@@ -1,0 +1,15 @@
+﻿<RCC>
+    <qresource prefix="/styles">
+        <file alias="hyperos.qss">styles/hyperos.qss</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="camera.svg">icons/camera.svg</file>
+        <file alias="folder.svg">icons/folder.svg</file>
+        <file alias="settings.svg">icons/settings.svg</file>
+        <file alias="chevron_left.svg">icons/chevron_left.svg</file>
+        <file alias="chevron_right.svg">icons/chevron_right.svg</file>
+        <file alias="crop.svg">icons/crop.svg</file>
+        <file alias="history.svg">icons/history.svg</file>
+        <file alias="plus_white.svg">icons/plus_white.svg</file>
+    </qresource>
+</RCC>
