@@ -1,0 +1,272 @@
+﻿/* ========================================================================== */
+/* Global                                                                       */
+/* ========================================================================== */
+* {
+    font-family: "Microsoft YaHei UI", "Segoe UI";
+    color: #1C2638;
+}
+
+QMainWindow {
+    background: #DDEAF7;
+}
+
+QWidget#centralwidget {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                stop:0 #DCEAF8,
+                                stop:1 #CFE1F4);
+}
+
+/* ========================================================================== */
+/* Left Sidebar                                                                 */
+/* ========================================================================== */
+QFrame#leftSidebar {
+    background: rgba(255, 255, 255, 0.93);
+    border: 1px solid rgba(176, 198, 224, 0.8);
+    border-radius: 24px;
+}
+
+QToolButton#sideCaptureButton,
+QToolButton#sideGalleryButton,
+QToolButton#sideConfigButton,
+QToolButton#sideBottomButton {
+    min-height: 58px;
+    min-width: 52px;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+}
+
+QToolButton#sideCaptureButton {
+    background: rgba(80, 140, 255, 0.22);
+}
+
+QToolButton#sideCaptureButton:hover,
+QToolButton#sideGalleryButton:hover,
+QToolButton#sideConfigButton:hover,
+QToolButton#sideBottomButton:hover {
+    background: rgba(99, 152, 245, 0.22);
+}
+
+/* ========================================================================== */
+/* Top Header                                                                   */
+/* ========================================================================== */
+QLabel#mainTitleLabel {
+    font-size: 34px;
+    font-weight: 800;
+    color: #1E2533;
+}
+
+QFrame#topActionGroup {
+    background: rgba(244, 247, 252, 0.96);
+    border: 1px solid rgba(205, 216, 234, 0.95);
+    border-radius: 18px;
+}
+
+QToolButton#btnPrev,
+QToolButton#btnShotIcon,
+QToolButton#btnNext,
+QToolButton#btnHistory {
+    min-width: 44px;
+    min-height: 40px;
+    border: none;
+    border-radius: 13px;
+    background: transparent;
+}
+
+QToolButton#btnPrev:hover,
+QToolButton#btnShotIcon:hover,
+QToolButton#btnNext:hover,
+QToolButton#btnHistory:hover {
+    background: rgba(109, 160, 244, 0.2);
+}
+
+QPushButton#btnNewTask {
+    min-height: 48px;
+    min-width: 124px;
+    border: none;
+    border-radius: 15px;
+    color: #FFFFFF;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 0 18px;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #FF9150, stop:1 #FF6840);
+}
+
+QPushButton#btnNewTask:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #FFA163, stop:1 #FF7950);
+}
+
+QPushButton#btnTopSettings {
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 15px;
+    border: 1px solid rgba(193, 206, 226, 0.9);
+    background: rgba(245, 249, 254, 0.95);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QPushButton#btnTopSettings:hover {
+    background: rgba(229, 239, 251, 0.95);
+}
+
+/* ========================================================================== */
+/* Card Containers                                                              */
+/* ========================================================================== */
+QFrame#quickCard,
+QFrame#recentCard,
+QFrame#formatCard,
+QFrame#commonCard {
+    background: rgba(255, 255, 255, 0.975);
+    border: 1px solid rgba(194, 210, 232, 0.9);
+    border-radius: 22px;
+}
+
+QLabel#quickTitleLabel,
+QLabel#recentTitleLabel,
+QLabel#formatTitleLabel,
+QLabel#commonTitleLabel {
+    font-size: 22px;
+    font-weight: 800;
+    color: #232B3A;
+}
+
+/* ========================================================================== */
+/* Capture Segment                                                              */
+/* ========================================================================== */
+QFrame#modeSegment {
+    background: #EDF1F6;
+    border-radius: 22px;
+    border: 1px solid rgba(201, 216, 238, 0.84);
+}
+
+QToolButton#modeFullButton,
+QToolButton#modeRegionButton,
+QToolButton#modeScrollButton {
+    min-height: 60px;
+    border: none;
+    border-radius: 18px;
+    font-size: 21px;
+    font-weight: 600;
+    color: #424D63;
+    background: transparent;
+    padding: 0 8px;
+}
+
+QToolButton#modeFullButton:hover,
+QToolButton#modeRegionButton:hover,
+QToolButton#modeScrollButton:hover {
+    background: rgba(157, 176, 204, 0.22);
+}
+
+QToolButton#modeFullButton:checked,
+QToolButton#modeRegionButton:checked,
+QToolButton#modeScrollButton:checked {
+    color: #FFFFFF;
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2F6CF0, stop:1 #4D90FF);
+    border: 1px solid rgba(73, 122, 214, 0.45);
+}
+
+QPushButton#startCaptureButton {
+    min-height: 70px;
+    border: none;
+    border-radius: 20px;
+    color: #FFFFFF;
+    font-size: 24px;
+    font-weight: 700;
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #FF6E3A, stop:1 #FF5C38);
+}
+
+QPushButton#startCaptureButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #FF7E4C, stop:1 #FF6E48);
+}
+
+/* ========================================================================== */
+/* Recent / Format / Common Settings                                            */
+/* ========================================================================== */
+QToolButton#btnMoreRecent,
+QToolButton#btnMoreFormat {
+    border: none;
+    font-size: 16px;
+    color: #627089;
+    background: transparent;
+}
+
+QToolButton#btnMoreRecent:hover,
+QToolButton#btnMoreFormat:hover {
+    color: #3D74D8;
+}
+
+QScrollArea#recentScrollArea {
+    background: transparent;
+}
+
+QWidget#recentContentWidget {
+    background: transparent;
+}
+
+QFrame#recentItemCard {
+    background: transparent;
+    border: none;
+}
+
+QLabel#recentItemTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #202A3B;
+}
+
+QLabel#recentItemTime {
+    font-size: 13px;
+    color: #647286;
+}
+
+QFrame#formatPreviewFrame {
+    background: rgba(247, 250, 255, 0.96);
+    border: 1px solid rgba(201, 214, 232, 0.9);
+    border-radius: 18px;
+}
+
+QLabel#formatPreviewLabel {
+    border-radius: 12px;
+    border: 1px solid rgba(182, 198, 222, 0.7);
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #E9F0FB, stop:1 #F7FAFF);
+    font-size: 13px;
+    color: #52637B;
+}
+
+QPushButton#btnHotkeySetting,
+QPushButton#btnFormatSetting,
+QPushButton#btnAutoSave {
+    min-height: 52px;
+    border-radius: 16px;
+    border: 1px solid rgba(192, 208, 230, 0.9);
+    background: rgba(248, 251, 255, 0.98);
+    font-size: 15px;
+    padding: 0 14px;
+}
+
+QPushButton#btnHotkeySetting:hover,
+QPushButton#btnFormatSetting:hover,
+QPushButton#btnAutoSave:hover {
+    background: rgba(235, 244, 255, 0.98);
+}
+
+QPushButton#btnAutoSave:checked {
+    color: #FFFFFF;
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4A7EF1, stop:1 #67A2FF);
+    border: 1px solid rgba(90, 133, 220, 0.9);
+}
+
+/* ========================================================================== */
+/* Tip Widget                                                                   */
+/* ========================================================================== */
+ShowTip QLabel#tipLabel,
+QWidget#ShowTip QLabel#tipLabel {
+    color: #F5FAFF;
+    background: rgba(12, 22, 36, 232);
+    border: 1px solid rgba(152, 197, 255, 112);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 10pt;
+}
