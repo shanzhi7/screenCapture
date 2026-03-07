@@ -1,95 +1,50 @@
-﻿# 系统架构（同步版）
+﻿# 架构文档（同步版）
 
 > 更新时间：2026-03-06
 
-## 1 总体分层
+## 1. 架构分层
 
-系统采用四层组织：
+当前系统按职责分为四层：
 
-1. UI Layer（主界面）
-2. Capture Layer（截图与选区）
-3. Feedback Layer（提示反馈）
-4. Resource/Style Layer（资源与主题）
+1. UI 层：`MainWindow`、`.ui`、QSS
+2. 交互层：`SelectionOverlay`
+3. 拼接层：`LongCaptureStitcher`
+4. 反馈层：`ShowTip`
 
----
+## 2. 模块职责
 
-## 2 UI Layer
+### 2.1 MainWindow
 
-### MainWindow
+- 主界面入口与模式调度
+- 全屏截图（含多屏选择）
+- 区域截图流程管理
+- 长截图流程编排（启停、保存、复制）
+- 占位按钮统一处理
 
-职责：
+### 2.2 SelectionOverlay
 
-- 承载主界面布局与按钮入口
-- 管理截图模式（全屏/区域/滚动）
-- 调度截图流程与结果预览
-- 承接占位按钮统一提示
+- 全屏遮罩和选区交互
+- 工具条展示与事件发射
+- 长截图状态下滚轮事件上报
+- 选区可视化高度随长截图增长
 
-关键对象：
+### 2.3 LongCaptureStitcher（新增）
 
-- `mainwindow.ui`
-- `mainwindow.h/.cpp`
+- 管理长截图拼接状态
+- 帧变化判定
+- 位移估算（scroll shift）
+- 增量拼接与结果输出
 
----
+### 2.4 ShowTip
 
-## 3 Capture Layer
+- 统一短时提示反馈
 
-### SelectionOverlay
+## 3. 关键数据流
 
-职责：
+- 区域截图：`MainWindow -> SelectionOverlay -> MainWindow::captureRegion`
+- 长截图：`SelectionOverlay(滚轮) -> MainWindow -> LongCaptureStitcher::append`
+- 输出：`LongCaptureStitcher::resultPixmap -> 预览/保存/复制`
 
-- 全屏遮罩选区
-- 鼠标交互与选区绘制
-- 工具条定位与确认/取消/保存/复制触发
+## 4. 当前架构结论
 
-关键对象：
-
-- `selectionoverlay.h/.cpp`
-
-### Screen Capture（当前内聚于 MainWindow）
-
-- 通过 `QScreen::grabWindow` 执行抓取
-- 后续建议提取为 `ScreenCaptureService`
-
----
-
-## 4 Feedback Layer
-
-### ShowTip
-
-职责：
-
-- 提供统一短时提示
-- 取代 `showMessage/statusBar` 的分散提示
-
-关键对象：
-
-- `showtip.h/.cpp/.ui`
-
----
-
-## 5 Resource/Style Layer
-
-### QSS 主题
-
-- 文件：`styles/hyperos.qss`
-- 负责统一视觉风格、按钮状态、卡片样式
-
-### SVG 图标资源
-
-- 文件：`icons/*.svg`
-- 通过 CMake 资源系统打包进可执行文件
-
-### CMake 资源打包
-
-- 使用 `qt_add_resources` 显式打包样式与图标
-- 链接 `Qt::Svg` 以支持 SVG 渲染
-
----
-
-## 6 当前架构结论
-
-已形成“可运行 + 可扩展”的基础架构：
-
-- UI 与截图交互已闭环
-- 提示与样式已统一
-- 下一阶段重点是把占位入口接入真实业务（滚动截图、历史、设置、编辑引擎）
+相比旧版本，长截图已从“临时逻辑”升级为独立拼接模块，稳定性和可维护性显著提升；后续可继续将抓图能力抽到 `ScreenCaptureService`。

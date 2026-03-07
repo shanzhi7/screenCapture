@@ -29,6 +29,7 @@
 #include <QStringList>
 #include <QSize>
 #include <QSizePolicy>
+#include <QThread>
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -654,8 +655,11 @@ QPixmap MainWindow::captureRegion(const QRect &rect) const
     if (m_overlay != nullptr && m_overlay->isVisible())
     {
         restoreOverlay = true;
+        m_overlay->setUpdatesEnabled(false);
         m_overlay->hide();
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 5);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 20);
+        QThread::msleep(18);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 20);
     }
 
     QImage stitched(rect.size(), QImage::Format_ARGB32_Premultiplied);
@@ -690,6 +694,7 @@ QPixmap MainWindow::captureRegion(const QRect &rect) const
 
     if (restoreOverlay && m_overlay != nullptr)
     {
+        m_overlay->setUpdatesEnabled(true);
         m_overlay->show();
         m_overlay->raise();
         m_overlay->activateWindow();
@@ -715,5 +720,7 @@ void MainWindow::showTip(const QString &text)
 {
     m_tip->showText(text, this);
 }
+
+
 
 
