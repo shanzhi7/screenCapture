@@ -2,98 +2,57 @@
 
 > 更新时间：2026-03-06
 
-## 1 MainWindow 模块
+## 1. MainWindow
 
-### 职责
+### 已实现接口（核心）
 
-- 主窗口初始化与界面状态维护
-- 截图模式切换
-- 调度全屏/区域截图
-- 预览更新、保存、复制
-- 未实现按钮占位处理
+- `startCapture()`
+- `onModeFullClicked()`
+- `onModeRegionClicked()`
+- `onSelectionFinished(const QRect &)`
+- `onOverlaySaveRequested(const QRect &)`
+- `onOverlayLongCaptureToggled(bool, const QRect &)`
+- `onOverlayLongCaptureWheel(const QRect &, int)`
+- `onOverlayLongCaptureSaveRequested(const QRect &)`
+- `onOverlayLongCaptureConfirmRequested(const QRect &)`
+- `captureRegion(const QRect &) const`
 
-### 关键接口
+### 说明
 
-- `void startCapture();`
-- `void onModeFullClicked();`
-- `void onModeRegionClicked();`
-- `void onModeScrollClicked();`
-- `void onSelectionFinished(const QRect &rect);`
-- `void onSelectionCanceled();`
-- `void onOverlayCopyRequested(const QRect &rect);`
-- `void onOverlaySaveRequested(const QRect &rect);`
-- `void saveCurrentImage();`
-- `void copyCurrentImage();`
-- `QPixmap captureRegion(const QRect &rect) const;`
-- `void updatePreview(const QPixmap &pixmap);`
-- `void showTip(const QString &text);`
+- 负责流程编排，不再承担复杂拼接算法细节。
 
-### 备注
+## 2. SelectionOverlay
 
-- 当前抓图函数仍在 MainWindow 内，后续建议拆分到服务层。
+### 已实现能力
 
----
+- 全屏遮罩、拖拽选区
+- 尺寸提示
+- ESC 取消 / Enter 确认
+- 工具条（编辑入口 + 长截图 + 保存/取消/确认）
+- 长截图期间选区可视高度增长
 
-## 2 SelectionOverlay 模块
+## 3. LongCaptureStitcher（新增）
 
-### 职责
+### 已实现能力
 
-- 全屏遮罩显示
-- 鼠标拖拽选区
-- 选区绘制与尺寸提示
-- 工具条展示与按钮事件发射
+- `begin(firstFrame)` 初始化
+- `append(nextFrame)` 增量拼接并返回新增高度
+- `resultPixmap()` 获取当前拼接结果
+- `visualHeight()` 提供 UI 可视高度同步
 
-### 关键接口/事件
+### 设计价值
 
-- `mousePressEvent`
-- `mouseMoveEvent`
-- `mouseReleaseEvent`
-- `keyPressEvent`
-- `paintEvent`
-- `QRect currentRect() const;`
-- `void updateToolbarPosition();`
-- `void ensureToolbar();`
-- `void confirmSelection();`
+- 降低 `MainWindow` 复杂度
+- 降低重复拼接和错位概率
+- 便于独立测试和迭代算法
 
-### 信号
+## 4. ShowTip
 
-- `selectionFinished(const QRect &rect)`
-- `selectionCanceled()`
-- `copyRequested(const QRect &rect)`
-- `saveRequested(const QRect &rect)`
+- 统一提示入口：`showText(...)`
+- 替代零散提示逻辑
 
----
+## 5. 待拆分建议
 
-## 3 ShowTip 模块
-
-### 职责
-
-- 显示短时浮动消息
-- 统一操作反馈体验
-
-### 关键接口
-
-- `void showText(const QString &text, QWidget *anchor, int timeoutMs = 1800);`
-
----
-
-## 4 样式与资源模块
-
-### 样式
-
-- `styles/hyperos.qss`
-- 负责布局细节、控件状态、交互视觉反馈
-
-### 图标资源
-
-- `icons/*.svg`
-- 通过资源系统打包并在按钮上加载
-
----
-
-## 5 近期模块演进建议
-
-1. 新增 `ScreenCaptureService`：剥离抓图逻辑。
-2. 新增 `HistoryService`：历史数据管理与缩略图缓存。
-3. 新增 `SettingsService`：热键、格式、自动保存持久化。
-4. 新增 `AnnotationEngine`：覆盖层编辑工具真实绘制能力。
+- `ScreenCaptureService`：屏幕抓取能力
+- `SettingsService`：配置持久化
+- `HistoryService`：历史记录管理
