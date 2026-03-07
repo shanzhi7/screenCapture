@@ -1,10 +1,10 @@
-/***********************************************************************************
+﻿/***********************************************************************************
 *
 * @file         selectionoverlay.h
-* @brief        区域截图遮罩层：负责选区交互、绘制与截图工具条触发。
+* @brief        区域截图覆盖层：负责选区交互、绘制与工具条触发。
 *
 * @author       shanzhi
-* @date         2026/03/06
+* @date         2026/03/07
 * @history
 ***********************************************************************************/
 
@@ -16,6 +16,7 @@
 #include <QRect>
 #include <QWidget>
 
+class QContextMenuEvent;
 class QFrame;
 class QKeyEvent;
 class QMouseEvent;
@@ -24,7 +25,7 @@ class QToolButton;
 class QWheelEvent;
 
 /**
- * @brief 截图时的全屏遮罩窗口。
+ * @brief 截图时的全屏覆盖窗口。
  */
 class SelectionOverlay : public QWidget
 {
@@ -34,7 +35,7 @@ public:
     explicit SelectionOverlay(QWidget *parent = nullptr);
     QRect selectedRect() const;
 
-    // 设置长截图可视化高度（用于选区随滚动持续增高的视觉反馈）。
+    // 设置长截图可视化高度（用于选区随滚动持续变高的视觉反馈）。
     void setLongCaptureVisualHeight(int height);
 
 signals:
@@ -56,14 +57,10 @@ signals:
      */
     void longCaptureWheel(const QRect &rect, int delta);
 
-    /**
-     * @brief 长截图模式下点击保存。
-     */
+    // 长截图模式下点击保存。
     void longCaptureSaveRequested(const QRect &rect);
 
-    /**
-     * @brief 长截图模式下点击确认（勾）。
-     */
+    // 长截图模式下点击确认（勾）。
     void longCaptureConfirmRequested(const QRect &rect);
 
 protected:
@@ -73,11 +70,14 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     QRect currentRect() const;
     QRect currentDisplayRect() const;
     QRect toGlobalRect(const QRect &rect) const;
+    QRect screenLocalRectForSelection(const QRect &selection) const;
+
     void updateToolbarPosition();
     void ensureToolbar();
     void resetSelection();
@@ -88,6 +88,7 @@ private:
     bool m_hasSelection = false;
     bool m_longCaptureEnabled = false;
     int m_longCaptureVisualHeight = 0;
+
     QPoint m_startPos;
     QPoint m_endPos;
     QRect m_selectedRect;
@@ -101,5 +102,3 @@ private:
 };
 
 #endif // SELECTIONOVERLAY_H
-
-

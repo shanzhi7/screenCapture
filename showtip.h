@@ -1,16 +1,18 @@
 ﻿/***********************************************************************************
 *
 * @file         showtip.h
-* @brief        浮动提示组件：用于显示短时消息提示。
+* @brief        浮动提示视图：仅负责提示内容展示，不承担定位策略。
 *
 * @author       shanzhi
-* @date         2026/03/06
+* @date         2026/03/07
 * @history
 ***********************************************************************************/
 
 #ifndef SHOWTIP_H
 #define SHOWTIP_H
 
+#include <QPoint>
+#include <QSize>
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -20,37 +22,33 @@ class ShowTip;
 }
 QT_END_NAMESPACE
 
-/**
- * @brief 轻量提示窗口。
- *
- * 显示短时提示文本，超时后自动隐藏。
- */
 class ShowTip : public QWidget
 {
     Q_OBJECT
 
 public:
-    /**
-     * @brief 构造提示组件。
-     * @param parent 父对象。
-     */
-    explicit ShowTip(QWidget *parent = nullptr);
+    enum class CloseChoice
+    {
+        HideToTray,
+        ExitApp,
+        Cancel
+    };
 
-    /**
-     * @brief 析构提示组件。
-     */
+public:
+    explicit ShowTip(QWidget *parent = nullptr);
     ~ShowTip();
 
-    /**
-     * @brief 显示提示文本。
-     * @param text 提示内容。
-     * @param anchor 锚点窗口（用于定位提示位置）。
-     * @param timeoutMs 自动隐藏超时时间（毫秒）。
-     */
-    void showText(const QString &text, QWidget *anchor, int timeoutMs = 1800);
+    // 计算指定文本在当前样式下的提示框尺寸。
+    QSize measureSize(const QString &text);
+
+    // 在指定全局坐标显示短时提示文本（坐标为窗口左上角）。
+    void showAt(const QString &text, const QPoint &globalTopLeft, int timeoutMs = 1800);
+
+    // 统一关闭行为弹窗：隐藏到托盘 / 退出应用 / 取消。
+    static CloseChoice askCloseChoice(QWidget *parent, const QString &appName);
 
 private:
-    Ui::ShowTip *ui; ///< UI 对象
+    Ui::ShowTip *ui;
 };
 
 #endif // SHOWTIP_H

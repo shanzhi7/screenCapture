@@ -2,7 +2,8 @@
 
 #include <QPainter>
 
-#include <algorithm>`r`n#include <limits>
+#include <algorithm>
+#include <limits>
 
 namespace
 {
