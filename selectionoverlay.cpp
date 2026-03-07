@@ -1,6 +1,7 @@
-#include "selectionoverlay.h"
+﻿#include "selectionoverlay.h"
 
 #include <QButtonGroup>
+#include <QContextMenuEvent>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -9,13 +10,14 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+#include <QShortcut>
 #include <QToolButton>
 #include <QWheelEvent>
 
 SelectionOverlay::SelectionOverlay(QWidget *parent)
     : QWidget(parent)
 {
-    // 覆盖全部显示器并集，支持多屏/跨屏选区。
+    // 跨多屏覆盖：取所有屏幕几何并集作为截图叠加层范围。
     QRect virtualDesktop;
     const QList<QScreen *> screens = QGuiApplication::screens();
     for (QScreen *screen : screens)
@@ -25,7 +27,9 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
             continue;
         }
 
-        virtualDesktop = virtualDesktop.isNull() ? screen->geometry() : virtualDesktop.united(screen->geometry());
+        virtualDesktop = virtualDesktop.isNull()
+                             ? screen->geometry()
+                             : virtualDesktop.united(screen->geometry());
     }
 
     if (virtualDesktop.isNull())
@@ -36,8 +40,26 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
     setGeometry(virtualDesktop);
     setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_DeleteOnClose, true);
     setCursor(Qt::CrossCursor);
     setFocusPolicy(Qt::StrongFocus);
+
+    // 全局取消与确认快捷键。
+    auto *cancelShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    cancelShortcut->setContext(Qt::ApplicationShortcut);
+    connect(cancelShortcut, &QShortcut::activated, this, [this]()
+    {
+        emit selectionCanceled();
+        close();
+    });
+
+    auto *confirmShortcut = new QShortcut(QKeySequence(Qt::Key_Return), this);
+    confirmShortcut->setContext(Qt::ApplicationShortcut);
+    connect(confirmShortcut, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);
+
+    auto *confirmShortcutEnter = new QShortcut(QKeySequence(Qt::Key_Enter), this);
+    confirmShortcutEnter->setContext(Qt::ApplicationShortcut);
+    connect(confirmShortcutEnter, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);
 
     ensureToolbar();
 }
@@ -49,7 +71,6 @@ QRect SelectionOverlay::selectedRect() const
 
 void SelectionOverlay::setLongCaptureVisualHeight(int height)
 {
-    // 长截图期间，外部持续传入累计高度用于视觉反馈。
     m_longCaptureVisualHeight = qMax(0, height);
 
     if (m_hasSelection)
@@ -61,12 +82,32 @@ void SelectionOverlay::setLongCaptureVisualHeight(int height)
 
 void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() != Qt::LeftButton)
+    if (event == nullptr)
     {
         return;
     }
 
-    // 点击工具条时，交给工具条子控件处理，不重置选区。
+    // 右键始终取消截图，行为等价 ESC / ✕。
+    if (event->button() == Qt::RightButton)
+    {
+        event->accept();
+        emit selectionCanceled();
+        close();
+        return;
+    }
+
+    // 非左键事件吞掉，避免透传到底层应用。
+    if (event->button() != Qt::LeftButton)
+    {
+        event->accept();
+        return;
+    }
+
+    activateWindow();
+    raise();
+    setFocus();
+
+    // 工具条区域交给子控件处理。
     if (m_toolbar != nullptr && m_toolbar->isVisible() && m_toolbar->geometry().contains(event->pos()))
     {
         QWidget::mousePressEvent(event);
@@ -90,24 +131,44 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         m_toolbar->hide();
     }
 
+    event->accept();
     update();
 }
 
 void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)
 {
-    if (!m_selecting)
+    if (event == nullptr)
     {
         return;
     }
 
+    if (!m_selecting)
+    {
+        QWidget::mouseMoveEvent(event);
+        return;
+    }
+
     m_endPos = event->pos();
+    event->accept();
     update();
 }
 
 void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (event == nullptr)
+    {
+        return;
+    }
+
+    if (event->button() == Qt::RightButton)
+    {
+        event->accept();
+        return;
+    }
+
     if (!m_selecting || event->button() != Qt::LeftButton)
     {
+        event->accept();
         return;
     }
 
@@ -118,19 +179,30 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
     if (rect.width() < 2 || rect.height() < 2)
     {
         resetSelection();
+        event->accept();
         return;
     }
 
-    // 保存全局坐标选区并展示工具条。
     m_hasSelection = true;
     m_selectedRect = toGlobalRect(rect);
     m_longCaptureVisualHeight = rect.height();
     updateToolbarPosition();
+
+    activateWindow();
+    raise();
+    setFocus();
+
+    event->accept();
     update();
 }
 
 void SelectionOverlay::keyPressEvent(QKeyEvent *event)
 {
+    if (event == nullptr)
+    {
+        return;
+    }
+
     if (event->key() == Qt::Key_Escape)
     {
         emit selectionCanceled();
@@ -160,7 +232,6 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     QPainterPath overlayPath;
     overlayPath.addRect(rect());
 
-    // 从半透明遮罩中挖出选区。
     if (validSelection)
     {
         QPainterPath holePath;
@@ -173,24 +244,45 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     if (!validSelection)
     {
         painter.setPen(QColor(220, 230, 255, 160));
-        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖拽选择截图区域"));
+        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));
         return;
     }
 
-    // 选区阶段保留轻微蓝色描边，增强边界识别。
+    // 选区内部保持几乎透明，仅用于视觉强调，不写入最终截图成品。
+    painter.fillRect(selection, QColor(0, 0, 0, 1));
+
+    // 选区交互态保留轻微蓝色描边。
     painter.setPen(QPen(QColor(118, 176, 255, 170), 1.0));
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(selection.adjusted(0, 0, -1, -1), 4, 4);
 
-    // 保留尺寸提示。
-    const QString sizeText = QString::number(selection.width()) + QStringLiteral(" x ") + QString::number(selection.height());
+    const QString sizeText = QString::number(selection.width())
+                             + QStringLiteral(" x ")
+                             + QString::number(selection.height());
+
     int textY = selection.top() - 28;
-    if (textY < 8)
+
+    const QRect screenRect = screenLocalRectForSelection(selection);
+    const int minTop = screenRect.top() + 8;
+    const int maxBottom = screenRect.bottom() - 8;
+
+    if (textY < minTop)
     {
         textY = selection.bottom() + 8;
     }
 
-    const QRect textRect(selection.left(), textY, 150, 22);
+    if (textY + 22 > maxBottom)
+    {
+        textY = qMax(minTop, maxBottom - 22);
+    }
+
+    int textX = selection.left();
+    if (textX + 150 > screenRect.right() - 4)
+    {
+        textX = qMax(screenRect.left() + 4, screenRect.right() - 150 - 4);
+    }
+
+    const QRect textRect(textX, textY, 150, 22);
     painter.fillRect(textRect, QColor(12, 19, 30, 220));
     painter.setPen(Qt::white);
     painter.drawText(textRect, Qt::AlignCenter, sizeText);
@@ -198,6 +290,11 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
 
 void SelectionOverlay::wheelEvent(QWheelEvent *event)
 {
+    if (event == nullptr)
+    {
+        return;
+    }
+
     if (m_longCaptureEnabled && m_hasSelection)
     {
         const int delta = event->angleDelta().y();
@@ -210,6 +307,14 @@ void SelectionOverlay::wheelEvent(QWheelEvent *event)
     }
 
     QWidget::wheelEvent(event);
+}
+
+void SelectionOverlay::contextMenuEvent(QContextMenuEvent *event)
+{
+    if (event != nullptr)
+    {
+        event->accept();
+    }
 }
 
 QRect SelectionOverlay::currentRect() const
@@ -227,7 +332,6 @@ QRect SelectionOverlay::currentDisplayRect() const
 
     if (m_longCaptureEnabled)
     {
-        // 长截图视觉效果：选区高度随滚动累计高度持续增高。
         const int targetHeight = qMax(selection.height(), m_longCaptureVisualHeight);
         const int maxBottom = height() - 1;
         const int targetBottom = qMin(maxBottom, selection.top() + targetHeight - 1);
@@ -242,6 +346,43 @@ QRect SelectionOverlay::toGlobalRect(const QRect &rect) const
     return rect.translated(geometry().topLeft());
 }
 
+QRect SelectionOverlay::screenLocalRectForSelection(const QRect &selection) const
+{
+    const QPoint fallbackGlobalCenter = toGlobalRect(selection).center();
+    QPoint globalCenter = fallbackGlobalCenter;
+
+    if (m_selectedRect.isValid())
+    {
+        globalCenter = m_selectedRect.center();
+    }
+
+    QScreen *targetScreen = QGuiApplication::screenAt(globalCenter);
+    if (targetScreen == nullptr)
+    {
+        targetScreen = QGuiApplication::screenAt(fallbackGlobalCenter);
+    }
+
+    if (targetScreen == nullptr)
+    {
+        targetScreen = QGuiApplication::primaryScreen();
+    }
+
+    if (targetScreen == nullptr)
+    {
+        return rect();
+    }
+
+    QRect localRect = targetScreen->geometry().translated(-geometry().topLeft());
+    localRect = localRect.intersected(rect());
+
+    if (!localRect.isValid() || localRect.width() < 40 || localRect.height() < 40)
+    {
+        return rect();
+    }
+
+    return localRect;
+}
+
 void SelectionOverlay::updateToolbarPosition()
 {
     if (m_toolbar == nullptr || !m_hasSelection)
@@ -250,20 +391,34 @@ void SelectionOverlay::updateToolbarPosition()
     }
 
     const QRect selection = currentDisplayRect();
+    const QRect screenRect = screenLocalRectForSelection(selection);
     const int toolbarWidth = m_toolbar->sizeHint().width();
     const int toolbarHeight = m_toolbar->sizeHint().height();
 
+    const int margin = 8;
+    const int minX = screenRect.left() + margin;
+    const int maxX = screenRect.right() - toolbarWidth - margin;
+
     int toolbarX = selection.center().x() - toolbarWidth / 2;
-    toolbarX = qMax(10, qMin(width() - toolbarWidth - 10, toolbarX));
+    toolbarX = qMax(minX, qMin(maxX, toolbarX));
+
+    const int minY = screenRect.top() + margin;
+    const int maxY = screenRect.bottom() - toolbarHeight - margin;
 
     int toolbarY = selection.top() - toolbarHeight - 12;
-    if (toolbarY < 8)
+    if (toolbarY < minY)
     {
         toolbarY = selection.bottom() + 12;
     }
-    if (toolbarY + toolbarHeight > height() - 8)
+
+    if (toolbarY > maxY)
     {
-        toolbarY = height() - toolbarHeight - 8;
+        toolbarY = maxY;
+    }
+
+    if (toolbarY < minY)
+    {
+        toolbarY = minY;
     }
 
     m_toolbar->move(toolbarX, toolbarY);
@@ -280,7 +435,7 @@ void SelectionOverlay::ensureToolbar()
 
     m_toolbar = new QFrame(this);
     m_toolbar->setObjectName(QStringLiteral("overlayToolbar"));
-    m_toolbar->setFixedHeight(46);
+    m_toolbar->setFixedHeight(48);
 
     QHBoxLayout *layout = new QHBoxLayout(m_toolbar);
     layout->setContentsMargins(10, 6, 10, 6);
@@ -360,6 +515,7 @@ void SelectionOverlay::ensureToolbar()
         {
             emit saveRequested(m_selectedRect);
         }
+
         close();
     });
 
@@ -428,3 +584,5 @@ void SelectionOverlay::confirmSelection()
 
     close();
 }
+
+

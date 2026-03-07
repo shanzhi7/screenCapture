@@ -11,5 +11,9 @@
         <file alias="crop.svg">icons/crop.svg</file>
         <file alias="history.svg">icons/history.svg</file>
         <file alias="plus_white.svg">icons/plus_white.svg</file>
+        <file alias="info.svg">icons/info.svg</file>
+    </qresource>
+    <qresource prefix="/">
+        <file alias="icon.ico">icon.ico</file>
     </qresource>
 </RCC>

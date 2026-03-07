@@ -261,12 +261,110 @@ QPushButton#btnAutoSave:checked {
 /* ========================================================================== */
 /* Tip Widget                                                                   */
 /* ========================================================================== */
+QWidget#ShowTip {
+    background: transparent;
+}
+
 ShowTip QLabel#tipLabel,
 QWidget#ShowTip QLabel#tipLabel {
-    color: #F5FAFF;
-    background: rgba(12, 22, 36, 232);
-    border: 1px solid rgba(152, 197, 255, 112);
-    border-radius: 12px;
-    padding: 8px 14px;
-    font-size: 10pt;
+    min-height: 40px;
+    min-width: 320px;
+    color: #FFFFFF;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                stop:0 rgba(16, 36, 64, 246),
+                                stop:1 rgba(22, 52, 92, 246));
+    border: 1px solid rgba(118, 182, 255, 228);
+    border-radius: 14px;
+    padding: 10px 18px;
+    font-size: 12pt;
+    font-weight: 700;
 }
+
+/* ========================================================================== */
+/* Close Dialog                                                                 */
+/* ========================================================================== */
+QDialog#CloseDialog {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                stop:0 #DFEBF8,
+                                stop:1 #D3E2F3);
+}
+
+QFrame#dialogCard {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(196, 211, 232, 0.95);
+    border-radius: 18px;
+}
+
+QLabel#titleLabel {
+    font-size: 24px;
+    font-weight: 800;
+    color: #202938;
+}
+
+QLabel#messageLabel {
+    font-size: 14px;
+    color: #4F5F77;
+}
+
+QPushButton#hideToTrayButton,
+QPushButton#cancelButton,
+QPushButton#exitAppButton {
+    min-height: 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(185, 203, 228, 0.92);
+    background: rgba(245, 250, 255, 0.96);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 0 14px;
+}
+
+QPushButton#hideToTrayButton:hover,
+QPushButton#cancelButton:hover,
+QPushButton#exitAppButton:hover {
+    background: rgba(233, 243, 255, 0.98);
+}
+
+QPushButton#hideToTrayButton {
+    color: #FFFFFF;
+    border: 1px solid rgba(82, 132, 222, 0.9);
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #3B78F2, stop:1 #5A98FF);
+}
+
+QPushButton#hideToTrayButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4C86F5, stop:1 #69A4FF);
+}
+
+QPushButton#exitAppButton {
+    color: #FFFFFF;
+    border: 1px solid rgba(221, 109, 86, 0.9);
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #FF7750, stop:1 #FF5E45);
+}
+
+QPushButton#exitAppButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #FF8764, stop:1 #FF6F57);
+}
+
+QToolButton#recentThumbButton {
+    border-radius: 14px;
+    border: 1px solid rgba(176, 196, 222, 0.78);
+    background: rgba(233, 241, 252, 0.94);
+}
+
+QToolButton#recentThumbButton:hover {
+    border: 1px solid rgba(126, 164, 224, 0.95);
+    background: rgba(222, 234, 249, 0.98);
+}
+
+QToolButton#recentThumbButton:pressed {
+    background: rgba(206, 223, 243, 0.98);
+}
+
+QLabel#recentEmptyLabel {
+    font-size: 16px;
+    font-weight: 600;
+    color: #71819B;
+    border: 1px dashed rgba(166, 186, 214, 0.9);
+    border-radius: 16px;
+    background: rgba(243, 248, 255, 0.76);
+}
+
