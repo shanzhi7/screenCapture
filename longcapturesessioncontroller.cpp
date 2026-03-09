@@ -25,6 +25,8 @@
 
 namespace
 {
+constexpr int kLongCaptureExpansionWheelSign = -1;
+
 class ScopedOverlayCaptureSuppression
 {
 public:
@@ -298,6 +300,14 @@ void LongCaptureSessionController::requestManualScroll(int delta)
 {
     if (!isActive() || delta == 0)
     {
+        return;
+    }
+
+    if ((delta > 0 && kLongCaptureExpansionWheelSign < 0)
+        || (delta < 0 && kLongCaptureExpansionWheelSign > 0))
+    {
+        m_wheelAccumulator = 0;
+        emit statusTextChanged(QStringLiteral("仅支持向下滚动长截图"));
         return;
     }
 
