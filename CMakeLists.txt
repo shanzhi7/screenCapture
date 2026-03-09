@@ -53,6 +53,10 @@ if (SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE AND WIN32)
         longcapturebackend.h
         desktopgdicapturebackend.cpp
         desktopgdicapturebackend.h
+        wgccapturebackend.cpp
+        wgccapturebackend.h
+        dxgiduplicationbackend.cpp
+        dxgiduplicationbackend.h
         scrolldispatcher.cpp
         scrolldispatcher.h
         motiondetector.cpp
@@ -102,6 +106,10 @@ target_link_libraries(screenCapture
         Qt::Svg
 )
 
+if (SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE AND WIN32)
+    target_link_libraries(screenCapture PRIVATE d3d11 dxgi)
+endif()
+
 include(GNUInstallDirs)
 
 install(TARGETS screenCapture
@@ -116,5 +124,3 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})
-
-

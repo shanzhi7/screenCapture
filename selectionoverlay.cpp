@@ -14,6 +14,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPen>
 #include <QScreen>
 #include <QShortcut>
 #include <QToolButton>
@@ -89,10 +90,13 @@ void SelectionOverlay::setLongCaptureModeEnabled(bool enabled)
 
     if (!targetEnabled)
     {
-
+        m_predictedLongCaptureHeight = currentRect().height();
+        m_committedLongCaptureHeight = currentRect().height();
         m_longCaptureAnchorBottomLocal = -1;
+        m_captureQuality = CaptureQuality::Idle;
         if (m_previewPanel != nullptr)
         {
+            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
             m_previewPanel->hide();
         }
     }
@@ -100,23 +104,51 @@ void SelectionOverlay::setLongCaptureModeEnabled(bool enabled)
     {
         const QRect current = currentRect();
         m_longCaptureAnchorBottomLocal = current.bottom();
-        m_longCaptureVisualHeight = qMax(current.height(), m_longCaptureVisualHeight);
+        m_committedLongCaptureHeight = qMax(current.height(), m_committedLongCaptureHeight);
+        m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
 
         if (m_previewPanel != nullptr)
         {
+            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
             updatePreviewPanelPosition();
             m_previewPanel->show();
             m_previewPanel->raise();
         }
     }
 
+    updateStatusLabel();
     updateToolbarPosition();
     update();
 }
 
-void SelectionOverlay::setLongCaptureVisualHeight(int height)
+void SelectionOverlay::setPredictedLongCaptureHeight(int height)
 {
-    m_longCaptureVisualHeight = qMax(0, height);
+    m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, height);
+    if (m_previewPanel != nullptr)
+    {
+        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
+    }
+
+    if (m_hasSelection)
+    {
+        updatePreviewPanelPosition();
+        update();
+    }
+}
+
+void SelectionOverlay::setCommittedLongCaptureHeight(int height)
+{
+    m_committedLongCaptureHeight = qMax(0, height);
+    if (m_predictedLongCaptureHeight < m_committedLongCaptureHeight)
+    {
+        m_predictedLongCaptureHeight = m_committedLongCaptureHeight;
+    }
+
+    if (m_previewPanel != nullptr)
+    {
+        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
+    }
+
     if (m_hasSelection)
     {
         updateToolbarPosition();
@@ -136,6 +168,7 @@ void SelectionOverlay::setLongCapturePreview(const QPixmap &preview)
     if (m_previewPixmap.isNull())
     {
         m_previewPanel->clearPreview();
+        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
         if (!m_longCaptureEnabled)
         {
             m_previewPanel->hide();
@@ -144,6 +177,7 @@ void SelectionOverlay::setLongCapturePreview(const QPixmap &preview)
     }
 
     m_previewPanel->setPreview(m_previewPixmap);
+    m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
     if (m_longCaptureEnabled)
     {
         updatePreviewPanelPosition();
@@ -154,17 +188,75 @@ void SelectionOverlay::setLongCapturePreview(const QPixmap &preview)
 
 void SelectionOverlay::setStatusText(const QString &text)
 {
-    if (m_statusLabel == nullptr)
-    {
-        return;
-    }
+    m_statusText = text.trimmed();
+    updateStatusLabel();
+}
 
-    m_statusLabel->setText(text);
+void SelectionOverlay::setCaptureQuality(CaptureQuality quality)
+{
+    m_captureQuality = quality;
+    updateStatusLabel();
+    update();
 }
 
 void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
 {
+    if (m_captureDecorationsHidden == hidden)
+    {
+        return;
+    }
+
     m_captureDecorationsHidden = hidden;
+    const QRect captureRect = currentRect().adjusted(-2, -2, 2, 2);
+    if (hidden)
+    {
+        m_toolbarVisibleBeforeCapture = (m_toolbar != nullptr
+                                         && m_toolbar->isVisible()
+                                         && m_toolbar->geometry().intersects(captureRect));
+        if (m_toolbarVisibleBeforeCapture)
+        {
+            m_toolbar->hide();
+        }
+
+        m_statusLabelVisibleBeforeCapture = (m_statusLabel != nullptr
+                                             && m_statusLabel->isVisible()
+                                             && m_statusLabel->geometry().intersects(captureRect));
+        if (m_statusLabelVisibleBeforeCapture)
+        {
+            m_statusLabel->hide();
+        }
+
+        m_previewPanelVisibleBeforeCapture = (m_previewPanel != nullptr
+                                              && m_previewPanel->isVisible()
+                                              && m_previewPanel->geometry().intersects(captureRect));
+        if (m_previewPanelVisibleBeforeCapture)
+        {
+            m_previewPanel->hide();
+        }
+    }
+    else
+    {
+        if (m_toolbarVisibleBeforeCapture && m_toolbar != nullptr && m_hasSelection)
+        {
+            updateToolbarPosition();
+        }
+        m_toolbarVisibleBeforeCapture = false;
+
+        if (m_statusLabelVisibleBeforeCapture && m_statusLabel != nullptr && m_hasSelection)
+        {
+            updateStatusPosition();
+        }
+        m_statusLabelVisibleBeforeCapture = false;
+
+        if (m_previewPanelVisibleBeforeCapture && m_previewPanel != nullptr && m_longCaptureEnabled)
+        {
+            updatePreviewPanelPosition();
+            m_previewPanel->show();
+            m_previewPanel->raise();
+        }
+        m_previewPanelVisibleBeforeCapture = false;
+    }
+
     update();
 }
 #endif
@@ -208,8 +300,11 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureEnabled = false;
-    m_longCaptureVisualHeight = 0;
+    m_predictedLongCaptureHeight = 0;
+    m_committedLongCaptureHeight = 0;
     m_longCaptureAnchorBottomLocal = -1;
+    m_captureQuality = CaptureQuality::Idle;
+    m_statusText = QStringLiteral("拖动中");
     m_previewPixmap = QPixmap();
 
     if (m_btnLongCapture != nullptr)
@@ -222,16 +317,22 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         m_previewPanel->clearPreview();
         m_previewPanel->hide();
     }
-#endif
 
+    updateStatusLabel();
+#else
     if (m_statusLabel != nullptr)
     {
         m_statusLabel->setText(QStringLiteral("拖动中"));
     }
+#endif
 
     if (m_toolbar != nullptr)
     {
         m_toolbar->hide();
+    }
+    if (m_statusLabel != nullptr)
+    {
+        m_statusLabel->hide();
     }
 
     event->accept();
@@ -290,14 +391,18 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
     m_selectedRect = toGlobalRect(rect);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
-    m_longCaptureVisualHeight = rect.height();
+    m_committedLongCaptureHeight = rect.height();
+    m_predictedLongCaptureHeight = rect.height();
     m_longCaptureAnchorBottomLocal = rect.bottom();
-#endif
-
+    m_captureQuality = CaptureQuality::Idle;
+    m_statusText = QStringLiteral("已选择区域");
+    updateStatusLabel();
+#else
     if (m_statusLabel != nullptr)
     {
         m_statusLabel->setText(QStringLiteral("已选择区域"));
     }
+#endif
 
     updateToolbarPosition();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -344,12 +449,15 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     const bool hideCaptureDecorations = m_captureDecorationsHidden;
-    const QRect selection = currentDisplayRect();
+    const QRect committedSelection = currentDisplayRect();
+    const QRect predictedSelection = predictedDisplayRect();
+    const QRect visibleSelection = predictedSelection.isValid() ? predictedSelection : committedSelection;
 #else
     const bool hideCaptureDecorations = false;
-    const QRect selection = currentRect();
+    const QRect committedSelection = currentRect();
+    const QRect visibleSelection = committedSelection;
 #endif
-    const bool validSelection = (m_selecting || m_hasSelection) && selection.width() > 1 && selection.height() > 1;
+    const bool validSelection = (m_selecting || m_hasSelection) && visibleSelection.width() > 1 && visibleSelection.height() > 1;
 
     QPainterPath overlayPath;
     overlayPath.addRect(rect());
@@ -357,7 +465,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     if (validSelection)
     {
         QPainterPath holePath;
-        holePath.addRect(selection);
+        holePath.addRect(visibleSelection);
         overlayPath = overlayPath.subtracted(holePath);
     }
 
@@ -368,35 +476,53 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
         if (!hideCaptureDecorations)
         {
             painter.setPen(QColor(220, 230, 255, 160));
-                        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("\u62d6\u52a8\u9f20\u6807\u9009\u62e9\u533a\u57df\uff0c\u53f3\u952e\u6216 ESC \u53d6\u6d88"));
+            painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));
         }
         return;
     }
 
-    painter.fillRect(selection, QColor(0, 0, 0, 1));
+    painter.fillRect(visibleSelection, QColor(0, 0, 0, 1));
 
     if (hideCaptureDecorations)
     {
         return;
     }
 
-    painter.setPen(QPen(QColor(118, 176, 255, 170), 1.0));
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    if (m_longCaptureEnabled && predictedSelection != committedSelection)
+    {
+        QPen predictedPen(QColor(155, 203, 255, 165), 1.0, Qt::DashLine);
+        predictedPen.setDashPattern({6.0, 4.0});
+        painter.setPen(predictedPen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRoundedRect(predictedSelection.adjusted(0, 0, -1, -1), 4, 4);
+    }
+#endif
+
+    painter.setPen(QPen(QColor(76, 166, 255, 215), 1.4));
     painter.setBrush(Qt::NoBrush);
-    painter.drawRoundedRect(selection.adjusted(0, 0, -1, -1), 4, 4);
+    painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);
 
-    const QString sizeText = QString::number(selection.width())
-                             + QStringLiteral(" x ")
-                             + QString::number(selection.height());
+    QString sizeText = QString::number(committedSelection.width())
+                       + QStringLiteral(" x ")
+                       + QString::number(committedSelection.height());
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    const int predictedExtra = qMax(0, predictedSelection.height() - committedSelection.height());
+    if (m_longCaptureEnabled && predictedExtra > 0)
+    {
+        sizeText += QStringLiteral("  预测 +%1 px").arg(predictedExtra);
+    }
+#endif
 
-    int textY = selection.top() - 28;
+    int textY = committedSelection.top() - 28;
 
-    const QRect screenRect = screenLocalRectForSelection(selection);
+    const QRect screenRect = screenLocalRectForSelection(committedSelection);
     const int minTop = screenRect.top() + 8;
     const int maxBottom = screenRect.bottom() - 8;
 
     if (textY < minTop)
     {
-        textY = selection.bottom() + 8;
+        textY = committedSelection.bottom() + 8;
     }
 
     if (textY + 22 > maxBottom)
@@ -404,13 +530,14 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
         textY = qMax(minTop, maxBottom - 22);
     }
 
-    int textX = selection.left();
-    if (textX + 150 > screenRect.right() - 4)
+    int textX = committedSelection.left();
+    const int textWidth = sizeText.contains(QStringLiteral("预测")) ? 220 : 150;
+    if (textX + textWidth > screenRect.right() - 4)
     {
-        textX = qMax(screenRect.left() + 4, screenRect.right() - 150 - 4);
+        textX = qMax(screenRect.left() + 4, screenRect.right() - textWidth - 4);
     }
 
-    const QRect textRect(textX, textY, 150, 22);
+    const QRect textRect(textX, textY, textWidth, 22);
     painter.fillRect(textRect, QColor(12, 19, 30, 220));
     painter.setPen(Qt::white);
     painter.drawText(textRect, Qt::AlignCenter, sizeText);
@@ -484,32 +611,93 @@ QRect SelectionOverlay::currentRect() const
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 QRect SelectionOverlay::currentDisplayRect() const
 {
+    return m_longCaptureEnabled
+               ? longCaptureRectForHeight(m_committedLongCaptureHeight)
+               : currentRect();
+}
+
+QRect SelectionOverlay::predictedDisplayRect() const
+{
+    return m_longCaptureEnabled
+               ? longCaptureRectForHeight(qMax(m_predictedLongCaptureHeight, m_committedLongCaptureHeight))
+               : currentDisplayRect();
+}
+
+QRect SelectionOverlay::longCaptureRectForHeight(int height) const
+{
     QRect selection = currentRect();
     if (!m_hasSelection)
     {
         return selection;
     }
 
-    if (m_longCaptureEnabled)
+    const int targetHeight = qMax(selection.height(), height);
+    const QRect screenRect = screenLocalRectForSelection(selection);
+
+    int anchorBottom = m_longCaptureAnchorBottomLocal;
+    if (anchorBottom < 0)
     {
-        const int targetHeight = qMax(selection.height(), m_longCaptureVisualHeight);
-        const QRect screenRect = screenLocalRectForSelection(selection);
-
-        int anchorBottom = m_longCaptureAnchorBottomLocal;
-        if (anchorBottom < 0)
-        {
-            anchorBottom = selection.bottom();
-        }
-
-        anchorBottom = qBound(screenRect.top(), anchorBottom, screenRect.bottom());
-        const int targetTop = anchorBottom - targetHeight + 1;
-        const int clampedTop = qMax(screenRect.top(), targetTop);
-
-        selection.setTop(clampedTop);
-        selection.setBottom(anchorBottom);
+        anchorBottom = selection.bottom();
     }
 
+    anchorBottom = qBound(screenRect.top(), anchorBottom, screenRect.bottom());
+    const int targetTop = anchorBottom - targetHeight + 1;
+    const int clampedTop = qMax(screenRect.top(), targetTop);
+
+    selection.setTop(clampedTop);
+    selection.setBottom(anchorBottom);
     return selection;
+}
+
+void SelectionOverlay::updateStatusLabel()
+{
+    if (m_statusLabel == nullptr)
+    {
+        return;
+    }
+
+    QString text = m_statusText;
+    if (text.isEmpty())
+    {
+        text = m_hasSelection ? QStringLiteral("已选择区域") : QStringLiteral("等待选区");
+    }
+
+    const QString quality = qualityText();
+    if (m_longCaptureEnabled && !quality.isEmpty())
+    {
+        text += QStringLiteral(" · ") + quality;
+    }
+
+    m_statusLabel->setText(text);
+    m_statusLabel->adjustSize();
+    if (m_hasSelection)
+    {
+        updateStatusPosition();
+    }
+    else
+    {
+        m_statusLabel->hide();
+    }
+}
+
+QString SelectionOverlay::qualityText() const
+{
+    switch (m_captureQuality)
+    {
+        case CaptureQuality::Predicting:
+            return QStringLiteral("预测中");
+        case CaptureQuality::WaitingForMotion:
+            return QStringLiteral("等待位移");
+        case CaptureQuality::WaitingForStable:
+            return QStringLiteral("等待稳定");
+        case CaptureQuality::WeakMatch:
+            return QStringLiteral("等待更稳定画面");
+        case CaptureQuality::Confirmed:
+            return QStringLiteral("已确认");
+        case CaptureQuality::Idle:
+        default:
+            return QString();
+    }
 }
 #endif
 
@@ -563,7 +751,7 @@ void SelectionOverlay::updateToolbarPosition()
     }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
-    const QRect selection = currentDisplayRect();
+    const QRect selection = predictedDisplayRect();
 #else
     const QRect selection = currentRect();
 #endif
@@ -600,10 +788,59 @@ void SelectionOverlay::updateToolbarPosition()
     m_toolbar->move(toolbarX, toolbarY);
     m_toolbar->show();
     m_toolbar->raise();
+    updateStatusPosition();
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     updatePreviewPanelPosition();
 #endif
+}
+
+void SelectionOverlay::updateStatusPosition()
+{
+    if (m_statusLabel == nullptr || !m_hasSelection)
+    {
+        return;
+    }
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    const QRect selection = predictedDisplayRect();
+#else
+    const QRect selection = currentRect();
+#endif
+    const QRect screenRect = screenLocalRectForSelection(selection);
+    const QSize labelSize = m_statusLabel->sizeHint();
+    const int margin = 8;
+    const int minX = screenRect.left() + margin;
+    const int maxX = screenRect.right() - labelSize.width() - margin;
+
+    int labelX = selection.center().x() - labelSize.width() / 2;
+    labelX = qMax(minX, qMin(maxX, labelX));
+
+    int labelY = selection.top() - labelSize.height() - 12;
+    if (m_toolbar != nullptr && m_toolbar->isVisible())
+    {
+        if (m_toolbar->y() < selection.top())
+        {
+            labelY = m_toolbar->y() - labelSize.height() - 8;
+        }
+        else
+        {
+            labelY = m_toolbar->geometry().bottom() + 8;
+        }
+    }
+
+    const int minY = screenRect.top() + margin;
+    const int maxY = screenRect.bottom() - labelSize.height() - margin;
+    if (labelY < minY)
+    {
+        labelY = selection.bottom() + 8;
+    }
+    labelY = qMax(minY, qMin(maxY, labelY));
+
+    m_statusLabel->resize(labelSize);
+    m_statusLabel->move(labelX, labelY);
+    m_statusLabel->show();
+    m_statusLabel->raise();
 }
 
 void SelectionOverlay::ensureToolbar()
@@ -671,7 +908,10 @@ void SelectionOverlay::ensureToolbar()
         if (m_longCaptureEnabled)
         {
             m_longCaptureAnchorBottomLocal = current.bottom();
-            m_longCaptureVisualHeight = qMax(current.height(), m_longCaptureVisualHeight);
+            m_committedLongCaptureHeight = qMax(current.height(), m_committedLongCaptureHeight);
+            m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);
+            m_statusText = QStringLiteral("长截图已开启");
+            m_captureQuality = CaptureQuality::Confirmed;
             if (m_previewPanel != nullptr)
             {
                 if (m_previewPixmap.isNull())
@@ -682,35 +922,26 @@ void SelectionOverlay::ensureToolbar()
                 m_previewPanel->show();
                 m_previewPanel->raise();
             }
-            if (m_statusLabel != nullptr)
-            {
-                m_statusLabel->setText(QStringLiteral("长截图已开启"));
-            }
         }
         else
         {
-            m_longCaptureVisualHeight = current.height();
+            m_predictedLongCaptureHeight = current.height();
+            m_committedLongCaptureHeight = current.height();
             m_longCaptureAnchorBottomLocal = -1;
+            m_statusText = QStringLiteral("长截图已关闭");
+            m_captureQuality = CaptureQuality::Idle;
             if (m_previewPanel != nullptr)
             {
                 m_previewPanel->hide();
             }
-            if (m_statusLabel != nullptr)
-            {
-                m_statusLabel->setText(QStringLiteral("长截图已关闭"));
-            }
         }
 
+        updateStatusLabel();
         updateToolbarPosition();
         update();
         emit longCaptureToggled(m_longCaptureEnabled, m_selectedRect);
     });
 #endif
-
-    m_statusLabel = new QLabel(QStringLiteral("等待选区"), m_toolbar);
-    m_statusLabel->setObjectName(QStringLiteral("overlayStatusLabel"));
-    layout->addWidget(m_statusLabel);
-    layout->addSpacing(8);
 
     m_btnSave = createTool(QStringLiteral("保存"));
     m_btnCancel = createTool(QStringLiteral("✕"));
@@ -757,12 +988,6 @@ void SelectionOverlay::ensureToolbar()
         "padding: 6px 10px;"
         "font: 10pt 'Microsoft YaHei UI';"
         "}"
-        "QLabel#overlayStatusLabel {"
-        "color: rgba(222, 236, 255, 210);"
-        "padding: 0 8px;"
-        "font: 9pt 'Microsoft YaHei UI';"
-        "font-weight: 500;"
-        "}"
         "QToolButton:hover {"
         "background: rgba(126, 170, 255, 35);"
         "border-color: rgba(170, 205, 255, 90);"
@@ -771,6 +996,22 @@ void SelectionOverlay::ensureToolbar()
         "background: rgba(114, 166, 255, 72);"
         "border-color: rgba(176, 214, 255, 120);"
         "}");
+
+    m_statusLabel = new QLabel(QStringLiteral("等待选区"), this);
+    m_statusLabel->setObjectName(QStringLiteral("overlayStatusLabel"));
+    m_statusLabel->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    m_statusLabel->setStyleSheet(
+        "QLabel#overlayStatusLabel {"
+        "color: rgba(228, 239, 255, 220);"
+        "background: rgba(14, 20, 30, 226);"
+        "border: 1px solid rgba(132, 180, 255, 72);"
+        "border-radius: 12px;"
+        "padding: 6px 12px;"
+        "font: 9pt 'Microsoft YaHei UI';"
+        "font-weight: 500;"
+        "}");
+    m_statusLabel->adjustSize();
+    m_statusLabel->hide();
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_previewPanel = new LongCapturePreviewPanel(this);
@@ -790,7 +1031,7 @@ void SelectionOverlay::updatePreviewPanelPosition()
         return;
     }
 
-    const QRect selection = currentDisplayRect();
+    const QRect selection = predictedDisplayRect();
     const QRect screenRect = screenLocalRectForSelection(selection);
 
     const int panelWidth = m_previewPanel->width();
@@ -824,8 +1065,11 @@ void SelectionOverlay::resetSelection()
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureEnabled = false;
-    m_longCaptureVisualHeight = 0;
+    m_predictedLongCaptureHeight = 0;
+    m_committedLongCaptureHeight = 0;
     m_longCaptureAnchorBottomLocal = -1;
+    m_captureQuality = CaptureQuality::Idle;
+    m_statusText.clear();
     m_previewPixmap = QPixmap();
 
     if (m_btnLongCapture != nullptr)
@@ -838,16 +1082,22 @@ void SelectionOverlay::resetSelection()
         m_previewPanel->clearPreview();
         m_previewPanel->hide();
     }
-#endif
 
+    updateStatusLabel();
+#else
     if (m_statusLabel != nullptr)
     {
         m_statusLabel->setText(QStringLiteral("等待选区"));
     }
+#endif
 
     if (m_toolbar != nullptr)
     {
         m_toolbar->hide();
+    }
+    if (m_statusLabel != nullptr)
+    {
+        m_statusLabel->hide();
     }
 
     update();
@@ -871,6 +1121,12 @@ void SelectionOverlay::confirmSelection()
     emit selectionFinished(m_selectedRect);
     close();
 }
+
+
+
+
+
+
 
 
 

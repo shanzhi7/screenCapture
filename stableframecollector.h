@@ -20,13 +20,8 @@ class StableFrameCollector
 public:
     StableFrameCollector();
 
-    // 用检测到位移后的第一帧启动稳定采样。
-    void begin(const QImage &firstFrame);
-
-    // 喂入后续帧，满足稳定条件后返回可拼接帧。
-    StableFrameResult ingest(const QImage &frame);
-
-    // 重置采样状态。
+    void begin(const CaptureFrame &firstFrame);
+    StableFrameResult ingest(const CaptureFrame &frame);
     void reset();
 
 private:
@@ -36,6 +31,9 @@ private:
     QImage m_lastFrame;
     int m_sampleCount = 0;
     int m_stableCount = 0;
+    qint64 m_firstTimestampMs = 0;
+    qint64 m_lastTimestampMs = 0;
+    qint64 m_stableStartTimestampMs = 0;
 };
 
 #endif // STABLEFRAMECOLLECTOR_H

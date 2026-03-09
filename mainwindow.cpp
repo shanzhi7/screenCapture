@@ -154,7 +154,9 @@ MainWindow::MainWindow(QWidget *parent)
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureController = std::make_unique<LongCaptureSessionController>(this);
     connect(m_longCaptureController.get(), &LongCaptureSessionController::previewUpdated, this, &MainWindow::onLongCapturePreviewUpdated);
-    connect(m_longCaptureController.get(), &LongCaptureSessionController::visualHeightChanged, this, &MainWindow::onLongCaptureVisualHeightChanged);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::predictedVisualHeightChanged, this, &MainWindow::onLongCapturePredictedVisualHeightChanged);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::committedVisualHeightChanged, this, &MainWindow::onLongCaptureCommittedVisualHeightChanged);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::captureQualityChanged, this, &MainWindow::onLongCaptureCaptureQualityChanged);
     connect(m_longCaptureController.get(), &LongCaptureSessionController::statusTextChanged, this, &MainWindow::onLongCaptureStatusTextChanged);
     connect(m_longCaptureController.get(), &LongCaptureSessionController::copyReady, this, &MainWindow::onLongCaptureCopyReady);
     connect(m_longCaptureController.get(), &LongCaptureSessionController::saveReady, this, &MainWindow::onLongCaptureSaveReady);
@@ -537,6 +539,7 @@ void MainWindow::onSelectionFinished(const QRect &rect)
 
 void MainWindow::onSelectionCanceled()
 {
+    resetLongCaptureState();
 
     const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
                                                 ? true
@@ -691,11 +694,27 @@ void MainWindow::onLongCapturePreviewUpdated(const QPixmap &pixmap)
     updatePreview(pixmap);
 }
 
-void MainWindow::onLongCaptureVisualHeightChanged(int height)
+void MainWindow::onLongCapturePredictedVisualHeightChanged(int height)
 {
     if (m_overlay != nullptr)
     {
-        m_overlay->setLongCaptureVisualHeight(height);
+        m_overlay->setPredictedLongCaptureHeight(height);
+    }
+}
+
+void MainWindow::onLongCaptureCommittedVisualHeightChanged(int height)
+{
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setCommittedLongCaptureHeight(height);
+    }
+}
+
+void MainWindow::onLongCaptureCaptureQualityChanged(CaptureQuality quality)
+{
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setCaptureQuality(quality);
     }
 }
 
@@ -1077,7 +1096,6 @@ void MainWindow::dismissOverlay()
     m_overlay->setAttribute(Qt::WA_TransparentForMouseEvents, false);
     m_overlay->hide();
     m_overlay->close();
-    m_overlay->deleteLater();
     m_overlay = nullptr;
 }
 
@@ -1529,6 +1547,10 @@ QString MainWindow::outputFormatName() const
                ? QStringLiteral("PNG")
                : QStringLiteral("JPG");
 }
+
+
+
+
 
 
 

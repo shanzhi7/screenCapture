@@ -1,4 +1,4 @@
-﻿#include "scrolldispatcher.h"
+#include "scrolldispatcher.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -74,7 +74,12 @@ ScrollDispatchResult ScrollDispatcher::dispatchWheel(int delta, const QPoint &sc
         return result;
     }
 
-    result.dispatched = dispatchWheelToWindow(m_targetCandidates.at(m_targetIndex), delta, screenPos);
+    const void *target = m_targetCandidates.at(m_targetIndex);
+    result.dispatched = dispatchWheelByInput(const_cast<void *>(target), delta, screenPos);
+    if (!result.dispatched)
+    {
+        result.dispatched = dispatchWheelToWindow(const_cast<void *>(target), delta, screenPos);
+    }
 #else
     Q_UNUSED(delta)
 #endif
@@ -149,6 +154,70 @@ bool ScrollDispatcher::isValidWindow(void *windowHandle) const
            && IsWindowVisible(static_cast<HWND>(windowHandle));
 }
 
+void ScrollDispatcher::activateTargetWindow(void *windowHandle) const
+{
+    if (!isValidWindow(windowHandle))
+    {
+        return;
+    }
+
+    HWND rootWindow = GetAncestor(static_cast<HWND>(windowHandle), GA_ROOT);
+    if (rootWindow == nullptr || !IsWindow(rootWindow))
+    {
+        rootWindow = static_cast<HWND>(windowHandle);
+    }
+
+    if (IsIconic(rootWindow))
+    {
+        ShowWindow(rootWindow, SW_RESTORE);
+    }
+
+    BringWindowToTop(rootWindow);
+    SetForegroundWindow(rootWindow);
+    SetActiveWindow(rootWindow);
+    SetFocus(static_cast<HWND>(windowHandle));
+}
+
+bool ScrollDispatcher::dispatchWheelByInput(void *windowHandle, int delta, const QPoint &screenPos) const
+{
+    if (!isValidWindow(windowHandle))
+    {
+        return false;
+    }
+
+    activateTargetWindow(windowHandle);
+
+    POINT originalPoint;
+    if (!GetCursorPos(&originalPoint))
+    {
+        originalPoint.x = screenPos.x();
+        originalPoint.y = screenPos.y();
+    }
+
+    const bool needMoveCursor = (originalPoint.x != screenPos.x() || originalPoint.y != screenPos.y());
+    if (needMoveCursor)
+    {
+        SetCursorPos(screenPos.x(), screenPos.y());
+        Sleep(8);
+    }
+
+    INPUT wheelInput;
+    ZeroMemory(&wheelInput, sizeof(wheelInput));
+    wheelInput.type = INPUT_MOUSE;
+    wheelInput.mi.dwFlags = MOUSEEVENTF_WHEEL;
+    wheelInput.mi.mouseData = static_cast<DWORD>(delta);
+
+    const UINT sent = SendInput(1, &wheelInput, sizeof(INPUT));
+    Sleep(8);
+
+    if (needMoveCursor)
+    {
+        SetCursorPos(originalPoint.x, originalPoint.y);
+    }
+
+    return sent == 1;
+}
+
 bool ScrollDispatcher::dispatchWheelToWindow(void *windowHandle, int delta, const QPoint &screenPos) const
 {
     if (!isValidWindow(windowHandle))
@@ -180,3 +249,5 @@ bool ScrollDispatcher::dispatchWheelToWindow(void *windowHandle, int delta, cons
     return ok != FALSE;
 }
 #endif
+
+

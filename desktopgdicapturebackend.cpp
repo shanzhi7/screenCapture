@@ -12,6 +12,11 @@ DesktopGdiCaptureBackend::~DesktopGdiCaptureBackend()
 {
 }
 
+QString DesktopGdiCaptureBackend::backendName() const
+{
+    return QStringLiteral("GDI");
+}
+
 QImage DesktopGdiCaptureBackend::capture(const QRect &globalRect)
 {
 #ifdef Q_OS_WIN
@@ -71,7 +76,7 @@ QImage DesktopGdiCaptureBackend::capture(const QRect &globalRect)
                  globalRect.width(),
                  globalRect.height(),
                  QImage::Format_ARGB32);
-    const QImage captured = image.copy();
+    const QImage captured = LongCaptureBackend::normalizeCapturedImage(image.copy());
 
     SelectObject(memoryDc, oldBitmap);
     DeleteObject(bitmap);
@@ -83,5 +88,3 @@ QImage DesktopGdiCaptureBackend::capture(const QRect &globalRect)
     return QImage();
 #endif
 }
-
-

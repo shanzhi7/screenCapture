@@ -25,12 +25,14 @@ public:
 
     void setPreview(const QPixmap &pixmap);
     void clearPreview();
+    void setVisualHeights(int committedHeight, int predictedHeight);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
     void refreshPreview();
+    QPixmap buildDisplayPixmap() const;
 
 private:
     QLabel *m_titleLabel = nullptr;
@@ -38,6 +40,8 @@ private:
     QScrollArea *m_scrollArea = nullptr;
     QLabel *m_imageLabel = nullptr;
     QPixmap m_sourcePixmap;
+    int m_committedHeight = 0;
+    int m_predictedHeight = 0;
 };
 
 #endif // LONGCAPTUREPREVIEWPANEL_H

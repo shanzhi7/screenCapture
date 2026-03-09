@@ -21,19 +21,10 @@ class ScrollDispatcher
 public:
     ScrollDispatcher();
 
-    // 根据屏幕坐标解析滚动目标窗口。
     bool resolveTarget(const QPoint &screenPos);
-
-    // 重置目标窗口状态。
     void reset();
-
-    // 投递一档滚轮消息。
     ScrollDispatchResult dispatchWheel(int delta, const QPoint &screenPos);
-
-    // 查询当前是否已锁定有效目标。
     bool hasTarget() const;
-
-    // 切换到下一个候选目标窗口。
     bool advanceFallbackTarget();
 
 private:
@@ -41,6 +32,8 @@ private:
     void *resolveDeepestWindow(const QPoint &screenPos) const;
     bool isValidWindow(void *windowHandle) const;
     bool dispatchWheelToWindow(void *windowHandle, int delta, const QPoint &screenPos) const;
+    bool dispatchWheelByInput(void *windowHandle, int delta, const QPoint &screenPos) const;
+    void activateTargetWindow(void *windowHandle) const;
 #endif
 
 private:

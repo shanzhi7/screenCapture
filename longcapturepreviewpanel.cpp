@@ -1,6 +1,7 @@
 ﻿#include "longcapturepreviewpanel.h"
 
 #include <QLabel>
+#include <QPainter>
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QVBoxLayout>
@@ -78,6 +79,15 @@ void LongCapturePreviewPanel::setPreview(const QPixmap &pixmap)
 void LongCapturePreviewPanel::clearPreview()
 {
     m_sourcePixmap = QPixmap();
+    m_committedHeight = 0;
+    m_predictedHeight = 0;
+    refreshPreview();
+}
+
+void LongCapturePreviewPanel::setVisualHeights(int committedHeight, int predictedHeight)
+{
+    m_committedHeight = qMax(0, committedHeight);
+    m_predictedHeight = qMax(m_committedHeight, predictedHeight);
     refreshPreview();
 }
 
@@ -102,13 +112,57 @@ void LongCapturePreviewPanel::refreshPreview()
         return;
     }
 
+    const QPixmap displayPixmap = buildDisplayPixmap();
     const QSize viewportSize = m_scrollArea->viewport()->size() - QSize(12, 12);
     const QSize targetSize(qMax(80, viewportSize.width()), qMax(120, viewportSize.height()));
-    const QPixmap scaled = m_sourcePixmap.scaled(targetSize,
-                                                 Qt::KeepAspectRatio,
-                                                 Qt::SmoothTransformation);
+    const QPixmap scaled = displayPixmap.scaled(targetSize,
+                                                Qt::KeepAspectRatio,
+                                                Qt::SmoothTransformation);
 
-    m_sizeLabel->setText(QStringLiteral("%1 x %2").arg(m_sourcePixmap.width()).arg(m_sourcePixmap.height()));
+    QString sizeText = QStringLiteral("%1 x %2").arg(m_sourcePixmap.width()).arg(m_sourcePixmap.height());
+    const int pendingHeight = qMax(0, m_predictedHeight - m_committedHeight);
+    if (pendingHeight > 0)
+    {
+        sizeText += QStringLiteral("  预测 +%1 px").arg(pendingHeight);
+    }
+
+    m_sizeLabel->setText(sizeText);
     m_imageLabel->setText(QString());
     m_imageLabel->setPixmap(scaled);
+}
+
+QPixmap LongCapturePreviewPanel::buildDisplayPixmap() const
+{
+    if (m_sourcePixmap.isNull())
+    {
+        return QPixmap();
+    }
+
+    const int committedHeight = qMax(m_sourcePixmap.height(), m_committedHeight);
+    const int predictedHeight = qMax(committedHeight, m_predictedHeight);
+    const int pendingHeight = qMax(0, predictedHeight - committedHeight);
+    if (pendingHeight <= 0)
+    {
+        return m_sourcePixmap;
+    }
+
+    QPixmap composed(m_sourcePixmap.width(), predictedHeight);
+    composed.fill(Qt::transparent);
+
+    QPainter painter(&composed);
+    painter.fillRect(composed.rect(), QColor(8, 12, 18, 0));
+    painter.drawPixmap(0, pendingHeight, m_sourcePixmap);
+
+    painter.fillRect(QRect(0, 0, composed.width(), pendingHeight), QColor(78, 132, 204, 44));
+    QPen pendingPen(QColor(156, 204, 255, 185), 1.0, Qt::DashLine);
+    pendingPen.setDashPattern({5.0, 4.0});
+    painter.setPen(pendingPen);
+    painter.drawRect(QRect(0, 0, composed.width() - 1, pendingHeight - 1));
+
+    painter.setPen(QColor(214, 232, 255, 190));
+    painter.drawText(QRect(0, 0, composed.width(), pendingHeight),
+                     Qt::AlignCenter,
+                     QStringLiteral("预测区域"));
+    painter.end();
+    return composed;
 }
