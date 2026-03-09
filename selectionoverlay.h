@@ -11,22 +11,30 @@
 #ifndef SELECTIONOVERLAY_H
 #define SELECTIONOVERLAY_H
 
+#ifndef SCREENCAPTURE_ENABLE_LONG_CAPTURE
+#define SCREENCAPTURE_ENABLE_LONG_CAPTURE 0
+#endif
+
 #include <QButtonGroup>
 #include <QPoint>
+#include <QPixmap>
 #include <QRect>
 #include <QWidget>
 
 class QContextMenuEvent;
+class QEvent;
 class QFrame;
 class QKeyEvent;
+class QLabel;
 class QMouseEvent;
 class QPaintEvent;
 class QToolButton;
 class QWheelEvent;
 
-/**
- * @brief 截图时的全屏覆盖窗口。
- */
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+class LongCapturePreviewPanel;
+#endif
+
 class SelectionOverlay : public QWidget
 {
     Q_OBJECT
@@ -35,33 +43,25 @@ public:
     explicit SelectionOverlay(QWidget *parent = nullptr);
     QRect selectedRect() const;
 
-    // 设置长截图可视化高度（用于选区随滚动持续变高的视觉反馈）。
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    void setLongCaptureModeEnabled(bool enabled);
     void setLongCaptureVisualHeight(int height);
+    void setLongCapturePreview(const QPixmap &preview);
+    void setStatusText(const QString &text);
+    void setCaptureDecorationsHidden(bool hidden);
+#endif
 
 signals:
     void selectionFinished(const QRect &rect);
     void selectionCanceled();
     void saveRequested(const QRect &rect);
 
-    /**
-     * @brief 长截图开关变化。
-     * @param enabled 是否开启长截图模式。
-     * @param rect 当前选区。
-     */
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void longCaptureToggled(bool enabled, const QRect &rect);
-
-    /**
-     * @brief 长截图模式下滚轮事件。
-     * @param rect 当前选区。
-     * @param delta 滚轮角度增量（通常 ±120）。
-     */
     void longCaptureWheel(const QRect &rect, int delta);
-
-    // 长截图模式下点击保存。
     void longCaptureSaveRequested(const QRect &rect);
-
-    // 长截图模式下点击确认（勾）。
     void longCaptureConfirmRequested(const QRect &rect);
+#endif
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -69,25 +69,31 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    void wheelEvent(QWheelEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+#endif
 
 private:
     QRect currentRect() const;
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     QRect currentDisplayRect() const;
+#endif
     QRect toGlobalRect(const QRect &rect) const;
     QRect screenLocalRectForSelection(const QRect &selection) const;
 
     void updateToolbarPosition();
     void ensureToolbar();
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    void updatePreviewPanelPosition();
+#endif
     void resetSelection();
     void confirmSelection();
 
 private:
     bool m_selecting = false;
     bool m_hasSelection = false;
-    bool m_longCaptureEnabled = false;
-    int m_longCaptureVisualHeight = 0;
 
     QPoint m_startPos;
     QPoint m_endPos;
@@ -95,10 +101,20 @@ private:
 
     QFrame *m_toolbar = nullptr;
     QButtonGroup *m_toolGroup = nullptr;
-    QToolButton *m_btnLongCapture = nullptr;
+    QLabel *m_statusLabel = nullptr;
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    bool m_longCaptureEnabled = false;
+    int m_longCaptureVisualHeight = 0;
+    int m_longCaptureAnchorBottomLocal = -1;
+    bool m_captureDecorationsHidden = false;
+    QToolButton *m_btnLongCapture = nullptr;
+    LongCapturePreviewPanel *m_previewPanel = nullptr;
+    QPixmap m_previewPixmap;
+#endif
 };
 
 #endif // SELECTIONOVERLAY_H

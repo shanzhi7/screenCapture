@@ -11,6 +11,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#ifndef SCREENCAPTURE_ENABLE_LONG_CAPTURE
+#define SCREENCAPTURE_ENABLE_LONG_CAPTURE 0
+#endif
+
 #include <QKeySequence>
 #include <QMainWindow>
 #include <QPixmap>
@@ -31,6 +35,9 @@ class CaptureHistoryManager;
 class CaptureResultHandler;
 class CaptureUiStateCoordinator;
 class GlobalHotkeyManager;
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+class LongCaptureSessionController;
+#endif
 class QCloseEvent;
 class QGridLayout;
 class QMenu;
@@ -39,7 +46,6 @@ class QShortcut;
 class QTimer;
 class SelectionOverlay;
 class TipPresenter;
-class LongCaptureStitcher;
 
 class MainWindow : public QMainWindow
 {
@@ -73,6 +79,38 @@ private slots:
     // 覆盖层请求保存当前区域。
     void onOverlaySaveRequested(const QRect &rect);
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    // 覆盖层切换长截图模式。
+    void onOverlayLongCaptureToggled(bool enabled, const QRect &rect);
+
+    // 长截图模式下的手动滚轮请求。
+    void onOverlayLongCaptureWheel(const QRect &rect, int delta);
+
+    // 长截图模式下请求保存。
+    void onOverlayLongCaptureSaveRequested(const QRect &rect);
+
+    // 长截图模式下请求确认复制。
+    void onOverlayLongCaptureConfirmRequested(const QRect &rect);
+
+    // 长截图控制器：预览更新。
+    void onLongCapturePreviewUpdated(const QPixmap &pixmap);
+
+    // 长截图控制器：可视高度更新。
+    void onLongCaptureVisualHeightChanged(int height);
+
+    // 长截图控制器：状态文案更新。
+    void onLongCaptureStatusTextChanged(const QString &text);
+
+    // 长截图控制器：复制结果就绪。
+    void onLongCaptureCopyReady(const QPixmap &pixmap);
+
+    // 长截图控制器：保存结果就绪。
+    void onLongCaptureSaveReady(const QPixmap &pixmap);
+
+    // 长截图控制器：失败回调。
+    void onLongCaptureFailed(const QString &message);
+#endif
+
     // 切换到全屏模式。
     void onModeFullClicked();
 
@@ -87,18 +125,6 @@ private slots:
 
     // 打开关于/反馈对话框。
     void onOpenAboutRequested();
-
-    // 长截图开关变化回调。
-    void onOverlayLongCaptureToggled(bool enabled, const QRect &rect);
-
-    // 长截图模式下滚轮触发回调。
-    void onOverlayLongCaptureWheel(const QRect &rect, int delta);
-
-    // 长截图请求保存。
-    void onOverlayLongCaptureSaveRequested(const QRect &rect);
-
-    // 长截图请求确认（复制）。
-    void onOverlayLongCaptureConfirmRequested(const QRect &rect);
 
     // 托盘：显示主界面。
     void onTrayShowRequested();
@@ -202,17 +228,8 @@ private:
     // 按全局坐标抓取指定区域（支持跨屏）。
     QPixmap captureRegion(const QRect &rect) const;
 
-    // 重置长截图运行态。
+    // 重置截图运行态。
     void resetLongCaptureState();
-
-    // 追加一帧长截图内容。
-    void appendLongCaptureFrame();
-
-    // 结束长截图并执行保存/复制动作。
-    void finishLongCapture(bool saveToFile, bool copyToClipboard);
-
-    // 向后台窗口注入滚轮事件（用于长截图驱动页面滚动）。
-    void injectWheelToBackground(int delta);
 
     // 初始化系统托盘。
     void ensureTrayIcon();
@@ -252,15 +269,11 @@ private:
     bool m_autoSaveEnabled = true;
     QString m_autoSaveDirectory;
     QKeySequence m_captureHotkey = QKeySequence(QStringLiteral("Ctrl+Shift+A"));
-
-    bool m_longCaptureActive = false;
-    bool m_longCaptureWheelBusy = false;
-    int m_longCaptureVisualHeight = 0;
-    QRect m_longCaptureRect;
-    QTimer *m_longCaptureDelayTimer = nullptr;
     QShortcut *m_appHotkeyShortcut = nullptr;
-    std::unique_ptr<LongCaptureStitcher> m_longCaptureStitcher;
     std::unique_ptr<CaptureHistoryManager> m_captureHistoryManager;
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    std::unique_ptr<LongCaptureSessionController> m_longCaptureController;
+#endif
 
     QSystemTrayIcon *m_trayIcon = nullptr;
     QMenu *m_trayMenu = nullptr;
@@ -274,3 +287,4 @@ private:
 };
 
 #endif // MAINWINDOW_H
+

@@ -5,7 +5,14 @@
 
 #include <QColor>
 #include <QGraphicsDropShadowEffect>
+#include <QSet>
 #include <QTimer>
+
+namespace
+{
+QSet<ShowTip *> g_activeTips;
+bool g_captureSuppressed = false;
+}
 
 ShowTip::ShowTip(QWidget *parent)
     : QWidget(parent)
@@ -18,6 +25,8 @@ ShowTip::ShowTip(QWidget *parent)
     setAttribute(Qt::WA_ShowWithoutActivating, true);
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
     setFocusPolicy(Qt::NoFocus);
+
+    g_activeTips.insert(this);
 
     // 兜底样式：即便主窗口样式不继承到该顶层窗口，也保证提示清晰可见。
     ui->tipLabel->setStyleSheet(QStringLiteral("QLabel#tipLabel {"
@@ -44,6 +53,7 @@ ShowTip::ShowTip(QWidget *parent)
 
 ShowTip::~ShowTip()
 {
+    g_activeTips.remove(this);
     delete ui;
 }
 
@@ -56,6 +66,12 @@ QSize ShowTip::measureSize(const QString &text)
 
 void ShowTip::showAt(const QString &text, const QPoint &globalTopLeft, int timeoutMs)
 {
+    if (g_captureSuppressed)
+    {
+        hide();
+        return;
+    }
+
     ui->tipLabel->setText(text);
     adjustSize();
 
@@ -64,6 +80,29 @@ void ShowTip::showAt(const QString &text, const QPoint &globalTopLeft, int timeo
     raise();
 
     QTimer::singleShot(timeoutMs, this, &QWidget::hide);
+}
+
+void ShowTip::setCaptureSuppressed(bool suppressed)
+{
+    g_captureSuppressed = suppressed;
+
+    if (!suppressed)
+    {
+        return;
+    }
+
+    for (ShowTip *tip : g_activeTips)
+    {
+        if (tip != nullptr)
+        {
+            tip->hide();
+        }
+    }
+}
+
+bool ShowTip::isCaptureSuppressed()
+{
+    return g_captureSuppressed;
 }
 
 ShowTip::CloseChoice ShowTip::askCloseChoice(QWidget *parent, const QString &appName)
