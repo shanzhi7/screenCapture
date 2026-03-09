@@ -70,7 +70,6 @@ bool LongCaptureSessionController::start(const QRect &selectedRect, WId overlayW
         return false;
     }
 
-    m_session.setAutoScrollEnabled(false);
     updateOverlayState();
 
     emit previewUpdated(m_session.previewPixmap());
@@ -95,11 +94,6 @@ void LongCaptureSessionController::requestManualScroll(int delta)
     }
 
     processPendingRequests();
-}
-
-void LongCaptureSessionController::setAutoScrollEnabled(bool enabled)
-{
-    Q_UNUSED(enabled)
 }
 
 void LongCaptureSessionController::confirmCopy()
@@ -350,10 +344,7 @@ void LongCaptureSessionController::finishObservation(bool success)
 
     resetObservationState();
 
-    if (m_session.state() != LongCaptureSession::State::Paused)
-    {
-        m_session.setState(LongCaptureSession::State::Armed);
-    }
+    m_session.setState(LongCaptureSession::State::Armed);
 
     processPendingRequests();
 }
@@ -367,22 +358,16 @@ void LongCaptureSessionController::handleObservationFailure(const QString &reaso
     {
         emit statusTextChanged(QStringLiteral("切换滚动目标后重试"));
         resetObservationState();
-        if (m_session.state() != LongCaptureSession::State::Paused)
-        {
-            m_session.setState(LongCaptureSession::State::Armed);
-            dispatchNextRequest();
-        }
+        m_session.setState(LongCaptureSession::State::Armed);
+        dispatchNextRequest();
         return;
     }
 
     emit statusTextChanged(reason);
 
     resetObservationState();
-    if (m_session.state() != LongCaptureSession::State::Paused)
-    {
-        m_session.setState(LongCaptureSession::State::Armed);
-        processPendingRequests();
-    }
+    m_session.setState(LongCaptureSession::State::Armed);
+    processPendingRequests();
 }
 
 QImage LongCaptureSessionController::captureFrame()

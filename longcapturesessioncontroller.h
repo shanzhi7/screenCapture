@@ -1,7 +1,7 @@
-﻿/***********************************************************************************
+/***********************************************************************************
 *
 * @file         longcapturesessioncontroller.h
-* @brief        长截图会话控制器：负责 Overlay 接入、流水线编排与结果回传。
+* @brief        ??????????? Overlay ??????????????
 *
 * @author       shanzhi
 * @date         2026/03/09
@@ -40,7 +40,6 @@ public:
 
     bool start(const QRect &selectedRect, WId overlayWinId);
     void requestManualScroll(int delta);
-    void setAutoScrollEnabled(bool enabled);
     void confirmCopy();
     void saveAs();
     void cancel();
@@ -54,7 +53,6 @@ signals:
     void copyReady(const QPixmap &pixmap);
     void saveReady(const QPixmap &pixmap);
     void failed(const QString &message);
-    void autoPaused(const QString &reason);
     void statusTextChanged(const QString &message);
 
 private slots:
