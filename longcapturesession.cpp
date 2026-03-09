@@ -1,4 +1,4 @@
-﻿#include "longcapturesession.h"
+#include "longcapturesession.h"
 
 LongCaptureSession::LongCaptureSession()
 {
@@ -6,6 +6,8 @@ LongCaptureSession::LongCaptureSession()
 
 bool LongCaptureSession::begin(const QRect &captureRect, WId overlayWinId, const QImage &firstFrame)
 {
+    Q_UNUSED(overlayWinId)
+
     reset();
     if (captureRect.width() <= 1 || captureRect.height() <= 1 || firstFrame.isNull())
     {
@@ -13,7 +15,6 @@ bool LongCaptureSession::begin(const QRect &captureRect, WId overlayWinId, const
     }
 
     m_captureRect = captureRect;
-    m_overlayWinId = overlayWinId;
     m_lastAcceptedFrame = firstFrame.convertToFormat(QImage::Format_ARGB32_Premultiplied);
     m_previewPixmap = QPixmap::fromImage(m_lastAcceptedFrame);
     m_visualHeight = m_lastAcceptedFrame.height();
@@ -25,11 +26,9 @@ void LongCaptureSession::reset()
 {
     m_state = State::Idle;
     m_captureRect = QRect();
-    m_overlayWinId = 0;
     m_lastAcceptedFrame = QImage();
     m_previewPixmap = QPixmap();
     m_visualHeight = 0;
-    m_autoScrollEnabled = false;
 }
 
 LongCaptureSession::State LongCaptureSession::state() const
@@ -47,17 +46,7 @@ QRect LongCaptureSession::captureRect() const
     return m_captureRect;
 }
 
-WId LongCaptureSession::overlayWinId() const
-{
-    return m_overlayWinId;
-}
-
 QPixmap LongCaptureSession::previewPixmap() const
-{
-    return m_previewPixmap;
-}
-
-QPixmap LongCaptureSession::resultPixmap() const
 {
     return m_previewPixmap;
 }
@@ -65,16 +54,6 @@ QPixmap LongCaptureSession::resultPixmap() const
 int LongCaptureSession::visualHeight() const
 {
     return m_visualHeight;
-}
-
-bool LongCaptureSession::autoScrollEnabled() const
-{
-    return m_autoScrollEnabled;
-}
-
-void LongCaptureSession::setAutoScrollEnabled(bool enabled)
-{
-    m_autoScrollEnabled = enabled;
 }
 
 const QImage &LongCaptureSession::lastAcceptedFrame() const

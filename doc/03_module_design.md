@@ -125,7 +125,6 @@
 - `Armed`
 - `Observing`
 - `Stitching`
-- `Paused`
 - `Completed`
 - `Canceled`
 
