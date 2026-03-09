@@ -20,10 +20,10 @@ class OverlapMatcher
 public:
     OverlapMatcher();
 
-    // 依据预计位移在限定范围内搜索可靠拼接结果。
     MatchDecision match(const QImage &previousFrame,
                         const QImage &currentFrame,
-                        int expectedShiftPx) const;
+                        int expectedShiftPx,
+                        int preferredShiftPx) const;
 
 private:
     double scoreForAppend(const QImage &previousFrame,
@@ -35,6 +35,14 @@ private:
                           int yEnd,
                           int stepX,
                           int stepY) const;
+    double duplicateScoreForAppend(const QImage &previousFrame,
+                                   const QImage &currentFrame,
+                                   int appendedHeight) const;
+    MatchDecision tryLegacyFallback(const QImage &previousFrame,
+                                    const QImage &currentFrame,
+                                    int expectedShiftPx,
+                                    int preferredShiftPx) const;
 };
 
 #endif // OVERLAPMATCHER_H
+

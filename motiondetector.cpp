@@ -19,6 +19,7 @@ MotionDetector::MotionDetector()
 MotionAnalysis MotionDetector::analyze(const QImage &previousFrame, const QImage &currentFrame) const
 {
     MotionAnalysis analysis;
+    analysis.reason = QStringLiteral("未检测到滚动位移");
 
     if (previousFrame.isNull() || currentFrame.isNull())
     {
@@ -35,20 +36,23 @@ MotionAnalysis MotionDetector::analyze(const QImage &previousFrame, const QImage
     const double sameFrameDiff = averageSameFrameDiff(previous, current);
     if (sameFrameDiff < 1.1)
     {
+        analysis.reason = QStringLiteral("画面变化过小");
         return analysis;
     }
 
     const int height = current.height();
-    const int minAppend = 8;
+    const int minAppend = 4;
     const int maxAppend = qMin(height * 2 / 3, 420);
     if (maxAppend <= minAppend)
     {
+        analysis.reason = QStringLiteral("可用位移窗口过小");
         return analysis;
     }
 
     double bestScore = std::numeric_limits<double>::max();
     double secondBestScore = std::numeric_limits<double>::max();
     int bestAppend = 0;
+    int secondBestAppend = 0;
 
     const int topIgnore = height / 10;
     const int bottomIgnore = height / 14;
@@ -84,17 +88,20 @@ MotionAnalysis MotionDetector::analyze(const QImage &previousFrame, const QImage
         if (totalScore < bestScore)
         {
             secondBestScore = bestScore;
+            secondBestAppend = bestAppend;
             bestScore = totalScore;
             bestAppend = appendedHeight;
         }
         else if (totalScore < secondBestScore)
         {
             secondBestScore = totalScore;
+            secondBestAppend = appendedHeight;
         }
     }
 
     if (bestAppend <= 0)
     {
+        analysis.reason = QStringLiteral("未找到可靠位移");
         return analysis;
     }
 
@@ -103,14 +110,31 @@ MotionAnalysis MotionDetector::analyze(const QImage &previousFrame, const QImage
     const double normalizedGap = qMin(1.0, gap / 5.0);
     const double confidence = qBound(0.0, normalizedScore * 0.72 + normalizedGap * 0.28, 1.0);
 
-    if (confidence < 0.72)
+    analysis.estimatedShiftPx = bestAppend;
+    analysis.secondaryShiftPx = secondBestAppend;
+    analysis.confidence = confidence;
+
+    int minShift = qMax(minAppend, bestAppend - qMax(12, bestAppend / 6));
+    int maxShift = qMin(maxAppend, bestAppend + qMax(12, bestAppend / 6));
+    if (secondBestAppend > 0)
     {
+        const int left = qMin(bestAppend, secondBestAppend);
+        const int right = qMax(bestAppend, secondBestAppend);
+        const int padding = qMax(10, qAbs(bestAppend - secondBestAppend) / 2);
+        minShift = qMax(minAppend, left - padding);
+        maxShift = qMin(maxAppend, right + padding);
+    }
+    analysis.minShiftPx = minShift;
+    analysis.maxShiftPx = maxShift;
+
+    if (confidence < 0.52)
+    {
+        analysis.reason = QStringLiteral("位移置信度不足");
         return analysis;
     }
 
     analysis.moved = true;
-    analysis.estimatedShiftPx = bestAppend;
-    analysis.confidence = confidence;
+    analysis.reason = QStringLiteral("位移确认");
     return analysis;
 }
 

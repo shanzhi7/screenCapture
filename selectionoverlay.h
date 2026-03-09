@@ -15,6 +15,8 @@
 #define SCREENCAPTURE_ENABLE_LONG_CAPTURE 0
 #endif
 
+#include "longcapturetypes.h"
+
 #include <QButtonGroup>
 #include <QPoint>
 #include <QPixmap>
@@ -45,9 +47,11 @@ public:
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void setLongCaptureModeEnabled(bool enabled);
-    void setLongCaptureVisualHeight(int height);
+    void setPredictedLongCaptureHeight(int height);
+    void setCommittedLongCaptureHeight(int height);
     void setLongCapturePreview(const QPixmap &preview);
     void setStatusText(const QString &text);
+    void setCaptureQuality(CaptureQuality quality);
     void setCaptureDecorationsHidden(bool hidden);
 #endif
 
@@ -79,11 +83,16 @@ private:
     QRect currentRect() const;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     QRect currentDisplayRect() const;
+    QRect predictedDisplayRect() const;
+    QRect longCaptureRectForHeight(int height) const;
+    void updateStatusLabel();
+    QString qualityText() const;
 #endif
     QRect toGlobalRect(const QRect &rect) const;
     QRect screenLocalRectForSelection(const QRect &selection) const;
 
     void updateToolbarPosition();
+    void updateStatusPosition();
     void ensureToolbar();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void updatePreviewPanelPosition();
@@ -108,9 +117,15 @@ private:
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     bool m_longCaptureEnabled = false;
-    int m_longCaptureVisualHeight = 0;
+    int m_predictedLongCaptureHeight = 0;
+    int m_committedLongCaptureHeight = 0;
     int m_longCaptureAnchorBottomLocal = -1;
     bool m_captureDecorationsHidden = false;
+    bool m_toolbarVisibleBeforeCapture = false;
+    bool m_statusLabelVisibleBeforeCapture = false;
+    bool m_previewPanelVisibleBeforeCapture = false;
+    CaptureQuality m_captureQuality = CaptureQuality::Idle;
+    QString m_statusText;
     QToolButton *m_btnLongCapture = nullptr;
     LongCapturePreviewPanel *m_previewPanel = nullptr;
     QPixmap m_previewPixmap;
@@ -118,3 +133,5 @@ private:
 };
 
 #endif // SELECTIONOVERLAY_H
+
+

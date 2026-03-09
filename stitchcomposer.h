@@ -29,6 +29,9 @@ public:
     const QImage &lastAcceptedFrame() const;
 
 private:
+    bool isDuplicateAppendStrip(const QImage &appendStrip) const;
+
+private:
     QImage m_lastAcceptedFrame;
     QImage m_result;
     int m_visualHeight = 0;

@@ -1,26 +1,27 @@
 ﻿/***********************************************************************************
 *
-* @file         desktopgdicapturebackend.h
-* @brief        Windows GDI 桌面抓帧后端实现。
+* @file         wgccapturebackend.h
+* @brief        Windows Graphics Capture 预留后端。
 *
 * @author       shanzhi
 * @date         2026/03/09
 * @history
 ***********************************************************************************/
 
-#ifndef DESKTOPGDICAPTUREBACKEND_H
-#define DESKTOPGDICAPTUREBACKEND_H
+#ifndef WGCCAPTUREBACKEND_H
+#define WGCCAPTUREBACKEND_H
 
 #include "longcapturebackend.h"
 
-class DesktopGdiCaptureBackend : public LongCaptureBackend
+class WgcCaptureBackend : public LongCaptureBackend
 {
 public:
-    DesktopGdiCaptureBackend();
-    ~DesktopGdiCaptureBackend() override;
+    WgcCaptureBackend();
+    ~WgcCaptureBackend() override;
 
     QString backendName() const override;
+    bool isAvailable() const override;
     QImage capture(const QRect &globalRect) override;
 };
 
-#endif // DESKTOPGDICAPTUREBACKEND_H
+#endif // WGCCAPTUREBACKEND_H

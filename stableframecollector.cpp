@@ -1,6 +1,6 @@
 ﻿#include "stableframecollector.h"
 
-#include <QtMath>
+#include <QDateTime>
 
 namespace
 {
@@ -14,55 +14,68 @@ StableFrameCollector::StableFrameCollector()
 {
 }
 
-void StableFrameCollector::begin(const QImage &firstFrame)
+void StableFrameCollector::begin(const CaptureFrame &firstFrame)
 {
     reset();
-    if (firstFrame.isNull())
+    if (!firstFrame.isValid())
     {
         return;
     }
 
-    m_lastFrame = firstFrame.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    m_lastFrame = firstFrame.image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
     m_sampleCount = 1;
+    m_firstTimestampMs = firstFrame.timestampMs > 0 ? firstFrame.timestampMs : QDateTime::currentMSecsSinceEpoch();
+    m_lastTimestampMs = m_firstTimestampMs;
 }
 
-StableFrameResult StableFrameCollector::ingest(const QImage &frame)
+StableFrameResult StableFrameCollector::ingest(const CaptureFrame &frame)
 {
     StableFrameResult result;
 
-    if (frame.isNull())
+    if (!frame.isValid())
     {
         return result;
     }
 
-    QImage current = frame.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QImage current = frame.image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
     if (!m_lastFrame.isNull() && current.size() != m_lastFrame.size())
     {
         current = current.scaled(m_lastFrame.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
+    const qint64 currentTimestamp = frame.timestampMs > 0 ? frame.timestampMs : QDateTime::currentMSecsSinceEpoch();
+
     if (m_lastFrame.isNull())
     {
-        begin(current);
+        begin(frame);
         result.stableSampleCount = m_sampleCount;
         return result;
     }
 
     const double diff = frameDiff(m_lastFrame, current);
-    if (diff <= 1.55)
+    if (diff <= 2.10)
     {
         ++m_stableCount;
+        if (m_stableStartTimestampMs <= 0)
+        {
+            m_stableStartTimestampMs = m_lastTimestampMs;
+        }
     }
     else
     {
         m_stableCount = 0;
+        m_stableStartTimestampMs = 0;
     }
 
     m_lastFrame = current;
+    m_lastTimestampMs = currentTimestamp;
     ++m_sampleCount;
 
     result.stableSampleCount = m_sampleCount;
-    if (m_stableCount >= 2 && m_sampleCount >= 3)
+    result.stableDurationMs = (m_stableStartTimestampMs > 0)
+                                 ? qMax<qint64>(0, currentTimestamp - m_stableStartTimestampMs)
+                                 : 0;
+    if (m_stableCount >= 2 && m_sampleCount >= 3 && result.stableDurationMs >= 60)
     {
         result.valid = true;
         result.frame = m_lastFrame;
@@ -76,6 +89,9 @@ void StableFrameCollector::reset()
     m_lastFrame = QImage();
     m_sampleCount = 0;
     m_stableCount = 0;
+    m_firstTimestampMs = 0;
+    m_lastTimestampMs = 0;
+    m_stableStartTimestampMs = 0;
 }
 
 double StableFrameCollector::frameDiff(const QImage &left, const QImage &right) const

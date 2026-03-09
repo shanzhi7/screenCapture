@@ -20,7 +20,6 @@ class MotionDetector
 public:
     MotionDetector();
 
-    // 判断当前帧相较上一基准帧是否发生了有效滚动，并估算新增高度。
     MotionAnalysis analyze(const QImage &previousFrame, const QImage &currentFrame) const;
 
 private:

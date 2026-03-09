@@ -2,6 +2,14 @@
 
 #include <QPainter>
 
+namespace
+{
+int stitchLuma(QRgb rgb)
+{
+    return (qRed(rgb) * 38 + qGreen(rgb) * 75 + qBlue(rgb) * 15) >> 7;
+}
+}
+
 StitchComposer::StitchComposer()
 {
 }
@@ -49,7 +57,7 @@ bool StitchComposer::append(const QImage &frame, int appendedHeight)
                                             current.height() - appendedHeight,
                                             current.width(),
                                             appendedHeight);
-    if (appendStrip.isNull() || appendStrip.height() <= 0)
+    if (appendStrip.isNull() || appendStrip.height() <= 0 || isDuplicateAppendStrip(appendStrip))
     {
         return false;
     }
@@ -93,4 +101,44 @@ QPixmap StitchComposer::resultPixmap() const
 const QImage &StitchComposer::lastAcceptedFrame() const
 {
     return m_lastAcceptedFrame;
+}
+
+bool StitchComposer::isDuplicateAppendStrip(const QImage &appendStrip) const
+{
+    if (appendStrip.isNull() || m_result.isNull() || appendStrip.width() != m_result.width())
+    {
+        return false;
+    }
+
+    const int stripHeight = appendStrip.height();
+    if (stripHeight <= 0 || m_result.height() < stripHeight)
+    {
+        return false;
+    }
+
+    const QImage tailStrip = m_result.copy(0, m_result.height() - stripHeight, m_result.width(), stripHeight);
+    if (tailStrip.isNull())
+    {
+        return false;
+    }
+
+    double diffSum = 0.0;
+    int samples = 0;
+    for (int y = 0; y < stripHeight; y += 2)
+    {
+        const QRgb *tailLine = reinterpret_cast<const QRgb *>(tailStrip.constScanLine(y));
+        const QRgb *appendLine = reinterpret_cast<const QRgb *>(appendStrip.constScanLine(y));
+        for (int x = 0; x < appendStrip.width(); x += 4)
+        {
+            diffSum += qAbs(stitchLuma(tailLine[x]) - stitchLuma(appendLine[x]));
+            ++samples;
+        }
+    }
+
+    if (samples <= 0)
+    {
+        return false;
+    }
+
+    return (diffSum / static_cast<double>(samples)) < 1.15;
 }
