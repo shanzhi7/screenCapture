@@ -44,6 +44,12 @@ public:
     // 在指定全局坐标显示短时提示文本（坐标为窗口左上角）。
     void showAt(const QString &text, const QPoint &globalTopLeft, int timeoutMs = 1800);
 
+    // 截图期间抑制提示窗口展示（并隐藏当前所有提示窗口）。
+    static void setCaptureSuppressed(bool suppressed);
+
+    // 查询当前是否处于截图提示抑制状态。
+    static bool isCaptureSuppressed();
+
     // 统一关闭行为弹窗：隐藏到托盘 / 退出应用 / 取消。
     static CloseChoice askCloseChoice(QWidget *parent, const QString &appName);
 

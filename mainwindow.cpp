@@ -6,7 +6,9 @@
 #include "captureresulthandler.h"
 #include "captureuistatecoordinator.h"
 #include "globalhotkeymanager.h"
-#include "longcapturestitcher.h"
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+#include "longcapturesessioncontroller.h"
+#endif
 #include "selectionoverlay.h"
 #include "settingsservice.h"
 #include "tippresenter.h"
@@ -60,8 +62,6 @@ MainWindow::MainWindow(QWidget *parent)
     , m_tipPresenter(std::make_unique<TipPresenter>())
     , m_uiStateCoordinator(std::make_unique<CaptureUiStateCoordinator>())
     , m_captureResultHandler(std::make_unique<CaptureResultHandler>())
-    , m_longCaptureDelayTimer(new QTimer(this))
-    , m_longCaptureStitcher(std::make_unique<LongCaptureStitcher>())
     , m_captureHistoryManager(std::make_unique<CaptureHistoryManager>())
 {
     ui->setupUi(this);
@@ -150,13 +150,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_globalHotkeyManager.get(), &GlobalHotkeyManager::activated, this, &MainWindow::startCapture);
     applyCaptureHotkey(m_captureHotkey, false);
     updateHotkeyButtonText();
-    m_longCaptureDelayTimer->setSingleShot(true);
-    m_longCaptureDelayTimer->setInterval(220);
-    connect(m_longCaptureDelayTimer, &QTimer::timeout, this, [this]()
-    {
-        appendLongCaptureFrame();
-        m_longCaptureWheelBusy = false;
-    });
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_longCaptureController = std::make_unique<LongCaptureSessionController>(this);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::previewUpdated, this, &MainWindow::onLongCapturePreviewUpdated);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::visualHeightChanged, this, &MainWindow::onLongCaptureVisualHeightChanged);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::statusTextChanged, this, &MainWindow::onLongCaptureStatusTextChanged);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::copyReady, this, &MainWindow::onLongCaptureCopyReady);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::saveReady, this, &MainWindow::onLongCaptureSaveReady);
+    connect(m_longCaptureController.get(), &LongCaptureSessionController::failed, this, &MainWindow::onLongCaptureFailed);
+#endif
 
     connect(ui->btnTopSettings, &QAbstractButton::clicked, this, &MainWindow::onOpenSettingsRequested);
     connect(ui->sideConfigButton, &QAbstractButton::clicked, this, &MainWindow::onOpenSettingsRequested);
@@ -356,7 +359,10 @@ void MainWindow::startCapture()
         hide();
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 25);
 
+        // 抓取全屏前先抑制并隐藏提示层，避免提示窗口进入截图成品。
+        ShowTip::setCaptureSuppressed(true);
         const QPixmap pixmap = targetScreen->grabWindow(0);
+        ShowTip::setCaptureSuppressed(false);
 
         const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
                                                     ? true
@@ -414,16 +420,16 @@ void MainWindow::startCapture()
         return;
     }
 
-    dismissOverlay();
-
     m_overlay = new SelectionOverlay();
     connect(m_overlay, &SelectionOverlay::selectionFinished, this, &MainWindow::onSelectionFinished);
     connect(m_overlay, &SelectionOverlay::selectionCanceled, this, &MainWindow::onSelectionCanceled);
     connect(m_overlay, &SelectionOverlay::saveRequested, this, &MainWindow::onOverlaySaveRequested);
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     connect(m_overlay, &SelectionOverlay::longCaptureToggled, this, &MainWindow::onOverlayLongCaptureToggled);
     connect(m_overlay, &SelectionOverlay::longCaptureWheel, this, &MainWindow::onOverlayLongCaptureWheel);
     connect(m_overlay, &SelectionOverlay::longCaptureSaveRequested, this, &MainWindow::onOverlayLongCaptureSaveRequested);
     connect(m_overlay, &SelectionOverlay::longCaptureConfirmRequested, this, &MainWindow::onOverlayLongCaptureConfirmRequested);
+#endif
 
     connect(m_overlay, &QObject::destroyed, this, [this]()
     {
@@ -496,7 +502,6 @@ bool MainWindow::saveCurrentImageWithDialog(bool useMainWindowAsParent)
 
 void MainWindow::onSelectionFinished(const QRect &rect)
 {
-    dismissOverlay();
     QTimer::singleShot(90, this, [this, rect]()
     {
         const QPixmap pixmap = captureRegion(rect);
@@ -532,7 +537,6 @@ void MainWindow::onSelectionFinished(const QRect &rect)
 
 void MainWindow::onSelectionCanceled()
 {
-    dismissOverlay();
 
     const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
                                                 ? true
@@ -554,7 +558,6 @@ void MainWindow::onSelectionCanceled()
 
 void MainWindow::onOverlaySaveRequested(const QRect &rect)
 {
-    dismissOverlay();
     QTimer::singleShot(90, this, [this, rect]()
     {
         const QPixmap pixmap = captureRegion(rect);
@@ -611,6 +614,177 @@ void MainWindow::onOverlaySaveRequested(const QRect &rect)
         endCaptureSession();
     });
 }
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+void MainWindow::onOverlayLongCaptureToggled(bool enabled, const QRect &rect)
+{
+    if (m_longCaptureController == nullptr || m_overlay == nullptr)
+    {
+        return;
+    }
+
+    if (!enabled)
+    {
+        m_longCaptureController->cancel();
+        return;
+    }
+
+    if (!m_longCaptureController->start(rect, m_overlay->winId()))
+    {
+        m_overlay->setLongCaptureModeEnabled(false);
+        m_overlay->setStatusText(QStringLiteral("长截图启动失败"));
+        showTip(QStringLiteral("长截图启动失败"));
+        return;
+    }
+
+    m_overlay->setStatusText(QStringLiteral("长截图已开启"));
+}
+
+void MainWindow::onOverlayLongCaptureWheel(const QRect &rect, int delta)
+{
+    Q_UNUSED(rect)
+
+    if (m_longCaptureController == nullptr)
+    {
+        return;
+    }
+
+    m_longCaptureController->requestManualScroll(delta);
+}
+
+void MainWindow::onOverlayLongCaptureSaveRequested(const QRect &rect)
+{
+    Q_UNUSED(rect)
+
+    if (m_longCaptureController == nullptr)
+    {
+        return;
+    }
+
+    m_longCaptureController->saveAs();
+}
+
+void MainWindow::onOverlayLongCaptureConfirmRequested(const QRect &rect)
+{
+    Q_UNUSED(rect)
+
+    if (m_longCaptureController == nullptr)
+    {
+        return;
+    }
+
+    m_longCaptureController->confirmCopy();
+}
+
+void MainWindow::onLongCapturePreviewUpdated(const QPixmap &pixmap)
+{
+    if (pixmap.isNull())
+    {
+        return;
+    }
+
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setLongCapturePreview(pixmap);
+    }
+
+    updatePreview(pixmap);
+}
+
+void MainWindow::onLongCaptureVisualHeightChanged(int height)
+{
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setLongCaptureVisualHeight(height);
+    }
+}
+
+void MainWindow::onLongCaptureStatusTextChanged(const QString &text)
+{
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setStatusText(text);
+    }
+}
+
+void MainWindow::onLongCaptureCopyReady(const QPixmap &pixmap)
+{
+    if (pixmap.isNull())
+    {
+        showTip(QStringLiteral("长截图复制失败"));
+        resetLongCaptureState();
+        endCaptureSession();
+        return;
+    }
+
+    dismissOverlay();
+
+    const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
+                                                ? true
+                                                : m_uiStateCoordinator->shouldRestoreMainWindowAfterCapture();
+    const CaptureResultDecision decision = (m_captureResultHandler == nullptr)
+                                               ? CaptureResultDecision{shouldRestoreWindowByState, false}
+                                               : m_captureResultHandler->decide(CaptureResultAction::LongCaptureCopied,
+                                                                                shouldRestoreWindowByState,
+                                                                                m_autoSaveEnabled);
+
+    if (decision.shouldRestoreWindow)
+    {
+        restoreWindowIfNeeded();
+    }
+
+    updatePreview(pixmap);
+    appendCaptureToHistory(pixmap, QStringLiteral("长截图"));
+    QApplication::clipboard()->setPixmap(pixmap);
+    showTip(QStringLiteral("长截图已复制"));
+
+    resetLongCaptureState();
+    endCaptureSession();
+}
+
+void MainWindow::onLongCaptureSaveReady(const QPixmap &pixmap)
+{
+    if (pixmap.isNull())
+    {
+        showTip(QStringLiteral("长截图保存失败"));
+        resetLongCaptureState();
+        endCaptureSession();
+        return;
+    }
+
+    dismissOverlay();
+
+    const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
+                                                ? true
+                                                : m_uiStateCoordinator->shouldRestoreMainWindowAfterCapture();
+    const CaptureResultDecision decision = (m_captureResultHandler == nullptr)
+                                               ? CaptureResultDecision{shouldRestoreWindowByState, true}
+                                               : m_captureResultHandler->decide(CaptureResultAction::LongCaptureSaveRequested,
+                                                                                shouldRestoreWindowByState,
+                                                                                m_autoSaveEnabled);
+
+    if (decision.shouldRestoreWindow)
+    {
+        restoreWindowIfNeeded();
+    }
+
+    updatePreview(pixmap);
+    appendCaptureToHistory(pixmap, QStringLiteral("长截图"));
+    saveCurrentImageWithDialog(decision.shouldRestoreWindow);
+
+    resetLongCaptureState();
+    endCaptureSession();
+}
+
+void MainWindow::onLongCaptureFailed(const QString &message)
+{
+    if (m_overlay != nullptr)
+    {
+        m_overlay->setStatusText(message);
+    }
+}
+
+#endif
 
 void MainWindow::onModeFullClicked()
 {
@@ -700,64 +874,6 @@ void MainWindow::onOpenAboutRequested()
 {
     AboutDialog dialog(this);
     dialog.exec();
-}
-
-void MainWindow::onOverlayLongCaptureToggled(bool enabled, const QRect &rect)
-{
-    if (!enabled)
-    {
-        resetLongCaptureState();
-        showTip(QStringLiteral("长截图已关闭"));
-        return;
-    }
-
-    m_longCaptureActive = true;
-    m_longCaptureRect = rect;
-
-    const QPixmap first = captureRegion(rect);
-    if (first.isNull() || !m_longCaptureStitcher->begin(first.toImage()))
-    {
-        showTip(QStringLiteral("长截图初始化失败"));
-        resetLongCaptureState();
-        return;
-    }
-
-    m_longCaptureVisualHeight = m_longCaptureStitcher->visualHeight();
-    if (m_overlay != nullptr)
-    {
-        m_overlay->setLongCaptureVisualHeight(m_longCaptureVisualHeight);
-    }
-
-    updatePreview(first);
-    showTip(QStringLiteral("长截图已开启"));
-}
-
-void MainWindow::onOverlayLongCaptureWheel(const QRect &rect, int delta)
-{
-    if (!m_longCaptureActive || m_longCaptureWheelBusy)
-    {
-        return;
-    }
-
-    m_longCaptureRect = rect;
-    m_longCaptureWheelBusy = true;
-
-    injectWheelToBackground(delta);
-    m_longCaptureDelayTimer->start();
-}
-
-void MainWindow::onOverlayLongCaptureSaveRequested(const QRect &rect)
-{
-    dismissOverlay();
-    m_longCaptureRect = rect;
-    finishLongCapture(true, false);
-}
-
-void MainWindow::onOverlayLongCaptureConfirmRequested(const QRect &rect)
-{
-    dismissOverlay();
-    m_longCaptureRect = rect;
-    finishLongCapture(false, true);
 }
 
 void MainWindow::onTrayShowRequested()
@@ -944,126 +1060,13 @@ void MainWindow::appendCaptureToHistory(const QPixmap &pixmap, const QString &ti
 
 void MainWindow::resetLongCaptureState()
 {
-    m_longCaptureActive = false;
-    m_longCaptureWheelBusy = false;
-    m_longCaptureVisualHeight = 0;
-    m_longCaptureRect = QRect();
-
-    if (m_longCaptureDelayTimer != nullptr)
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    if (m_longCaptureController != nullptr)
     {
-        m_longCaptureDelayTimer->stop();
+        m_longCaptureController->cancel();
     }
-
-    if (m_longCaptureStitcher)
-    {
-        m_longCaptureStitcher->reset();
-    }
-
-    if (m_overlay != nullptr)
-    {
-        m_overlay->setLongCaptureVisualHeight(0);
-    }
-}
-
-void MainWindow::appendLongCaptureFrame()
-{
-    if (!m_longCaptureActive || m_longCaptureRect.width() <= 1 || m_longCaptureRect.height() <= 1)
-    {
-        return;
-    }
-
-    const QPixmap frame = captureRegion(m_longCaptureRect);
-    if (frame.isNull())
-    {
-        return;
-    }
-
-    const int appended = m_longCaptureStitcher->append(frame.toImage());
-    if (appended <= 0)
-    {
-        return;
-    }
-
-    m_longCaptureVisualHeight = m_longCaptureStitcher->visualHeight();
-    if (m_overlay != nullptr)
-    {
-        m_overlay->setLongCaptureVisualHeight(m_longCaptureVisualHeight);
-    }
-
-    const QPixmap merged = m_longCaptureStitcher->resultPixmap();
-    if (!merged.isNull())
-    {
-        updatePreview(merged);
-    }
-}
-
-void MainWindow::finishLongCapture(bool saveToFile, bool copyToClipboard)
-{
-    if (m_longCaptureActive)
-    {
-        appendLongCaptureFrame();
-    }
-
-    const QPixmap stitched = m_longCaptureStitcher->resultPixmap();
-    if (stitched.isNull())
-    {
-        showTip(QStringLiteral("长截图失败"));
-        resetLongCaptureState();
-        return;
-    }
-
-    const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
-                                                ? true
-                                                : m_uiStateCoordinator->shouldRestoreMainWindowAfterCapture();
-    const CaptureResultAction action = saveToFile
-                                           ? CaptureResultAction::LongCaptureSaveRequested
-                                           : CaptureResultAction::LongCaptureCopied;
-    const CaptureResultDecision decision = (m_captureResultHandler == nullptr)
-                                               ? CaptureResultDecision{shouldRestoreWindowByState, saveToFile}
-                                               : m_captureResultHandler->decide(action,
-                                                                                shouldRestoreWindowByState,
-                                                                                m_autoSaveEnabled);
-
-    if (decision.shouldRestoreWindow)
-    {
-        restoreWindowIfNeeded();
-    }
-
-    updatePreview(stitched);
-    appendCaptureToHistory(stitched, QStringLiteral("截图"));
-
-    if (copyToClipboard)
-    {
-        QApplication::clipboard()->setPixmap(m_currentPixmap);
-        showTip(QStringLiteral("长截图已复制"));
-    }
-
-    if (saveToFile)
-    {
-        saveCurrentImageWithDialog(decision.shouldRestoreWindow);
-    }
-
-    if (!saveToFile && !copyToClipboard)
-    {
-        showTip(QStringLiteral("长截图已完成"));
-    }
-
-    resetLongCaptureState();
-}
-
-void MainWindow::injectWheelToBackground(int delta)
-{
-#ifdef Q_OS_WIN
-    INPUT input = {};
-    input.type = INPUT_MOUSE;
-    input.mi.dwFlags = MOUSEEVENTF_WHEEL;
-    input.mi.mouseData = static_cast<DWORD>(delta);
-    SendInput(1, &input, sizeof(INPUT));
-#else
-    Q_UNUSED(delta)
 #endif
 }
-
 void MainWindow::dismissOverlay()
 {
     if (m_overlay == nullptr)
@@ -1142,11 +1145,12 @@ QPixmap MainWindow::captureRegion(const QRect &rect) const
         return QPixmap();
     }
 
+    ShowTip::setCaptureSuppressed(true);
+
     bool restoreOverlay = false;
     if (m_overlay != nullptr && m_overlay->isVisible())
     {
         restoreOverlay = true;
-        m_overlay->setUpdatesEnabled(false);
         m_overlay->hide();
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 20);
         QThread::msleep(18);
@@ -1185,25 +1189,38 @@ QPixmap MainWindow::captureRegion(const QRect &rect) const
 
     if (restoreOverlay && m_overlay != nullptr)
     {
-        m_overlay->setUpdatesEnabled(true);
         m_overlay->show();
         m_overlay->raise();
         m_overlay->activateWindow();
         m_overlay->setFocus();
     }
 
+    ShowTip::setCaptureSuppressed(false);
     return QPixmap::fromImage(stitched);
 }
-
 void MainWindow::updatePreview(const QPixmap &pixmap)
 {
     m_currentPixmap = pixmap;
 
+    if (m_currentPixmap.isNull())
+    {
+        ui->formatPreviewLabel->setPixmap(QPixmap());
+        ui->formatPreviewLabel->setText(QStringLiteral("格式预览区域"));
+        return;
+    }
+
+    const bool isLongPreview = m_currentPixmap.height() > m_currentPixmap.width() * 13 / 10;
+    const Qt::AspectRatioMode aspectMode = isLongPreview
+                                               ? Qt::KeepAspectRatio
+                                               : Qt::KeepAspectRatioByExpanding;
+
     const QPixmap scaledMain = m_currentPixmap.scaled(ui->formatPreviewLabel->size(),
-                                                      Qt::KeepAspectRatioByExpanding,
+                                                      aspectMode,
                                                       Qt::SmoothTransformation);
+    ui->formatPreviewLabel->setAlignment(isLongPreview ? (Qt::AlignTop | Qt::AlignHCenter)
+                                                       : Qt::AlignCenter);
     ui->formatPreviewLabel->setPixmap(scaledMain);
-    ui->formatPreviewLabel->setScaledContents(true);
+    ui->formatPreviewLabel->setScaledContents(false);
     ui->startCaptureButton->setText(QStringLiteral("重新截图"));
 }
 
@@ -1512,5 +1529,26 @@ QString MainWindow::outputFormatName() const
                ? QStringLiteral("PNG")
                : QStringLiteral("JPG");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

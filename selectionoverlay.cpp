@@ -1,23 +1,29 @@
 ﻿#include "selectionoverlay.h"
 
-#include <QButtonGroup>
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+#include "longcapturepreviewpanel.h"
+#endif
+
 #include <QContextMenuEvent>
+#include <QEvent>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
 #include <QShortcut>
 #include <QToolButton>
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 #include <QWheelEvent>
+#endif
 
 SelectionOverlay::SelectionOverlay(QWidget *parent)
     : QWidget(parent)
 {
-    // 跨多屏覆盖：取所有屏幕几何并集作为截图叠加层范围。
     QRect virtualDesktop;
     const QList<QScreen *> screens = QGuiApplication::screens();
     for (QScreen *screen : screens)
@@ -44,7 +50,6 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
     setCursor(Qt::CrossCursor);
     setFocusPolicy(Qt::StrongFocus);
 
-    // 全局取消与确认快捷键。
     auto *cancelShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     cancelShortcut->setContext(Qt::ApplicationShortcut);
     connect(cancelShortcut, &QShortcut::activated, this, [this]()
@@ -69,16 +74,100 @@ QRect SelectionOverlay::selectedRect() const
     return m_selectedRect;
 }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+void SelectionOverlay::setLongCaptureModeEnabled(bool enabled)
+{
+    const bool targetEnabled = enabled && m_hasSelection;
+    m_longCaptureEnabled = targetEnabled;
+
+    if (m_btnLongCapture != nullptr)
+    {
+        const bool blocked = m_btnLongCapture->blockSignals(true);
+        m_btnLongCapture->setChecked(targetEnabled);
+        m_btnLongCapture->blockSignals(blocked);
+    }
+
+    if (!targetEnabled)
+    {
+
+        m_longCaptureAnchorBottomLocal = -1;
+        if (m_previewPanel != nullptr)
+        {
+            m_previewPanel->hide();
+        }
+    }
+    else
+    {
+        const QRect current = currentRect();
+        m_longCaptureAnchorBottomLocal = current.bottom();
+        m_longCaptureVisualHeight = qMax(current.height(), m_longCaptureVisualHeight);
+
+        if (m_previewPanel != nullptr)
+        {
+            updatePreviewPanelPosition();
+            m_previewPanel->show();
+            m_previewPanel->raise();
+        }
+    }
+
+    updateToolbarPosition();
+    update();
+}
+
 void SelectionOverlay::setLongCaptureVisualHeight(int height)
 {
     m_longCaptureVisualHeight = qMax(0, height);
-
     if (m_hasSelection)
     {
         updateToolbarPosition();
+        updatePreviewPanelPosition();
         update();
     }
 }
+
+void SelectionOverlay::setLongCapturePreview(const QPixmap &preview)
+{
+    m_previewPixmap = preview;
+    if (m_previewPanel == nullptr)
+    {
+        return;
+    }
+
+    if (m_previewPixmap.isNull())
+    {
+        m_previewPanel->clearPreview();
+        if (!m_longCaptureEnabled)
+        {
+            m_previewPanel->hide();
+        }
+        return;
+    }
+
+    m_previewPanel->setPreview(m_previewPixmap);
+    if (m_longCaptureEnabled)
+    {
+        updatePreviewPanelPosition();
+        m_previewPanel->show();
+        m_previewPanel->raise();
+    }
+}
+
+void SelectionOverlay::setStatusText(const QString &text)
+{
+    if (m_statusLabel == nullptr)
+    {
+        return;
+    }
+
+    m_statusLabel->setText(text);
+}
+
+void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
+{
+    m_captureDecorationsHidden = hidden;
+    update();
+}
+#endif
 
 void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 {
@@ -87,7 +176,6 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    // 右键始终取消截图，行为等价 ESC / ✕。
     if (event->button() == Qt::RightButton)
     {
         event->accept();
@@ -96,7 +184,6 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    // 非左键事件吞掉，避免透传到底层应用。
     if (event->button() != Qt::LeftButton)
     {
         event->accept();
@@ -107,7 +194,6 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     raise();
     setFocus();
 
-    // 工具条区域交给子控件处理。
     if (m_toolbar != nullptr && m_toolbar->isVisible() && m_toolbar->geometry().contains(event->pos()))
     {
         QWidget::mousePressEvent(event);
@@ -116,14 +202,31 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 
     m_selecting = true;
     m_hasSelection = false;
-    m_longCaptureEnabled = false;
-    m_longCaptureVisualHeight = 0;
     m_startPos = event->pos();
     m_endPos = m_startPos;
+    m_selectedRect = QRect();
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_longCaptureEnabled = false;
+    m_longCaptureVisualHeight = 0;
+    m_longCaptureAnchorBottomLocal = -1;
+    m_previewPixmap = QPixmap();
 
     if (m_btnLongCapture != nullptr)
     {
         m_btnLongCapture->setChecked(false);
+    }
+
+    if (m_previewPanel != nullptr)
+    {
+        m_previewPanel->clearPreview();
+        m_previewPanel->hide();
+    }
+#endif
+
+    if (m_statusLabel != nullptr)
+    {
+        m_statusLabel->setText(QStringLiteral("拖动中"));
     }
 
     if (m_toolbar != nullptr)
@@ -185,8 +288,21 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
 
     m_hasSelection = true;
     m_selectedRect = toGlobalRect(rect);
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureVisualHeight = rect.height();
+    m_longCaptureAnchorBottomLocal = rect.bottom();
+#endif
+
+    if (m_statusLabel != nullptr)
+    {
+        m_statusLabel->setText(QStringLiteral("已选择区域"));
+    }
+
     updateToolbarPosition();
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    updatePreviewPanelPosition();
+#endif
 
     activateWindow();
     raise();
@@ -226,7 +342,13 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    const bool hideCaptureDecorations = m_captureDecorationsHidden;
     const QRect selection = currentDisplayRect();
+#else
+    const bool hideCaptureDecorations = false;
+    const QRect selection = currentRect();
+#endif
     const bool validSelection = (m_selecting || m_hasSelection) && selection.width() > 1 && selection.height() > 1;
 
     QPainterPath overlayPath;
@@ -243,15 +365,21 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
 
     if (!validSelection)
     {
-        painter.setPen(QColor(220, 230, 255, 160));
-        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));
+        if (!hideCaptureDecorations)
+        {
+            painter.setPen(QColor(220, 230, 255, 160));
+                        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("\u62d6\u52a8\u9f20\u6807\u9009\u62e9\u533a\u57df\uff0c\u53f3\u952e\u6216 ESC \u53d6\u6d88"));
+        }
         return;
     }
 
-    // 选区内部保持几乎透明，仅用于视觉强调，不写入最终截图成品。
     painter.fillRect(selection, QColor(0, 0, 0, 1));
 
-    // 选区交互态保留轻微蓝色描边。
+    if (hideCaptureDecorations)
+    {
+        return;
+    }
+
     painter.setPen(QPen(QColor(118, 176, 255, 170), 1.0));
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(selection.adjusted(0, 0, -1, -1), 4, 4);
@@ -288,6 +416,15 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     painter.drawText(textRect, Qt::AlignCenter, sizeText);
 }
 
+void SelectionOverlay::contextMenuEvent(QContextMenuEvent *event)
+{
+    if (event != nullptr)
+    {
+        event->accept();
+    }
+}
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 void SelectionOverlay::wheelEvent(QWheelEvent *event)
 {
     if (event == nullptr)
@@ -297,7 +434,12 @@ void SelectionOverlay::wheelEvent(QWheelEvent *event)
 
     if (m_longCaptureEnabled && m_hasSelection)
     {
-        const int delta = event->angleDelta().y();
+        int delta = event->angleDelta().y();
+        if (delta == 0)
+        {
+            delta = event->pixelDelta().y() * 8;
+        }
+
         if (delta != 0)
         {
             emit longCaptureWheel(m_selectedRect, delta);
@@ -309,19 +451,37 @@ void SelectionOverlay::wheelEvent(QWheelEvent *event)
     QWidget::wheelEvent(event);
 }
 
-void SelectionOverlay::contextMenuEvent(QContextMenuEvent *event)
+bool SelectionOverlay::eventFilter(QObject *watched, QEvent *event)
 {
-    if (event != nullptr)
+    Q_UNUSED(watched)
+
+    if (event != nullptr && event->type() == QEvent::Wheel && m_longCaptureEnabled && m_hasSelection)
     {
-        event->accept();
+        auto *wheelEvent = static_cast<QWheelEvent *>(event);
+        int delta = wheelEvent->angleDelta().y();
+        if (delta == 0)
+        {
+            delta = wheelEvent->pixelDelta().y() * 8;
+        }
+
+        if (delta != 0)
+        {
+            emit longCaptureWheel(m_selectedRect, delta);
+            wheelEvent->accept();
+            return true;
+        }
     }
+
+    return QWidget::eventFilter(watched, event);
 }
+#endif
 
 QRect SelectionOverlay::currentRect() const
 {
     return QRect(m_startPos, m_endPos).normalized();
 }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 QRect SelectionOverlay::currentDisplayRect() const
 {
     QRect selection = currentRect();
@@ -333,13 +493,25 @@ QRect SelectionOverlay::currentDisplayRect() const
     if (m_longCaptureEnabled)
     {
         const int targetHeight = qMax(selection.height(), m_longCaptureVisualHeight);
-        const int maxBottom = height() - 1;
-        const int targetBottom = qMin(maxBottom, selection.top() + targetHeight - 1);
-        selection.setBottom(targetBottom);
+        const QRect screenRect = screenLocalRectForSelection(selection);
+
+        int anchorBottom = m_longCaptureAnchorBottomLocal;
+        if (anchorBottom < 0)
+        {
+            anchorBottom = selection.bottom();
+        }
+
+        anchorBottom = qBound(screenRect.top(), anchorBottom, screenRect.bottom());
+        const int targetTop = anchorBottom - targetHeight + 1;
+        const int clampedTop = qMax(screenRect.top(), targetTop);
+
+        selection.setTop(clampedTop);
+        selection.setBottom(anchorBottom);
     }
 
     return selection;
 }
+#endif
 
 QRect SelectionOverlay::toGlobalRect(const QRect &rect) const
 {
@@ -390,7 +562,11 @@ void SelectionOverlay::updateToolbarPosition()
         return;
     }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     const QRect selection = currentDisplayRect();
+#else
+    const QRect selection = currentRect();
+#endif
     const QRect screenRect = screenLocalRectForSelection(selection);
     const int toolbarWidth = m_toolbar->sizeHint().width();
     const int toolbarHeight = m_toolbar->sizeHint().height();
@@ -424,6 +600,10 @@ void SelectionOverlay::updateToolbarPosition()
     m_toolbar->move(toolbarX, toolbarY);
     m_toolbar->show();
     m_toolbar->raise();
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    updatePreviewPanelPosition();
+#endif
 }
 
 void SelectionOverlay::ensureToolbar()
@@ -434,19 +614,25 @@ void SelectionOverlay::ensureToolbar()
     }
 
     m_toolbar = new QFrame(this);
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_toolbar->installEventFilter(this);
+#endif
     m_toolbar->setObjectName(QStringLiteral("overlayToolbar"));
     m_toolbar->setFixedHeight(48);
 
-    QHBoxLayout *layout = new QHBoxLayout(m_toolbar);
+    auto *layout = new QHBoxLayout(m_toolbar);
     layout->setContentsMargins(10, 6, 10, 6);
     layout->setSpacing(6);
 
     auto createTool = [this, layout](const QString &text, bool checkable = false)
     {
-        QToolButton *button = new QToolButton(m_toolbar);
+        auto *button = new QToolButton(m_toolbar);
         button->setText(text);
         button->setCheckable(checkable);
         button->setCursor(Qt::PointingHandCursor);
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+        button->installEventFilter(this);
+#endif
         layout->addWidget(button);
         return button;
     };
@@ -468,10 +654,8 @@ void SelectionOverlay::ensureToolbar()
 
     layout->addSpacing(8);
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_btnLongCapture = createTool(QStringLiteral("长截图"), true);
-    m_btnSave = createTool(QStringLiteral("保存"));
-    m_btnCancel = createTool(QStringLiteral("✕"));
-    m_btnConfirm = createTool(QStringLiteral("✓"));
 
     connect(m_btnLongCapture, &QToolButton::clicked, this, [this]()
     {
@@ -482,15 +666,55 @@ void SelectionOverlay::ensureToolbar()
         }
 
         m_longCaptureEnabled = m_btnLongCapture->isChecked();
-        if (!m_longCaptureEnabled)
+        const QRect current = currentRect();
+
+        if (m_longCaptureEnabled)
         {
-            m_longCaptureVisualHeight = currentRect().height();
+            m_longCaptureAnchorBottomLocal = current.bottom();
+            m_longCaptureVisualHeight = qMax(current.height(), m_longCaptureVisualHeight);
+            if (m_previewPanel != nullptr)
+            {
+                if (m_previewPixmap.isNull())
+                {
+                    m_previewPanel->clearPreview();
+                }
+                updatePreviewPanelPosition();
+                m_previewPanel->show();
+                m_previewPanel->raise();
+            }
+            if (m_statusLabel != nullptr)
+            {
+                m_statusLabel->setText(QStringLiteral("长截图已开启"));
+            }
+        }
+        else
+        {
+            m_longCaptureVisualHeight = current.height();
+            m_longCaptureAnchorBottomLocal = -1;
+            if (m_previewPanel != nullptr)
+            {
+                m_previewPanel->hide();
+            }
+            if (m_statusLabel != nullptr)
+            {
+                m_statusLabel->setText(QStringLiteral("长截图已关闭"));
+            }
         }
 
         updateToolbarPosition();
         update();
         emit longCaptureToggled(m_longCaptureEnabled, m_selectedRect);
     });
+#endif
+
+    m_statusLabel = new QLabel(QStringLiteral("等待选区"), m_toolbar);
+    m_statusLabel->setObjectName(QStringLiteral("overlayStatusLabel"));
+    layout->addWidget(m_statusLabel);
+    layout->addSpacing(8);
+
+    m_btnSave = createTool(QStringLiteral("保存"));
+    m_btnCancel = createTool(QStringLiteral("✕"));
+    m_btnConfirm = createTool(QStringLiteral("✓"));
 
     connect(m_btnCancel, &QToolButton::clicked, this, [this]()
     {
@@ -507,15 +731,15 @@ void SelectionOverlay::ensureToolbar()
             return;
         }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
         if (m_longCaptureEnabled)
         {
             emit longCaptureSaveRequested(m_selectedRect);
+            return;
         }
-        else
-        {
-            emit saveRequested(m_selectedRect);
-        }
+#endif
 
+        emit saveRequested(m_selectedRect);
         close();
     });
 
@@ -533,6 +757,12 @@ void SelectionOverlay::ensureToolbar()
         "padding: 6px 10px;"
         "font: 10pt 'Microsoft YaHei UI';"
         "}"
+        "QLabel#overlayStatusLabel {"
+        "color: rgba(222, 236, 255, 210);"
+        "padding: 0 8px;"
+        "font: 9pt 'Microsoft YaHei UI';"
+        "font-weight: 500;"
+        "}"
         "QToolButton:hover {"
         "background: rgba(126, 170, 255, 35);"
         "border-color: rgba(170, 205, 255, 90);"
@@ -542,20 +772,77 @@ void SelectionOverlay::ensureToolbar()
         "border-color: rgba(176, 214, 255, 120);"
         "}");
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_previewPanel = new LongCapturePreviewPanel(this);
+    m_previewPanel->installEventFilter(this);
+    m_previewPanel->hide();
+#endif
+
     m_toolbar->adjustSize();
     m_toolbar->hide();
 }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+void SelectionOverlay::updatePreviewPanelPosition()
+{
+    if (m_previewPanel == nullptr || !m_hasSelection || !m_longCaptureEnabled)
+    {
+        return;
+    }
+
+    const QRect selection = currentDisplayRect();
+    const QRect screenRect = screenLocalRectForSelection(selection);
+
+    const int panelWidth = m_previewPanel->width();
+    const int panelHeight = m_previewPanel->height();
+    const int margin = 10;
+
+    int panelX = selection.right() + 12;
+    if (panelX + panelWidth > screenRect.right() - margin)
+    {
+        panelX = selection.left() - panelWidth - 12;
+    }
+
+    if (panelX < screenRect.left() + margin)
+    {
+        panelX = screenRect.left() + margin;
+    }
+
+    int panelY = selection.top();
+    const int minY = screenRect.top() + margin;
+    const int maxY = qMax(minY, screenRect.bottom() - panelHeight - margin);
+    panelY = qBound(minY, panelY, maxY);
+
+    m_previewPanel->move(panelX, panelY);
+}
+#endif
+
 void SelectionOverlay::resetSelection()
 {
     m_hasSelection = false;
+    m_selectedRect = QRect();
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureEnabled = false;
     m_longCaptureVisualHeight = 0;
-    m_selectedRect = QRect();
+    m_longCaptureAnchorBottomLocal = -1;
+    m_previewPixmap = QPixmap();
 
     if (m_btnLongCapture != nullptr)
     {
         m_btnLongCapture->setChecked(false);
+    }
+
+    if (m_previewPanel != nullptr)
+    {
+        m_previewPanel->clearPreview();
+        m_previewPanel->hide();
+    }
+#endif
+
+    if (m_statusLabel != nullptr)
+    {
+        m_statusLabel->setText(QStringLiteral("等待选区"));
     }
 
     if (m_toolbar != nullptr)
@@ -573,16 +860,18 @@ void SelectionOverlay::confirmSelection()
         return;
     }
 
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     if (m_longCaptureEnabled)
     {
         emit longCaptureConfirmRequested(m_selectedRect);
+        return;
     }
-    else
-    {
-        emit selectionFinished(m_selectedRect);
-    }
+#endif
 
+    emit selectionFinished(m_selectedRect);
     close();
 }
+
+
 
 

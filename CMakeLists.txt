@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.19)
 project(screenCapture LANGUAGES CXX)
 
+option(SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE "Enable experimental Windows long capture pipeline" ON)
+
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Svg)
 
 qt_standard_project_setup()
@@ -34,8 +36,6 @@ qt_add_executable(screenCapture
     captureuistatecoordinator.h
     captureresulthandler.cpp
     captureresulthandler.h
-    longcapturestitcher.cpp
-    longcapturestitcher.h
     settingsservice.cpp
     settingsservice.h
     tippresenter.cpp
@@ -44,6 +44,34 @@ qt_add_executable(screenCapture
 
 if (WIN32)
     target_sources(screenCapture PRIVATE appicon.rc)
+endif()
+
+if (SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE AND WIN32)
+    target_compile_definitions(screenCapture PRIVATE SCREENCAPTURE_ENABLE_LONG_CAPTURE=1)
+    target_sources(screenCapture PRIVATE
+        longcapturetypes.h
+        longcapturebackend.h
+        desktopgdicapturebackend.cpp
+        desktopgdicapturebackend.h
+        scrolldispatcher.cpp
+        scrolldispatcher.h
+        motiondetector.cpp
+        motiondetector.h
+        stableframecollector.cpp
+        stableframecollector.h
+        overlapmatcher.cpp
+        overlapmatcher.h
+        stitchcomposer.cpp
+        stitchcomposer.h
+        longcapturesession.cpp
+        longcapturesession.h
+        longcapturesessioncontroller.cpp
+        longcapturesessioncontroller.h
+        longcapturepreviewpanel.cpp
+        longcapturepreviewpanel.h
+    )
+else()
+    target_compile_definitions(screenCapture PRIVATE SCREENCAPTURE_ENABLE_LONG_CAPTURE=0)
 endif()
 
 # 固定源码编码：在 MSVC 下强制使用 UTF-8，避免中文字符串乱码。
@@ -88,3 +116,5 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})
+
+
