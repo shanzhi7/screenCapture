@@ -4,12 +4,20 @@
 #include "longcapturepreviewpanel.h"
 #endif
 
+#include <QAbstractButton>
+#include <QApplication>
+#include <QClipboard>
+#include <QColor>
 #include <QContextMenuEvent>
+#include <QCursor>
 #include <QEvent>
+#include <QFont>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QKeyEvent>
+#include <QKeySequence>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
@@ -21,6 +29,196 @@
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 #include <QWheelEvent>
 #endif
+
+namespace
+{
+constexpr QSize kCursorInfoPanelSize(176, 154);
+constexpr int kCursorInfoPanelOffset = 18;
+constexpr int kCursorInfoPanelMargin = 10;
+constexpr int kCursorMagnifierGrid = 11;
+constexpr int kCursorInfoBottomHeight = 56;
+constexpr qreal kOverlayPenWidth = 3.2;
+const QColor kDefaultAnnotationColor(255, 96, 110);
+
+QCursor penToolCursor()
+{
+    QIcon icon(QStringLiteral(":/icons/overlay_pen.svg"));
+    if (icon.isNull())
+    {
+        return QCursor(Qt::CrossCursor);
+    }
+
+    const QPixmap pixmap = icon.pixmap(24, 24);
+    if (pixmap.isNull())
+    {
+        return QCursor(Qt::CrossCursor);
+    }
+
+    return QCursor(pixmap, 3, 21);
+}
+
+QRect cursorInfoPanelRect(const QRect &bounds, const QPoint &cursorPos)
+{
+    int panelX = cursorPos.x() + kCursorInfoPanelOffset;
+    int panelY = cursorPos.y() + kCursorInfoPanelOffset;
+
+    if (panelX + kCursorInfoPanelSize.width() > bounds.right() - kCursorInfoPanelMargin)
+    {
+        panelX = cursorPos.x() - kCursorInfoPanelSize.width() - kCursorInfoPanelOffset;
+    }
+
+    if (panelY + kCursorInfoPanelSize.height() > bounds.bottom() - kCursorInfoPanelMargin)
+    {
+        panelY = cursorPos.y() - kCursorInfoPanelSize.height() - kCursorInfoPanelOffset;
+    }
+
+    const int minX = bounds.left() + kCursorInfoPanelMargin;
+    const int maxX = qMax(minX, bounds.right() - kCursorInfoPanelSize.width() - kCursorInfoPanelMargin);
+    const int minY = bounds.top() + kCursorInfoPanelMargin;
+    const int maxY = qMax(minY, bounds.bottom() - kCursorInfoPanelSize.height() - kCursorInfoPanelMargin);
+
+    panelX = qBound(minX, panelX, maxX);
+    panelY = qBound(minY, panelY, maxY);
+    return QRect(QPoint(panelX, panelY), kCursorInfoPanelSize);
+}
+
+QPoint clampedSamplePoint(const QImage &image, const QPoint &point)
+{
+    if (image.isNull())
+    {
+        return QPoint();
+    }
+
+    return QPoint(qBound(0, point.x(), qMax(0, image.width() - 1)),
+                  qBound(0, point.y(), qMax(0, image.height() - 1)));
+}
+
+QImage magnifierSample(const QImage &image, const QPoint &center)
+{
+    QImage sample(kCursorMagnifierGrid, kCursorMagnifierGrid, QImage::Format_ARGB32_Premultiplied);
+    sample.fill(QColor(18, 24, 35));
+
+    if (image.isNull())
+    {
+        return sample;
+    }
+
+    const int radius = kCursorMagnifierGrid / 2;
+    for (int y = 0; y < kCursorMagnifierGrid; ++y)
+    {
+        for (int x = 0; x < kCursorMagnifierGrid; ++x)
+        {
+            const QPoint sourcePoint = clampedSamplePoint(image, center + QPoint(x - radius, y - radius));
+            sample.setPixelColor(x, y, image.pixelColor(sourcePoint));
+        }
+    }
+
+    return sample;
+}
+
+QString hexColorText(const QColor &color)
+{
+    return color.name(QColor::HexRgb).toUpper();
+}
+
+void drawCursorInfoPanel(QPainter *painter,
+                         const QRect &bounds,
+                         const QPoint &cursorPos,
+                         const QPoint &globalCursorPos,
+                         const QImage &desktopSnapshot)
+{
+    if (painter == nullptr || desktopSnapshot.isNull() || !bounds.contains(cursorPos))
+    {
+        return;
+    }
+
+    const QRect panelRect = cursorInfoPanelRect(bounds, cursorPos);
+    const QRect contentRect = panelRect.adjusted(8, 8, -8, -8);
+    const QRect magnifierRect(contentRect.left(),
+                              contentRect.top(),
+                              contentRect.width(),
+                              qMax(48, contentRect.height() - kCursorInfoBottomHeight - 6));
+    const QRect infoRect(contentRect.left(),
+                         magnifierRect.bottom() + 6,
+                         contentRect.width(),
+                         qMax(44, contentRect.bottom() - magnifierRect.bottom() - 6));
+
+    painter->save();
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QColor(14, 20, 30, 236));
+    painter->drawRoundedRect(panelRect, 12, 12);
+    painter->setPen(QPen(QColor(136, 185, 255, 96), 1.0));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRoundedRect(panelRect.adjusted(0, 0, -1, -1), 12, 12);
+
+    const QImage zoomed = magnifierSample(desktopSnapshot, cursorPos).scaled(magnifierRect.size(),
+                                                                              Qt::IgnoreAspectRatio,
+                                                                              Qt::FastTransformation);
+    painter->save();
+    painter->setClipRect(magnifierRect.adjusted(1, 1, -1, -1));
+    painter->setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter->drawImage(magnifierRect, zoomed);
+    painter->restore();
+
+    painter->setPen(QPen(QColor(228, 239, 255, 34), 1.0));
+    const double cellWidth = magnifierRect.width() / static_cast<double>(kCursorMagnifierGrid);
+    const double cellHeight = magnifierRect.height() / static_cast<double>(kCursorMagnifierGrid);
+    for (int index = 1; index < kCursorMagnifierGrid; ++index)
+    {
+        const int gridX = qRound(magnifierRect.left() + cellWidth * index);
+        const int gridY = qRound(magnifierRect.top() + cellHeight * index);
+        painter->drawLine(gridX, magnifierRect.top(), gridX, magnifierRect.bottom());
+        painter->drawLine(magnifierRect.left(), gridY, magnifierRect.right(), gridY);
+    }
+
+    const int centerIndex = kCursorMagnifierGrid / 2;
+    QRectF centerCell(magnifierRect.left() + cellWidth * centerIndex,
+                      magnifierRect.top() + cellHeight * centerIndex,
+                      cellWidth,
+                      cellHeight);
+    painter->setPen(QPen(QColor(41, 255, 157, 230), 1.6));
+    painter->drawRect(centerCell.adjusted(0.8, 0.8, -0.8, -0.8));
+    painter->drawLine(QPointF(centerCell.center().x(), magnifierRect.top()),
+                      QPointF(centerCell.center().x(), magnifierRect.bottom()));
+    painter->drawLine(QPointF(magnifierRect.left(), centerCell.center().y()),
+                      QPointF(magnifierRect.right(), centerCell.center().y()));
+
+    painter->setPen(QPen(QColor(136, 185, 255, 56), 1.0));
+    painter->drawLine(infoRect.left(), infoRect.top() - 3, infoRect.right(), infoRect.top() - 3);
+
+    const QColor sampledColor = desktopSnapshot.pixelColor(clampedSamplePoint(desktopSnapshot, cursorPos));
+    const QString colorText = hexColorText(sampledColor);
+    const QString coordText = QStringLiteral("%1, %2").arg(globalCursorPos.x()).arg(globalCursorPos.y());
+
+    QFont labelFont = painter->font();
+    labelFont.setFamily(QStringLiteral("Microsoft YaHei UI"));
+    labelFont.setPointSizeF(8.8);
+    labelFont.setWeight(QFont::Normal);
+
+    QFont valueFont = labelFont;
+    valueFont.setPointSizeF(9.6);
+    valueFont.setWeight(QFont::DemiBold);
+
+    const QRect coordRow(infoRect.left(), infoRect.top(), infoRect.width(), 18);
+    const QRect colorRow(infoRect.left(), infoRect.top() + 20, infoRect.width(), 18);
+    const QRect hintRow(infoRect.left(), infoRect.bottom() - 18, infoRect.width(), 18);
+
+    painter->setFont(labelFont);
+    painter->setPen(QColor(206, 220, 244, 170));
+    painter->drawText(coordRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("坐标"));
+    painter->drawText(colorRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("色值"));
+
+    painter->setFont(valueFont);
+    painter->setPen(QColor(248, 251, 255));
+    painter->drawText(coordRow, Qt::AlignRight | Qt::AlignVCenter, coordText);
+    painter->drawText(colorRow, Qt::AlignRight | Qt::AlignVCenter, colorText);
+
+    painter->setFont(labelFont);
+    painter->setPen(QColor(206, 220, 244, 154));
+    painter->drawText(hintRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("按 Ctrl + C 复制色值"));
+    painter->restore();
+}
+}
 
 SelectionOverlay::SelectionOverlay(QWidget *parent)
     : QWidget(parent)
@@ -50,6 +248,8 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
     setCursor(Qt::CrossCursor);
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
+    m_cursorPos = mapFromGlobal(QCursor::pos());
 
     auto *cancelShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     cancelShortcut->setContext(Qt::ApplicationShortcut);
@@ -68,11 +268,94 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
     connect(confirmShortcutEnter, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);
 
     ensureToolbar();
+    captureDesktopSnapshot();
+    updateActiveCursor();
 }
 
 QRect SelectionOverlay::selectedRect() const
 {
     return m_selectedRect;
+}
+
+QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect &captureRect) const
+{
+    Q_UNUSED(captureRect)
+
+    if (pixmap.isNull() || m_penStrokes.isEmpty())
+    {
+        return pixmap;
+    }
+
+    const QRect referenceRect = editableSelectionRect();
+    if (!referenceRect.isValid())
+    {
+        return pixmap;
+    }
+
+    QImage annotated = pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    if (annotated.isNull())
+    {
+        return pixmap;
+    }
+
+    QPainter painter(&annotated);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
+    painter.end();
+
+    QPixmap result = QPixmap::fromImage(annotated);
+    result.setDevicePixelRatio(pixmap.devicePixelRatio());
+    return result;
+}
+
+void SelectionOverlay::captureDesktopSnapshot()
+{
+    if (width() <= 0 || height() <= 0)
+    {
+        m_desktopSnapshot = QImage();
+        return;
+    }
+
+    m_desktopSnapshot = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+    m_desktopSnapshot.fill(Qt::transparent);
+
+    QPainter painter(&m_desktopSnapshot);
+    const QPoint overlayTopLeft = geometry().topLeft();
+    const QList<QScreen *> screens = QGuiApplication::screens();
+    for (QScreen *screen : screens)
+    {
+        if (screen == nullptr)
+        {
+            continue;
+        }
+
+        const QPixmap screenshot = screen->grabWindow(0);
+        if (screenshot.isNull())
+        {
+            continue;
+        }
+
+        QImage screenImage = screenshot.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        if (screenImage.size() != screen->geometry().size())
+        {
+            screenImage = screenImage.scaled(screen->geometry().size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+        }
+
+        painter.drawImage(screen->geometry().topLeft() - overlayTopLeft, screenImage);
+    }
+}
+
+QString SelectionOverlay::copyCurrentColorValue()
+{
+    if (m_desktopSnapshot.isNull() || !rect().contains(m_cursorPos) || (m_hasSelection && !m_selecting))
+    {
+        return QString();
+    }
+
+    const QColor sampledColor = m_desktopSnapshot.pixelColor(clampedSamplePoint(m_desktopSnapshot, m_cursorPos));
+    const QString colorText = hexColorText(sampledColor);
+    QApplication::clipboard()->setText(colorText);
+    return colorText;
 }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -118,6 +401,7 @@ void SelectionOverlay::setLongCaptureModeEnabled(bool enabled)
 
     updateStatusLabel();
     updateToolbarPosition();
+    updateActiveCursor();
     update();
 }
 
@@ -268,6 +552,8 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    m_cursorPos = event->pos();
+
     if (event->button() == Qt::RightButton)
     {
         event->accept();
@@ -292,6 +578,24 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (shouldHandlePenAt(event->pos()))
+    {
+        m_drawingPenStroke = true;
+        m_currentPenColor = m_annotationColor;
+        m_currentPenStroke.clear();
+        m_currentPenStroke.append(clampPointToSelection(event->pos()));
+        event->accept();
+        update();
+        return;
+    }
+
+    if (shouldHandleToolAt(event->pos()))
+    {
+        event->accept();
+        return;
+    }
+
+    clearAnnotations();
     m_selecting = true;
     m_hasSelection = false;
     m_startPos = event->pos();
@@ -309,7 +613,9 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 
     if (m_btnLongCapture != nullptr)
     {
+        const bool blocked = m_btnLongCapture->blockSignals(true);
         m_btnLongCapture->setChecked(false);
+        m_btnLongCapture->blockSignals(blocked);
     }
 
     if (m_previewPanel != nullptr)
@@ -335,6 +641,7 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         m_statusLabel->hide();
     }
 
+    updateActiveCursor();
     event->accept();
     update();
 }
@@ -346,14 +653,29 @@ void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)
         return;
     }
 
-    if (!m_selecting)
+    m_cursorPos = event->pos();
+
+    if (m_drawingPenStroke)
     {
-        QWidget::mouseMoveEvent(event);
+        const QPointF point = clampPointToSelection(event->pos());
+        if (m_currentPenStroke.isEmpty() || m_currentPenStroke.constLast() != point)
+        {
+            m_currentPenStroke.append(point);
+        }
+        event->accept();
+        update();
         return;
     }
 
-    m_endPos = event->pos();
-    event->accept();
+    if (m_selecting)
+    {
+        m_endPos = event->pos();
+        event->accept();
+        update();
+        return;
+    }
+
+    QWidget::mouseMoveEvent(event);
     update();
 }
 
@@ -364,9 +686,24 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
 
+    m_cursorPos = event->pos();
+
     if (event->button() == Qt::RightButton)
     {
         event->accept();
+        return;
+    }
+
+    if (m_drawingPenStroke && event->button() == Qt::LeftButton)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        if (m_currentPenStroke.isEmpty() || m_currentPenStroke.constLast() != point)
+        {
+            m_currentPenStroke.append(point);
+        }
+        finishCurrentPenStroke();
+        event->accept();
+        update();
         return;
     }
 
@@ -413,6 +750,7 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
     raise();
     setFocus();
 
+    updateActiveCursor();
     event->accept();
     update();
 }
@@ -422,6 +760,17 @@ void SelectionOverlay::keyPressEvent(QKeyEvent *event)
     if (event == nullptr)
     {
         return;
+    }
+
+    if (event->matches(QKeySequence::Copy))
+    {
+        const QString colorText = copyCurrentColorValue();
+        if (!colorText.isEmpty())
+        {
+            emit colorValueCopied(colorText);
+            close();
+            return;
+        }
     }
 
     if (event->key() == Qt::Key_Escape)
@@ -458,6 +807,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     const QRect visibleSelection = committedSelection;
 #endif
     const bool validSelection = (m_selecting || m_hasSelection) && visibleSelection.width() > 1 && visibleSelection.height() > 1;
+    const bool showCursorInfoPanel = !hideCaptureDecorations && !m_selecting && !m_hasSelection;
 
     QPainterPath overlayPath;
     overlayPath.addRect(rect());
@@ -473,10 +823,12 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
 
     if (!validSelection)
     {
-        if (!hideCaptureDecorations)
+        painter.setPen(QColor(220, 230, 255, 160));
+        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));
+
+        if (showCursorInfoPanel)
         {
-            painter.setPen(QColor(220, 230, 255, 160));
-            painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));
+            drawCursorInfoPanel(&painter, rect(), m_cursorPos, mapToGlobal(m_cursorPos), m_desktopSnapshot);
         }
         return;
     }
@@ -502,6 +854,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(76, 166, 255, 215), 1.4));
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);
+    paintPenStrokes(&painter, committedSelection, editableSelectionRect(), true);
 
     QString sizeText = QString::number(committedSelection.width())
                        + QStringLiteral(" x ")
@@ -606,6 +959,146 @@ bool SelectionOverlay::eventFilter(QObject *watched, QEvent *event)
 QRect SelectionOverlay::currentRect() const
 {
     return QRect(m_startPos, m_endPos).normalized();
+}
+
+QRect SelectionOverlay::editableSelectionRect() const
+{
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    return m_longCaptureEnabled ? currentDisplayRect() : currentRect();
+#else
+    return currentRect();
+#endif
+}
+
+QPointF SelectionOverlay::clampPointToSelection(const QPoint &point) const
+{
+    const QRect selection = editableSelectionRect();
+    if (!selection.isValid())
+    {
+        return QPointF();
+    }
+
+    return QPointF(qBound(selection.left(), point.x(), selection.right()),
+                   qBound(selection.top(), point.y(), selection.bottom()));
+}
+
+bool SelectionOverlay::shouldHandleToolAt(const QPoint &point) const
+{
+    if (!m_hasSelection || m_selecting || m_activeTool == ToolMode::None)
+    {
+        return false;
+    }
+
+    return editableSelectionRect().contains(point);
+}
+
+bool SelectionOverlay::shouldHandlePenAt(const QPoint &point) const
+{
+    return m_activeTool == ToolMode::Pen && shouldHandleToolAt(point);
+}
+
+void SelectionOverlay::finishCurrentPenStroke()
+{
+    if (!m_currentPenStroke.isEmpty())
+    {
+        PenStroke stroke;
+        stroke.points = m_currentPenStroke;
+        stroke.color = m_currentPenColor;
+        m_penStrokes.append(stroke);
+    }
+
+    m_currentPenStroke.clear();
+    m_currentPenColor = m_annotationColor;
+    m_drawingPenStroke = false;
+}
+
+void SelectionOverlay::clearAnnotations()
+{
+    m_drawingPenStroke = false;
+    m_currentPenStroke.clear();
+    m_currentPenColor = m_annotationColor;
+    m_penStrokes.clear();
+}
+
+void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const
+{
+    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid())
+    {
+        return;
+    }
+
+    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
+    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
+    const qreal strokeWidth = kOverlayPenWidth * (scaleX + scaleY) * 0.5;
+    const qreal dotRadius = qMax<qreal>(1.6, strokeWidth * 0.5);
+
+    auto drawStroke = [painter, scaleX, scaleY, dotRadius, strokeWidth, referenceRect](const QVector<QPointF> &points, const QColor &color)
+    {
+        if (points.isEmpty())
+        {
+            return;
+        }
+
+        auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
+        {
+            return QPointF((point.x() - referenceRect.left()) * scaleX,
+                           (point.y() - referenceRect.top()) * scaleY);
+        };
+
+        if (points.size() == 1)
+        {
+            painter->save();
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(color);
+            painter->drawEllipse(mappedPoint(points.constFirst()), dotRadius, dotRadius);
+            painter->restore();
+            return;
+        }
+
+        QPainterPath path(mappedPoint(points.constFirst()));
+        for (int index = 1; index < points.size(); ++index)
+        {
+            path.lineTo(mappedPoint(points.at(index)));
+        }
+
+        painter->save();
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(color, strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter->drawPath(path);
+        painter->restore();
+    };
+
+    painter->save();
+    painter->translate(targetRect.topLeft());
+
+    for (const PenStroke &stroke : m_penStrokes)
+    {
+        drawStroke(stroke.points, stroke.color);
+    }
+
+    if (includeActiveStroke)
+    {
+        drawStroke(m_currentPenStroke, m_currentPenColor);
+    }
+
+    painter->restore();
+}
+
+void SelectionOverlay::prepareForOutputCapture()
+{
+    setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    hide();
+}
+
+void SelectionOverlay::updateActiveCursor()
+{
+    if (m_activeTool == ToolMode::Pen && m_hasSelection)
+    {
+        setCursor(penToolCursor());
+        return;
+    }
+
+    setCursor(Qt::CrossCursor);
 }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -861,12 +1354,68 @@ void SelectionOverlay::ensureToolbar()
     layout->setContentsMargins(10, 6, 10, 6);
     layout->setSpacing(6);
 
-    auto createTool = [this, layout](const QString &text, bool checkable = false)
+    auto createTool = [this, layout](const QString &text,
+                                     const QString &iconPath,
+                                     const QSize &iconSize,
+                                     bool checkable = false)
     {
         auto *button = new QToolButton(m_toolbar);
-        button->setText(text);
         button->setCheckable(checkable);
         button->setCursor(Qt::PointingHandCursor);
+        button->setToolTip(text);
+        button->setAccessibleName(text);
+        button->setMinimumSize(36, 36);
+
+        QIcon icon(iconPath);
+        if (icon.isNull() && iconPath.startsWith(QStringLiteral(":/icons/")))
+        {
+            const QString fallback = QStringLiteral(":/icons/icons/") + iconPath.mid(QStringLiteral(":/icons/").size());
+            icon = QIcon(fallback);
+        }
+
+        if (icon.isNull())
+        {
+            button->setText(text);
+        }
+        else
+        {
+            button->setText(QString());
+            button->setIcon(icon);
+            button->setIconSize(iconSize);
+            button->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        }
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+        button->installEventFilter(this);
+#endif
+        layout->addWidget(button);
+        return button;
+    };
+
+    auto createColorSwatch = [this, layout](const QColor &color, bool checked = false)
+    {
+        auto *button = new QToolButton(m_toolbar);
+        button->setCheckable(true);
+        button->setChecked(checked);
+        button->setCursor(Qt::PointingHandCursor);
+        button->setToolTip(color.name(QColor::HexRgb).toUpper());
+        button->setAccessibleName(QStringLiteral("注释颜色 %1").arg(color.name(QColor::HexRgb).toUpper()));
+        button->setFixedSize(24, 24);
+        button->setStyleSheet(QStringLiteral(
+            "QToolButton {"
+            "background: %1;"
+            "border: 1px solid rgba(255, 255, 255, 72);"
+            "border-radius: 12px;"
+            "padding: 0px;"
+            "min-width: 24px;"
+            "min-height: 24px;"
+            "}"
+            "QToolButton:hover {"
+            "border-color: rgba(255, 255, 255, 180);"
+            "}"
+            "QToolButton:checked {"
+            "border: 2px solid #F7FBFF;"
+            "}"
+        ).arg(color.name(QColor::HexRgb)));
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
         button->installEventFilter(this);
 #endif
@@ -875,13 +1424,13 @@ void SelectionOverlay::ensureToolbar()
     };
 
     m_toolGroup = new QButtonGroup(this);
-    m_toolGroup->setExclusive(true);
+    m_toolGroup->setExclusive(false);
 
-    QToolButton *btnPen = createTool(QStringLiteral("画笔"), true);
-    QToolButton *btnRect = createTool(QStringLiteral("矩形"), true);
-    QToolButton *btnEllipse = createTool(QStringLiteral("圆形"), true);
-    QToolButton *btnMosaic = createTool(QStringLiteral("马赛克"), true);
-    QToolButton *btnText = createTool(QStringLiteral("文字"), true);
+    QToolButton *btnPen = createTool(QStringLiteral("画笔"), QStringLiteral(":/icons/overlay_pen.svg"), QSize(18, 18), true);
+    QToolButton *btnRect = createTool(QStringLiteral("矩形"), QStringLiteral(":/icons/overlay_rect.svg"), QSize(18, 18), true);
+    QToolButton *btnEllipse = createTool(QStringLiteral("圆形"), QStringLiteral(":/icons/overlay_ellipse.svg"), QSize(18, 18), true);
+    QToolButton *btnMosaic = createTool(QStringLiteral("马赛克"), QStringLiteral(":/icons/overlay_mosaic.svg"), QSize(18, 18), true);
+    QToolButton *btnText = createTool(QStringLiteral("文字"), QStringLiteral(":/icons/overlay_text.svg"), QSize(18, 18), true);
 
     m_toolGroup->addButton(btnPen);
     m_toolGroup->addButton(btnRect);
@@ -889,10 +1438,68 @@ void SelectionOverlay::ensureToolbar()
     m_toolGroup->addButton(btnMosaic);
     m_toolGroup->addButton(btnText);
 
+    auto bindToolToggle = [this](QToolButton *button, ToolMode mode)
+    {
+        connect(button, &QToolButton::clicked, this, [this, button, mode]()
+        {
+            if (button->isChecked())
+            {
+                for (QAbstractButton *other : m_toolGroup->buttons())
+                {
+                    if (other == button)
+                    {
+                        continue;
+                    }
+
+                    const bool blocked = other->blockSignals(true);
+                    other->setChecked(false);
+                    other->blockSignals(blocked);
+                }
+                m_activeTool = mode;
+            }
+            else if (m_activeTool == mode)
+            {
+                m_activeTool = ToolMode::None;
+            }
+
+            updateActiveCursor();
+        });
+    };
+
+    bindToolToggle(btnPen, ToolMode::Pen);
+    bindToolToggle(btnRect, ToolMode::Rectangle);
+    bindToolToggle(btnEllipse, ToolMode::Ellipse);
+    bindToolToggle(btnMosaic, ToolMode::Mosaic);
+    bindToolToggle(btnText, ToolMode::Text);
+
+    layout->addSpacing(4);
+
+    auto *colorGroup = new QButtonGroup(this);
+    colorGroup->setExclusive(true);
+
+    const QList<QColor> colorPalette = {
+        kDefaultAnnotationColor,
+        QColor(255, 184, 0),
+        QColor(42, 201, 124),
+        QColor(76, 166, 255),
+        QColor(255, 255, 255)
+    };
+
+    for (const QColor &color : colorPalette)
+    {
+        auto *button = createColorSwatch(color, color == m_annotationColor);
+        colorGroup->addButton(button);
+        connect(button, &QToolButton::clicked, this, [this, color]()
+        {
+            m_annotationColor = color;
+            update();
+        });
+    }
+
     layout->addSpacing(8);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
-    m_btnLongCapture = createTool(QStringLiteral("长截图"), true);
+    m_btnLongCapture = createTool(QStringLiteral("长截图"), QStringLiteral(":/icons/overlay_scroll.svg"), QSize(18, 18), true);
 
     connect(m_btnLongCapture, &QToolButton::clicked, this, [this]()
     {
@@ -938,14 +1545,15 @@ void SelectionOverlay::ensureToolbar()
 
         updateStatusLabel();
         updateToolbarPosition();
+        updateActiveCursor();
         update();
         emit longCaptureToggled(m_longCaptureEnabled, m_selectedRect);
     });
 #endif
 
-    m_btnSave = createTool(QStringLiteral("保存"));
-    m_btnCancel = createTool(QStringLiteral("✕"));
-    m_btnConfirm = createTool(QStringLiteral("✓"));
+    m_btnSave = createTool(QStringLiteral("保存"), QStringLiteral(":/icons/overlay_save.svg"), QSize(18, 18));
+    m_btnCancel = createTool(QStringLiteral("取消"), QStringLiteral(":/icons/overlay_close.svg"), QSize(18, 18));
+    m_btnConfirm = createTool(QStringLiteral("完成"), QStringLiteral(":/icons/overlay_check.svg"), QSize(18, 18));
 
     connect(m_btnCancel, &QToolButton::clicked, this, [this]()
     {
@@ -962,6 +1570,11 @@ void SelectionOverlay::ensureToolbar()
             return;
         }
 
+        if (m_drawingPenStroke)
+        {
+            finishCurrentPenStroke();
+        }
+
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
         if (m_longCaptureEnabled)
         {
@@ -970,8 +1583,8 @@ void SelectionOverlay::ensureToolbar()
         }
 #endif
 
+        prepareForOutputCapture();
         emit saveRequested(m_selectedRect);
-        close();
     });
 
     m_toolbar->setStyleSheet(
@@ -985,7 +1598,9 @@ void SelectionOverlay::ensureToolbar()
         "background: transparent;"
         "border: 1px solid transparent;"
         "border-radius: 10px;"
-        "padding: 6px 10px;"
+        "padding: 0px;"
+        "min-width: 36px;"
+        "min-height: 36px;"
         "font: 10pt 'Microsoft YaHei UI';"
         "}"
         "QToolButton:hover {"
@@ -1060,8 +1675,10 @@ void SelectionOverlay::updatePreviewPanelPosition()
 
 void SelectionOverlay::resetSelection()
 {
+    m_selecting = false;
     m_hasSelection = false;
     m_selectedRect = QRect();
+    clearAnnotations();
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_longCaptureEnabled = false;
@@ -1074,7 +1691,9 @@ void SelectionOverlay::resetSelection()
 
     if (m_btnLongCapture != nullptr)
     {
+        const bool blocked = m_btnLongCapture->blockSignals(true);
         m_btnLongCapture->setChecked(false);
+        m_btnLongCapture->blockSignals(blocked);
     }
 
     if (m_previewPanel != nullptr)
@@ -1100,6 +1719,7 @@ void SelectionOverlay::resetSelection()
         m_statusLabel->hide();
     }
 
+    updateActiveCursor();
     update();
 }
 
@@ -1110,6 +1730,11 @@ void SelectionOverlay::confirmSelection()
         return;
     }
 
+    if (m_drawingPenStroke)
+    {
+        finishCurrentPenStroke();
+    }
+
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     if (m_longCaptureEnabled)
     {
@@ -1118,16 +1743,6 @@ void SelectionOverlay::confirmSelection()
     }
 #endif
 
+    prepareForOutputCapture();
     emit selectionFinished(m_selectedRect);
-    close();
 }
-
-
-
-
-
-
-
-
-
-

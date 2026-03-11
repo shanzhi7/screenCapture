@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>340</height>
+    <width>720</width>
+    <height>458</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,169 +15,368 @@
   </property>
   <layout class="QVBoxLayout" name="rootLayout">
    <property name="leftMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="topMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="rightMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="bottomMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="spacing">
-    <number>12</number>
+    <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="settingsCard">
+    <widget class="QFrame" name="dialogCard">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>
      <layout class="QVBoxLayout" name="cardLayout">
       <property name="leftMargin">
-       <number>18</number>
+       <number>24</number>
       </property>
       <property name="topMargin">
-       <number>16</number>
+       <number>24</number>
       </property>
       <property name="rightMargin">
-       <number>18</number>
+       <number>24</number>
       </property>
       <property name="bottomMargin">
-       <number>16</number>
+       <number>24</number>
       </property>
       <property name="spacing">
-       <number>14</number>
+       <number>16</number>
       </property>
       <item>
-       <widget class="QLabel" name="titleLabel">
-        <property name="text">
-         <string>截图设置</string>
+       <widget class="QFrame" name="heroFrame">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
         </property>
+        <layout class="QVBoxLayout" name="heroLayout">
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>20</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="heroBadgeLabel">
+           <property name="text">
+            <string>轻影截图设置</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="titleLabel">
+           <property name="text">
+            <string>截图设置</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="subTitleLabel">
+           <property name="text">
+            <string>按你的使用习惯设置快捷键和保存位置。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="subTitleLabel">
-        <property name="text">
-         <string>可自定义全局截图快捷键和自动保存目录。</string>
+       <widget class="QFrame" name="hotkeySection">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
         </property>
+        <layout class="QVBoxLayout" name="hotkeySectionLayout">
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="hotkeySectionTitle">
+           <property name="text">
+            <string>全局快捷键</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="hotkeySectionDesc">
+           <property name="text">
+            <string>设置后可快速开始截图。建议使用组合键，减少误触。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="hotkeyLayout">
+           <property name="spacing">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="hotkeyLabel">
+             <property name="minimumSize">
+              <size>
+               <width>96</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>当前快捷键</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QKeySequenceEdit" name="hotkeyEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>46</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="resetHotkeyButton">
+             <property name="minimumSize">
+              <size>
+               <width>112</width>
+               <height>46</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>恢复默认</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="hotkeyLayout">
+       <widget class="QFrame" name="directorySection">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <layout class="QVBoxLayout" name="directorySectionLayout">
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="directorySectionTitle">
+           <property name="text">
+            <string>自动保存目录</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="directorySectionDesc">
+           <property name="text">
+            <string>选择截图保存位置。留空时会自动保存到默认图片文件夹中的“轻影截图”。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="dirLayout">
+           <property name="spacing">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="dirLabel">
+             <property name="minimumSize">
+              <size>
+               <width>96</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>当前目录</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="autoSaveDirEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>46</height>
+              </size>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+             <property name="placeholderText">
+              <string>留空则使用默认目录：图片/轻影截图</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="browseDirButton">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>46</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>浏览</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="clearDirButton">
+             <property name="minimumSize">
+              <size>
+               <width>82</width>
+               <height>46</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清空</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="directoryTipLabel">
+           <property name="text">
+            <string>如果想恢复默认保存位置，直接清空即可。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="hintCard">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <layout class="QHBoxLayout" name="hintLayout">
+         <property name="leftMargin">
+          <number>16</number>
+         </property>
+         <property name="topMargin">
+          <number>14</number>
+         </property>
+         <property name="rightMargin">
+          <number>16</number>
+         </property>
+         <property name="bottomMargin">
+          <number>14</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="hintLabel">
+           <property name="text">
+            <string>建议快捷键包含 Ctrl / Alt / Shift / Win 中的至少一个按键。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="footerLayout">
         <property name="spacing">
-         <number>8</number>
+         <number>10</number>
         </property>
         <item>
-         <widget class="QLabel" name="hotkeyLabel">
+         <spacer name="footerSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancelButton">
           <property name="minimumSize">
            <size>
-            <width>90</width>
-            <height>0</height>
+            <width>108</width>
+            <height>46</height>
            </size>
           </property>
           <property name="text">
-           <string>截图快捷键</string>
+           <string>取消</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QKeySequenceEdit" name="hotkeyEdit"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="resetHotkeyButton">
+         <widget class="QPushButton" name="saveButton">
+          <property name="minimumSize">
+           <size>
+            <width>132</width>
+            <height>46</height>
+           </size>
+          </property>
           <property name="text">
-           <string>恢复默认</string>
+           <string>保存设置</string>
           </property>
          </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="dirLayout">
-        <property name="spacing">
-         <number>8</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="dirLabel">
-          <property name="minimumSize">
-           <size>
-            <width>90</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>自动保存目录</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="autoSaveDirEdit">
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-          <property name="placeholderText">
-           <string>留空则使用默认目录：图片/轻影截图</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="browseDirButton">
-          <property name="text">
-           <string>浏览...</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="clearDirButton">
-          <property name="text">
-           <string>清空</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QLabel" name="hintLabel">
-        <property name="text">
-         <string>提示：全局热键必须包含 Ctrl/Alt/Shift/Win 之一。</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="footerLayout">
-     <item>
-      <spacer name="footerSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="cancelButton">
-       <property name="text">
-        <string>取消</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="saveButton">
-       <property name="text">
-        <string>保存设置</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

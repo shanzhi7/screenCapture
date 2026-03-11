@@ -70,6 +70,7 @@ private slots:
     void saveCurrentImage();
     void onSelectionFinished(const QRect &rect);
     void onSelectionCanceled();
+    void onOverlayColorValueCopied(const QString &colorText);
     void onOverlaySaveRequested(const QRect &rect);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE

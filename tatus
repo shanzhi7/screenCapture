@@ -1,0 +1,2484 @@
+warning: in the working copy of 'CMakeLists.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'aboutdialog.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'aboutdialog.ui', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'capturesettingsdialog.ui', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mainwindow.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mainwindow.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'resources.qrc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'selectionoverlay.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'selectionoverlay.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'styles/hyperos.qss', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/CMakeLists.txt b/CMakeLists.txt[m
+[1mindex c434c79..8c8c3f7 100644[m
+[1m--- a/CMakeLists.txt[m
+[1m+++ b/CMakeLists.txt[m
+[36m@@ -96,6 +96,15 @@[m [mqt_add_resources(screenCapture app_resources[m
+         icons/history.svg[m
+         icons/plus_white.svg[m
+         icons/info.svg[m
+[32m+[m[32m        icons/overlay_pen.svg[m
+[32m+[m[32m        icons/overlay_rect.svg[m
+[32m+[m[32m        icons/overlay_ellipse.svg[m
+[32m+[m[32m        icons/overlay_mosaic.svg[m
+[32m+[m[32m        icons/overlay_text.svg[m
+[32m+[m[32m        icons/overlay_scroll.svg[m
+[32m+[m[32m        icons/overlay_save.svg[m
+[32m+[m[32m        icons/overlay_close.svg[m
+[32m+[m[32m        icons/overlay_check.svg[m
+         icon.ico[m
+ )[m
+ [m
+[1mdiff --git a/CMakeLists.txt.user b/CMakeLists.txt.user[m
+[1mindex 8b685c8..67ffc24 100644[m
+[1m--- a/CMakeLists.txt.user[m
+[1m+++ b/CMakeLists.txt.user[m
+[36m@@ -1,6 +1,6 @@[m
+ <?xml version="1.0" encoding="UTF-8"?>[m
+ <!DOCTYPE QtCreatorProject>[m
+[31m-<!-- Written by QtCreator 17.0.0, 2026-03-09T19:07:05. -->[m
+[32m+[m[32m<!-- Written by QtCreator 17.0.0, 2026-03-10T21:41:31. -->[m
+ <qtcreator>[m
+  <data>[m
+   <variable>EnvironmentId</variable>[m
+[36m@@ -104,16 +104,16 @@[m
+     <value type="int" key="CMake.Configure.BaseEnvironment">2</value>[m
+     <value type="bool" key="CMake.Configure.ClearSystemEnvironment">false</value>[m
+     <valuelist type="QVariantList" key="CMake.Configure.UserEnvironmentChanges"/>[m
+[31m-    <value type="QString" key="CMake.Initial.Parameters">-DCMAKE_BUILD_TYPE:STRING=Debug[m
+[31m--DCMAKE_C_COMPILER:FILEPATH=%{Compiler:Executable:C}[m
+[32m+[m[32m    <value type="QString" key="CMake.Initial.Parameters">-DCMAKE_C_COMPILER:FILEPATH=%{Compiler:Executable:C}[m
+[32m+[m[32m-DCMAKE_COLOR_DIAGNOSTICS:BOOL=ON[m
+[32m+[m[32m-DCMAKE_BUILD_TYPE:STRING=Debug[m
+[32m+[m[32m-DQT_QMAKE_EXECUTABLE:FILEPATH=%{Qt:qmakeExecutable}[m
+ -DCMAKE_GENERATOR:STRING=Ninja[m
+[31m--DCMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=%{BuildConfig:BuildDirectory:NativeFilePath}/.qtc/package-manager/auto-setup.cmake[m
+[31m--DCMAKE_CXX_FLAGS_INIT:STRING=%{Qt:QML_DEBUG_FLAG}[m
+ -DCMAKE_CXX_COMPILER:FILEPATH=%{Compiler:Executable:Cxx}[m
+[31m--DCMAKE_PREFIX_PATH:PATH=%{Qt:QT_INSTALL_PREFIX}[m
+[31m--DCMAKE_COLOR_DIAGNOSTICS:BOOL=ON[m
+[32m+[m[32m-DCMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=%{BuildConfig:BuildDirectory:NativeFilePath}/.qtc/package-manager/auto-setup.cmake[m
+ -DQT_MAINTENANCE_TOOL:FILEPATH=E:/Qt/MaintenanceTool.exe[m
+[31m--DQT_QMAKE_EXECUTABLE:FILEPATH=%{Qt:qmakeExecutable}</value>[m
+[32m+[m[32m-DCMAKE_CXX_FLAGS_INIT:STRING=%{Qt:QML_DEBUG_FLAG}[m
+[32m+[m[32m-DCMAKE_PREFIX_PATH:PATH=%{Qt:QT_INSTALL_PREFIX}</value>[m
+     <value type="int" key="EnableQmlDebugging">0</value>[m
+     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">E:\qt_project\screenCapture\build\Desktop_Qt_6_5_3_MinGW_64_bit-Debug</value>[m
+     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">[m
+[36m@@ -232,16 +232,16 @@[m
+     <value type="int" key="CMake.Configure.BaseEnvironment">2</value>[m
+     <value type="bool" key="CMake.Configure.ClearSystemEnvironment">false</value>[m
+     <valuelist type="QVariantList" key="CMake.Configure.UserEnvironmentChanges"/>[m
+[31m-    <value type="QString" key="CMake.Initial.Parameters">-DCMAKE_BUILD_TYPE:STRING=Release[m
+[31m--DCMAKE_C_COMPILER:FILEPATH=%{Compiler:Executable:C}[m
+[32m+[m[32m    <value type="QString" key="CMake.Initial.Parameters">-DCMAKE_C_COMPILER:FILEPATH=%{Compiler:Executable:C}[m
+[32m+[m[32m-DCMAKE_COLOR_DIAGNOSTICS:BOOL=ON[m
+[32m+[m[32m-DCMAKE_BUILD_TYPE:STRING=Release[m
+[32m+[m[32m-DQT_QMAKE_EXECUTABLE:FILEPATH=%{Qt:qmakeExecutable}[m
+ -DCMAKE_GENERATOR:STRING=Ninja[m
+[31m--DCMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=%{BuildConfig:BuildDirectory:NativeFilePath}/.qtc/package-manager/auto-setup.cmake[m
+[31m--DCMAKE_CXX_FLAGS_INIT:STRING=%{Qt:QML_DEBUG_FLAG}[m
+ -DCMAKE_CXX_COMPILER:FILEPATH=%{Compiler:Executable:Cxx}[m
+[31m--DCMAKE_PREFIX_PATH:PATH=%{Qt:QT_INSTALL_PREFIX}[m
+[31m--DCMAKE_COLOR_DIAGNOSTICS:BOOL=ON[m
+[32m+[m[32m-DCMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=%{BuildConfig:BuildDirectory:NativeFilePath}/.qtc/package-manager/auto-setup.cmake[m
+ -DQT_MAINTENANCE_TOOL:FILEPATH=E:/Qt/MaintenanceTool.exe[m
+[31m--DQT_QMAKE_EXECUTABLE:FILEPATH=%{Qt:qmakeExecutable}</value>[m
+[32m+[m[32m-DCMAKE_CXX_FLAGS_INIT:STRING=%{Qt:QML_DEBUG_FLAG}[m
+[32m+[m[32m-DCMAKE_PREFIX_PATH:PATH=%{Qt:QT_INSTALL_PREFIX}</value>[m
+     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">E:\qt_project\screenCapture\build\Desktop_Qt_6_5_3_MinGW_64_bit-Release</value>[m
+     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">[m
+      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">[m
+[1mdiff --git a/aboutdialog.cpp b/aboutdialog.cpp[m
+[1mindex b247709..f2fd534 100644[m
+[1m--- a/aboutdialog.cpp[m
+[1m+++ b/aboutdialog.cpp[m
+[36m@@ -25,10 +25,10 @@[m [mAboutDialog::AboutDialog(QWidget *parent)[m
+     connect(ui->closeButton, &QPushButton::clicked, this, &QDialog::accept);[m
+ [m
+     const QString buildTime = QStringLiteral(__DATE__) + QStringLiteral(" ") + QStringLiteral(__TIME__);[m
+[31m-    ui->contentLabel->setText(QStringLiteral("轻影截图（LightShadowCapture）\n"[m
+[32m+[m[32m    ui->contentLabel->setText(QStringLiteral("应用：轻影截图（LightShadowCapture）\n"[m
+                                              "版本：v0.2\n"[m
+[31m-                                             "构建时间：%1\n\n"[m
+[31m-                                             "反馈建议：可在项目仓库提交 Issue，或联系维护者。")[m
+[32m+[m[32m                                             "构建时间：%1\n"[m
+[32m+[m[32m                                             "功能：全屏截图、区域截图、历史记录、长截图")[m
+                                  .arg(buildTime));[m
+ }[m
+ [m
+[36m@@ -43,5 +43,5 @@[m [mvoid AboutDialog::onCopyInfoClicked()[m
+                          + QStringLiteral("\n复制时间：")[m
+                          + QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));[m
+     QApplication::clipboard()->setText(info);[m
+[31m-    ui->copyInfoButton->setText(QStringLiteral("已复制"));[m
+[31m-}[m
+[32m+[m[32m    ui->copyInfoButton->setText(QStringLiteral("已复制信息"));[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/aboutdialog.ui b/aboutdialog.ui[m
+[1mindex d135ba5..69dc6ab 100644[m
+[1m--- a/aboutdialog.ui[m
+[1m+++ b/aboutdialog.ui[m
+[36m@@ -6,8 +6,8 @@[m
+    <rect>[m
+     <x>0</x>[m
+     <y>0</y>[m
+[31m-    <width>540</width>[m
+[31m-    <height>300</height>[m
+[32m+[m[32m    <width>620</width>[m
+[32m+[m[32m    <height>430</height>[m
+    </rect>[m
+   </property>[m
+   <property name="windowTitle">[m
+[36m@@ -15,94 +15,222 @@[m
+   </property>[m
+   <layout class="QVBoxLayout" name="rootLayout">[m
+    <property name="leftMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="topMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="rightMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="bottomMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="spacing">[m
+[31m-    <number>12</number>[m
+[32m+[m[32m    <number>0</number>[m
+    </property>[m
+    <item>[m
+[31m-    <widget class="QFrame" name="aboutCard">[m
+[32m+[m[32m    <widget class="QFrame" name="dialogCard">[m
+      <property name="frameShape">[m
+       <enum>QFrame::NoFrame</enum>[m
+      </property>[m
+      <layout class="QVBoxLayout" name="cardLayout">[m
+       <property name="leftMargin">[m
+[31m-       <number>18</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="topMargin">[m
+[31m-       <number>16</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="rightMargin">[m
+[31m-       <number>18</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="bottomMargin">[m
+[31m-       <number>16</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="spacing">[m
+[31m-       <number>12</number>[m
+[32m+[m[32m       <number>16</number>[m
+       </property>[m
+       <item>[m
+[31m-       <widget class="QLabel" name="titleLabel">[m
+[31m-        <property name="text">[m
+[31m-         <string>关于轻影截图</string>[m
+[32m+[m[32m       <widget class="QFrame" name="heroFrame">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+         </property>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="heroLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>20</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>20</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>8</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="heroBadgeLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>轻影截图</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="titleLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>关于轻影截图</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="subTitleLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>一款轻快顺手的截图工具，适合日常快速截图与保存。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+        </widget>[m
+       </item>[m
+       <item>[m
+[31m-       <widget class="QLabel" name="contentLabel">[m
+[31m-        <property name="text">[m
+[31m-         <string/>[m
+[32m+[m[32m       <widget class="QFrame" name="infoSection">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+         </property>[m
+[31m-        <property name="wordWrap">[m
+[31m-         <bool>true</bool>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="infoSectionLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>10</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="infoSectionTitle">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>应用信息</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="contentLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string/>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+[32m+[m[32m       </widget>[m
+[32m+[m[32m      </item>[m
+[32m+[m[32m      <item>[m
+[32m+[m[32m       <widget class="QFrame" name="feedbackSection">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+         </property>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="feedbackSectionLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>8</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="feedbackTitleLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>反馈建议</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="feedbackBodyLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>如果遇到问题或想提出建议，可以先复制应用信息，再附上截图或现象描述进行反馈。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+        </widget>[m
+       </item>[m
+[32m+[m[32m      <item>[m
+[32m+[m[32m       <layout class="QHBoxLayout" name="footerLayout">[m
+[32m+[m[32m        <property name="spacing">[m
+[32m+[m[32m         <number>10</number>[m
+[32m+[m[32m        </property>[m
+[32m+[m[32m        <item>[m
+[32m+[m[32m         <widget class="QPushButton" name="copyInfoButton">[m
+[32m+[m[32m          <property name="minimumSize">[m
+[32m+[m[32m           <size>[m
+[32m+[m[32m            <width>132</width>[m
+[32m+[m[32m            <height>46</height>[m
+[32m+[m[32m           </size>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m          <property name="text">[m
+[32m+[m[32m           <string>复制信息</string>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m         </widget>[m
+[32m+[m[32m        </item>[m
+[32m+[m[32m        <item>[m
+[32m+[m[32m         <spacer name="footerSpacer">[m
+[32m+[m[32m          <property name="orientation">[m
+[32m+[m[32m           <enum>Qt::Horizontal</enum>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m          <property name="sizeHint" stdset="0">[m
+[32m+[m[32m           <size>[m
+[32m+[m[32m            <width>40</width>[m
+[32m+[m[32m            <height>20</height>[m
+[32m+[m[32m           </size>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m         </spacer>[m
+[32m+[m[32m        </item>[m
+[32m+[m[32m        <item>[m
+[32m+[m[32m         <widget class="QPushButton" name="closeButton">[m
+[32m+[m[32m          <property name="minimumSize">[m
+[32m+[m[32m           <size>[m
+[32m+[m[32m            <width>108</width>[m
+[32m+[m[32m            <height>46</height>[m
+[32m+[m[32m           </size>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m          <property name="text">[m
+[32m+[m[32m           <string>关闭</string>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m         </widget>[m
+[32m+[m[32m        </item>[m
+[32m+[m[32m       </layout>[m
+[32m+[m[32m      </item>[m
+      </layout>[m
+     </widget>[m
+    </item>[m
+[31m-   <item>[m
+[31m-    <layout class="QHBoxLayout" name="footerLayout">[m
+[31m-     <item>[m
+[31m-      <widget class="QPushButton" name="copyInfoButton">[m
+[31m-       <property name="text">[m
+[31m-        <string>复制信息</string>[m
+[31m-       </property>[m
+[31m-      </widget>[m
+[31m-     </item>[m
+[31m-     <item>[m
+[31m-      <spacer name="footerSpacer">[m
+[31m-       <property name="orientation">[m
+[31m-        <enum>Qt::Horizontal</enum>[m
+[31m-       </property>[m
+[31m-       <property name="sizeHint" stdset="0">[m
+[31m-        <size>[m
+[31m-         <width>40</width>[m
+[31m-         <height>20</height>[m
+[31m-        </size>[m
+[31m-       </property>[m
+[31m-      </spacer>[m
+[31m-     </item>[m
+[31m-     <item>[m
+[31m-      <widget class="QPushButton" name="closeButton">[m
+[31m-       <property name="text">[m
+[31m-        <string>关闭</string>[m
+[31m-       </property>[m
+[31m-      </widget>[m
+[31m-     </item>[m
+[31m-    </layout>[m
+[31m-   </item>[m
+   </layout>[m
+  </widget>[m
+  <resources/>[m
+  <connections/>[m
+[31m-</ui>[m
+[32m+[m[32m</ui>[m
+\ No newline at end of file[m
+[1mdiff --git a/capturesettingsdialog.ui b/capturesettingsdialog.ui[m
+[1mindex afb1305..06f104d 100644[m
+[1m--- a/capturesettingsdialog.ui[m
+[1m+++ b/capturesettingsdialog.ui[m
+[36m@@ -6,8 +6,8 @@[m
+    <rect>[m
+     <x>0</x>[m
+     <y>0</y>[m
+[31m-    <width>640</width>[m
+[31m-    <height>340</height>[m
+[32m+[m[32m    <width>720</width>[m
+[32m+[m[32m    <height>458</height>[m
+    </rect>[m
+   </property>[m
+   <property name="windowTitle">[m
+[36m@@ -15,172 +15,371 @@[m
+   </property>[m
+   <layout class="QVBoxLayout" name="rootLayout">[m
+    <property name="leftMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="topMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="rightMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="bottomMargin">[m
+[31m-    <number>18</number>[m
+[32m+[m[32m    <number>22</number>[m
+    </property>[m
+    <property name="spacing">[m
+[31m-    <number>12</number>[m
+[32m+[m[32m    <number>0</number>[m
+    </property>[m
+    <item>[m
+[31m-    <widget class="QFrame" name="settingsCard">[m
+[32m+[m[32m    <widget class="QFrame" name="dialogCard">[m
+      <property name="frameShape">[m
+       <enum>QFrame::NoFrame</enum>[m
+      </property>[m
+      <layout class="QVBoxLayout" name="cardLayout">[m
+       <property name="leftMargin">[m
+[31m-       <number>18</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="topMargin">[m
+[31m-       <number>16</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="rightMargin">[m
+[31m-       <number>18</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="bottomMargin">[m
+[31m-       <number>16</number>[m
+[32m+[m[32m       <number>24</number>[m
+       </property>[m
+       <property name="spacing">[m
+[31m-       <number>14</number>[m
+[32m+[m[32m       <number>16</number>[m
+       </property>[m
+       <item>[m
+[31m-       <widget class="QLabel" name="titleLabel">[m
+[31m-        <property name="text">[m
+[31m-         <string>截图设置</string>[m
+[32m+[m[32m       <widget class="QFrame" name="heroFrame">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+[32m+[m[32m        </property>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="heroLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>20</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>20</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>8</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="heroBadgeLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>轻影截图设置</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="titleLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>截图设置</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="subTitleLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>按你的使用习惯设置快捷键和保存位置。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+[32m+[m[32m       </widget>[m
+[32m+[m[32m      </item>[m
+[32m+[m[32m      <item>[m
+[32m+[m[32m       <widget class="QFrame" name="hotkeySection">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+[32m+[m[32m        </property>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="hotkeySectionLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>12</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="hotkeySectionTitle">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>全局快捷键</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="hotkeySectionDesc">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>设置后可快速开始截图。建议使用组合键，减少误触。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <layout class="QHBoxLayout" name="hotkeyLayout">[m
+[32m+[m[32m           <property name="spacing">[m
+[32m+[m[32m            <number>10</number>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QLabel" name="hotkeyLabel">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>96</width>[m
+[32m+[m[32m               <height>0</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="text">[m
+[32m+[m[32m              <string>当前快捷键</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QKeySequenceEdit" name="hotkeyEdit">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>0</width>[m
+[32m+[m[32m               <height>46</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QPushButton" name="resetHotkeyButton">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>112</width>[m
+[32m+[m[32m               <height>46</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="text">[m
+[32m+[m[32m              <string>恢复默认</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m          </layout>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+[32m+[m[32m       </widget>[m
+[32m+[m[32m      </item>[m
+[32m+[m[32m      <item>[m
+[32m+[m[32m       <widget class="QFrame" name="directorySection">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+         </property>[m
+[32m+[m[32m        <layout class="QVBoxLayout" name="directorySectionLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>18</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>12</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="directorySectionTitle">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>自动保存目录</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="directorySectionDesc">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>选择截图保存位置。留空时会自动保存到默认图片文件夹中的“轻影截图”。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <layout class="QHBoxLayout" name="dirLayout">[m
+[32m+[m[32m           <property name="spacing">[m
+[32m+[m[32m            <number>10</number>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QLabel" name="dirLabel">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>96</width>[m
+[32m+[m[32m               <height>0</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="text">[m
+[32m+[m[32m              <string>当前目录</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QLineEdit" name="autoSaveDirEdit">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>0</width>[m
+[32m+[m[32m               <height>46</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="readOnly">[m
+[32m+[m[32m              <bool>true</bool>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="placeholderText">[m
+[32m+[m[32m              <string>留空则使用默认目录：图片/轻影截图</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QPushButton" name="browseDirButton">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>90</width>[m
+[32m+[m[32m               <height>46</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="text">[m
+[32m+[m[32m              <string>浏览</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m           <item>[m
+[32m+[m[32m            <widget class="QPushButton" name="clearDirButton">[m
+[32m+[m[32m             <property name="minimumSize">[m
+[32m+[m[32m              <size>[m
+[32m+[m[32m               <width>82</width>[m
+[32m+[m[32m               <height>46</height>[m
+[32m+[m[32m              </size>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m             <property name="text">[m
+[32m+[m[32m              <string>清空</string>[m
+[32m+[m[32m             </property>[m
+[32m+[m[32m            </widget>[m
+[32m+[m[32m           </item>[m
+[32m+[m[32m          </layout>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="directoryTipLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>如果想恢复默认保存位置，直接清空即可。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+        </widget>[m
+       </item>[m
+       <item>[m
+[31m-       <widget class="QLabel" name="subTitleLabel">[m
+[31m-        <property name="text">[m
+[31m-         <string>可自定义全局截图快捷键和自动保存目录。</string>[m
+[32m+[m[32m       <widget class="QFrame" name="hintCard">[m
+[32m+[m[32m        <property name="frameShape">[m
+[32m+[m[32m         <enum>QFrame::NoFrame</enum>[m
+         </property>[m
+[32m+[m[32m        <layout class="QHBoxLayout" name="hintLayout">[m
+[32m+[m[32m         <property name="leftMargin">[m
+[32m+[m[32m          <number>16</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="topMargin">[m
+[32m+[m[32m          <number>14</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="rightMargin">[m
+[32m+[m[32m          <number>16</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="bottomMargin">[m
+[32m+[m[32m          <number>14</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <property name="spacing">[m
+[32m+[m[32m          <number>0</number>[m
+[32m+[m[32m         </property>[m
+[32m+[m[32m         <item>[m
+[32m+[m[32m          <widget class="QLabel" name="hintLabel">[m
+[32m+[m[32m           <property name="text">[m
+[32m+[m[32m            <string>建议快捷键包含 Ctrl / Alt / Shift / Win 中的至少一个按键。</string>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m           <property name="wordWrap">[m
+[32m+[m[32m            <bool>true</bool>[m
+[32m+[m[32m           </property>[m
+[32m+[m[32m          </widget>[m
+[32m+[m[32m         </item>[m
+[32m+[m[32m        </layout>[m
+        </widget>[m
+       </item>[m
+       <item>[m
+[31m-       <layout class="QHBoxLayout" name="hotkeyLayout">[m
+[32m+[m[32m       <layout class="QHBoxLayout" name="footerLayout">[m
+         <property name="spacing">[m
+[31m-         <number>8</number>[m
+[32m+[m[32m         <number>10</number>[m
+         </property>[m
+         <item>[m
+[31m-         <widget class="QLabel" name="hotkeyLabel">[m
+[31m-          <property name="minimumSize">[m
+[32m+[m[32m         <spacer name="footerSpacer">[m
+[32m+[m[32m          <property name="orientation">[m
+[32m+[m[32m           <enum>Qt::Horizontal</enum>[m
+[32m+[m[32m          </property>[m
+[32m+[m[32m          <property name="sizeHint" stdset="0">[m
+            <size>[m
+[31m-            <width>90</width>[m
+[31m-            <height>0</height>[m
+[32m+[m[32m            <width>40</width>[m
+[32m+[m[32m            <height>20</height>[m
+            </size>[m
+           </property>[m
+[31m-          <property name="text">[m
+[31m-           <string>截图快捷键</string>[m
+[31m-          </property>[m
+[31m-         </widget>[m
+[31m-        </item>[m
+[31m-        <item>[m
+[31m-         <widget class="QKeySequenceEdit" name="hotkeyEdit"/>[m
+[31m-        </item>[m
+[31m-        <item>[m
+[31m-         <widget class="QPushButton" name="resetHotkeyButton">[m
+[31m-          <property name="text">[m
+[31m-           <string>恢复默认</string>[m
+[31m-          </property>[m
+[31m-         </widget>[m
+[32m+[m[32m         </spacer>[m
+         </item>[m
+[31m-       </layout>[m
+[31m-      </item>[m
+[31m-      <item>[m
+[31m-       <layout class="QHBoxLayout" name="dirLayout">[m
+[31m-        <property name="spacing">[m
+[31m-         <number>8</number>[m
+[31m-        </property>[m
+         <item>[m
+[31m-         <widget class="QLabel" name="dirLabel">[m
+[32m+[m[32m         <widget class="QPushButton" name="cancelButton">[m
+           <property name="minimumSize">[m
+            <size>[m
+[31m-            <width>90</width>[m
+[31m-            <height>0</height>[m
+[32m+[m[32m            <width>108</width>[m
+[32m+[m[32m            <height>46</height>[m
+            </size>[m
+           </property>[m
+           <property name="text">[m
+[31m-           <string>自动保存目录</string>[m
+[31m-          </property>[m
+[31m-         </widget>[m
+[31m-        </item>[m
+[31m-        <item>[m
+[31m-         <widget class="QLineEdit" name="autoSaveDirEdit">[m
+[31m-          <property name="readOnly">[m
+[31m-           <bool>true</bool>[m
+[31m-          </property>[m
+[31m-          <property name="placeholderText">[m
+[31m-           <string>留空则使用默认目录：图片/轻影截图</string>[m
+[32m+[m[32m           <string>取消</string>[m
+           </property>[m
+          </widget>[m
+         </item>[m
+         <item>[m
+[31m-         <widget class="QPushButton" name="browseDirButton">[m
+[31m-          <property name="text">[m
+[31m-           <string>浏览...</string>[m
+[32m+[m[32m         <widget class="QPushButton" name="saveButton">[m
+[32m+[m[32m          <property name="minimumSize">[m
+[32m+[m[32m           <size>[m
+[32m+[m[32m            <width>132</width>[m
+[32m+[m[32m            <height>46</height>[m
+[32m+[m[32m           </size>[m
+           </property>[m
+[31m-         </widget>[m
+[31m-        </item>[m
+[31m-        <item>[m
+[31m-         <widget class="QPushButton" name="clearDirButton">[m
+           <property name="text">[m
+[31m-           <string>清空</string>[m
+[32m+[m[32m           <string>保存设置</string>[m
+           </property>[m
+          </widget>[m
+         </item>[m
+        </layout>[m
+       </item>[m
+[31m-      <item>[m
+[31m-       <widget class="QLabel" name="hintLabel">[m
+[31m-        <property name="text">[m
+[31m-         <string>提示：全局热键必须包含 Ctrl/Alt/Shift/Win 之一。</string>[m
+[31m-        </property>[m
+[31m-       </widget>[m
+[31m-      </item>[m
+      </layout>[m
+     </widget>[m
+    </item>[m
+[31m-   <item>[m
+[31m-    <layout class="QHBoxLayout" name="footerLayout">[m
+[31m-     <item>[m
+[31m-      <spacer name="footerSpacer">[m
+[31m-       <property name="orientation">[m
+[31m-        <enum>Qt::Horizontal</enum>[m
+[31m-       </property>[m
+[31m-       <property name="sizeHint" stdset="0">[m
+[31m-        <size>[m
+[31m-         <width>40</width>[m
+[31m-         <height>20</height>[m
+[31m-        </size>[m
+[31m-       </property>[m
+[31m-      </spacer>[m
+[31m-     </item>[m
+[31m-     <item>[m
+[31m-      <widget class="QPushButton" name="cancelButton">[m
+[31m-       <property name="text">[m
+[31m-        <string>取消</string>[m
+[31m-       </property>[m
+[31m-      </widget>[m
+[31m-     </item>[m
+[31m-     <item>[m
+[31m-      <widget class="QPushButton" name="saveButton">[m
+[31m-       <property name="text">[m
+[31m-        <string>保存设置</string>[m
+[31m-       </property>[m
+[31m-      </widget>[m
+[31m-     </item>[m
+[31m-    </layout>[m
+[31m-   </item>[m
+   </layout>[m
+  </widget>[m
+  <resources/>[m
+  <connections/>[m
+[31m-</ui>[m
+[32m+[m[32m</ui>[m
+\ No newline at end of file[m
+[1mdiff --git a/mainwindow.cpp b/mainwindow.cpp[m
+[1mindex 6eef0d7..6f084fd 100644[m
+[1m--- a/mainwindow.cpp[m
+[1m+++ b/mainwindow.cpp[m
+[36m@@ -425,6 +425,7 @@[m [mvoid MainWindow::startCapture()[m
+     m_overlay = new SelectionOverlay();[m
+     connect(m_overlay, &SelectionOverlay::selectionFinished, this, &MainWindow::onSelectionFinished);[m
+     connect(m_overlay, &SelectionOverlay::selectionCanceled, this, &MainWindow::onSelectionCanceled);[m
+[32m+[m[32m    connect(m_overlay, &SelectionOverlay::colorValueCopied, this, &MainWindow::onOverlayColorValueCopied);[m
+     connect(m_overlay, &SelectionOverlay::saveRequested, this, &MainWindow::onOverlaySaveRequested);[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     connect(m_overlay, &SelectionOverlay::longCaptureToggled, this, &MainWindow::onOverlayLongCaptureToggled);[m
+[36m@@ -506,7 +507,11 @@[m [mvoid MainWindow::onSelectionFinished(const QRect &rect)[m
+ {[m
+     QTimer::singleShot(90, this, [this, rect]()[m
+     {[m
+[31m-        const QPixmap pixmap = captureRegion(rect);[m
+[32m+[m[32m        QPixmap pixmap = captureRegion(rect);[m
+[32m+[m[32m        if (!pixmap.isNull() && m_overlay != nullptr)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            pixmap = m_overlay->applyEditsToPixmap(pixmap, rect);[m
+[32m+[m[32m        }[m
+ [m
+         const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)[m
+                                                     ? true[m
+[36m@@ -559,11 +564,33 @@[m [mvoid MainWindow::onSelectionCanceled()[m
+     endCaptureSession();[m
+ }[m
+ [m
+[32m+[m[32mvoid MainWindow::onOverlayColorValueCopied(const QString &colorText)[m
+[32m+[m[32m{[m
+[32m+[m[32m    resetLongCaptureState();[m
+[32m+[m
+[32m+[m[32m    const bool shouldRestoreWindow = (m_uiStateCoordinator == nullptr)[m
+[32m+[m[32m                                         ? true[m
+[32m+[m[32m                                         : m_uiStateCoordinator->shouldRestoreMainWindowAfterCapture();[m
+[32m+[m[32m    if (shouldRestoreWindow)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        restoreWindowIfNeeded();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    endCaptureSession();[m
+[32m+[m[32m    showTip(colorText.isEmpty()[m
+[32m+[m[32m                ? QStringLiteral("已复制色值")[m
+[32m+[m[32m                : QStringLiteral("已复制色值：%1").arg(colorText));[m
+[32m+[m[32m}[m
+[32m+[m
+ void MainWindow::onOverlaySaveRequested(const QRect &rect)[m
+ {[m
+     QTimer::singleShot(90, this, [this, rect]()[m
+     {[m
+[31m-        const QPixmap pixmap = captureRegion(rect);[m
+[32m+[m[32m        QPixmap pixmap = captureRegion(rect);[m
+[32m+[m[32m        if (!pixmap.isNull() && m_overlay != nullptr)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            pixmap = m_overlay->applyEditsToPixmap(pixmap, rect);[m
+[32m+[m[32m        }[m
+ [m
+         const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)[m
+                                                     ? true[m
+[36m@@ -609,9 +636,9 @@[m [mvoid MainWindow::onOverlaySaveRequested(const QRect &rect)[m
+                 showTip(QStringLiteral("自动保存失败"));[m
+             }[m
+         }[m
+[31m-        else[m
+[32m+[m[32m        else if (saveCurrentImageWithDialog(decision.shouldRestoreWindow))[m
+         {[m
+[31m-            saveCurrentImageWithDialog(decision.shouldRestoreWindow);[m
+[32m+[m[32m            // 提示已在保存逻辑内处理[m
+         }[m
+ [m
+         endCaptureSession();[m
+[36m@@ -728,7 +755,13 @@[m [mvoid MainWindow::onLongCaptureStatusTextChanged(const QString &text)[m
+ [m
+ void MainWindow::onLongCaptureCopyReady(const QPixmap &pixmap)[m
+ {[m
+[31m-    if (pixmap.isNull())[m
+[32m+[m[32m    QPixmap finalPixmap = pixmap;[m
+[32m+[m[32m    if (!finalPixmap.isNull() && m_overlay != nullptr)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        finalPixmap = m_overlay->applyEditsToPixmap(finalPixmap, QRect(QPoint(0, 0), finalPixmap.size()));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (finalPixmap.isNull())[m
+     {[m
+         showTip(QStringLiteral("长截图复制失败"));[m
+         resetLongCaptureState();[m
+[36m@@ -752,9 +785,9 @@[m [mvoid MainWindow::onLongCaptureCopyReady(const QPixmap &pixmap)[m
+         restoreWindowIfNeeded();[m
+     }[m
+ [m
+[31m-    updatePreview(pixmap);[m
+[31m-    appendCaptureToHistory(pixmap, QStringLiteral("长截图"));[m
+[31m-    QApplication::clipboard()->setPixmap(pixmap);[m
+[32m+[m[32m    updatePreview(finalPixmap);[m
+[32m+[m[32m    appendCaptureToHistory(finalPixmap, QStringLiteral("长截图"));[m
+[32m+[m[32m    QApplication::clipboard()->setPixmap(finalPixmap);[m
+     showTip(QStringLiteral("长截图已复制"));[m
+ [m
+     resetLongCaptureState();[m
+[36m@@ -763,7 +796,13 @@[m [mvoid MainWindow::onLongCaptureCopyReady(const QPixmap &pixmap)[m
+ [m
+ void MainWindow::onLongCaptureSaveReady(const QPixmap &pixmap)[m
+ {[m
+[31m-    if (pixmap.isNull())[m
+[32m+[m[32m    QPixmap finalPixmap = pixmap;[m
+[32m+[m[32m    if (!finalPixmap.isNull() && m_overlay != nullptr)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        finalPixmap = m_overlay->applyEditsToPixmap(finalPixmap, QRect(QPoint(0, 0), finalPixmap.size()));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (finalPixmap.isNull())[m
+     {[m
+         showTip(QStringLiteral("长截图保存失败"));[m
+         resetLongCaptureState();[m
+[36m@@ -787,15 +826,15 @@[m [mvoid MainWindow::onLongCaptureSaveReady(const QPixmap &pixmap)[m
+         restoreWindowIfNeeded();[m
+     }[m
+ [m
+[31m-    updatePreview(pixmap);[m
+[31m-    appendCaptureToHistory(pixmap, QStringLiteral("长截图"));[m
+[32m+[m[32m    updatePreview(finalPixmap);[m
+[32m+[m[32m    appendCaptureToHistory(finalPixmap, QStringLiteral("长截图"));[m
+     saveCurrentImageWithDialog(decision.shouldRestoreWindow);[m
+ [m
+     resetLongCaptureState();[m
+     endCaptureSession();[m
+ }[m
+ [m
+[31m-void MainWindow::onLongCaptureFailed(const QString &message)[m
+[32m+[m[32mvoid MainWindow::onLongCaptureFailed(const QString &message)void MainWindow::onLongCaptureFailed(const QString &message)[m
+ {[m
+     if (m_overlay != nullptr)[m
+     {[m
+[1mdiff --git a/mainwindow.h b/mainwindow.h[m
+[1mindex c1a6d72..c87cac3 100644[m
+[1m--- a/mainwindow.h[m
+[1m+++ b/mainwindow.h[m
+[36m@@ -70,6 +70,7 @@[m [mprivate slots:[m
+     void saveCurrentImage();[m
+     void onSelectionFinished(const QRect &rect);[m
+     void onSelectionCanceled();[m
+[32m+[m[32m    void onOverlayColorValueCopied(const QString &colorText);[m
+     void onOverlaySaveRequested(const QRect &rect);[m
+ [m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[1mdiff --git a/resources.qrc b/resources.qrc[m
+[1mindex de08424..64479a4 100644[m
+[1m--- a/resources.qrc[m
+[1m+++ b/resources.qrc[m
+[36m@@ -12,6 +12,15 @@[m
+         <file alias="history.svg">icons/history.svg</file>[m
+         <file alias="plus_white.svg">icons/plus_white.svg</file>[m
+         <file alias="info.svg">icons/info.svg</file>[m
+[32m+[m[32m        <file alias="overlay_pen.svg">icons/overlay_pen.svg</file>[m
+[32m+[m[32m        <file alias="overlay_rect.svg">icons/overlay_rect.svg</file>[m
+[32m+[m[32m        <file alias="overlay_ellipse.svg">icons/overlay_ellipse.svg</file>[m
+[32m+[m[32m        <file alias="overlay_mosaic.svg">icons/overlay_mosaic.svg</file>[m
+[32m+[m[32m        <file alias="overlay_text.svg">icons/overlay_text.svg</file>[m
+[32m+[m[32m        <file alias="overlay_scroll.svg">icons/overlay_scroll.svg</file>[m
+[32m+[m[32m        <file alias="overlay_save.svg">icons/overlay_save.svg</file>[m
+[32m+[m[32m        <file alias="overlay_close.svg">icons/overlay_close.svg</file>[m
+[32m+[m[32m        <file alias="overlay_check.svg">icons/overlay_check.svg</file>[m
+     </qresource>[m
+     <qresource prefix="/">[m
+         <file alias="icon.ico">icon.ico</file>[m
+[1mdiff --git a/selectionoverlay.cpp b/selectionoverlay.cpp[m
+[1mindex 74a2dab..485c250 100644[m
+[1m--- a/selectionoverlay.cpp[m
+[1m+++ b/selectionoverlay.cpp[m
+[36m@@ -4,11 +4,16 @@[m
+ #include "longcapturepreviewpanel.h"[m
+ #endif[m
+ [m
+[32m+[m[32m#include <QApplication>[m
+[32m+[m[32m#include <QClipboard>[m
+[32m+[m[32m#include <QColor>[m
+ #include <QContextMenuEvent>[m
+[32m+[m[32m#include <QCursor>[m
+ #include <QEvent>[m
+ #include <QFrame>[m
+ #include <QGuiApplication>[m
+ #include <QHBoxLayout>[m
+[32m+[m[32m#include <QIcon>[m
+ #include <QKeyEvent>[m
+ #include <QLabel>[m
+ #include <QMouseEvent>[m
+[36m@@ -22,489 +27,376 @@[m
+ #include <QWheelEvent>[m
+ #endif[m
+ [m
+[31m-SelectionOverlay::SelectionOverlay(QWidget *parent)[m
+[31m-    : QWidget(parent)[m
+[32m+[m[32mnamespace[m
+ {[m
+[31m-    QRect virtualDesktop;[m
+[31m-    const QList<QScreen *> screens = QGuiApplication::screens();[m
+[31m-    for (QScreen *screen : screens)[m
+[32m+[m[32mconstexpr QSize kCursorInfoPanelSize(176, 154);[m
+[32m+[m[32mconstexpr int kCursorInfoPanelOffset = 18;[m
+[32m+[m[32mconstexpr int kCursorInfoPanelMargin = 10;[m
+[32m+[m[32mconstexpr int kCursorMagnifierGrid = 11;[m
+[32m+[m[32mconstexpr int kCursorInfoBottomHeight = 56;[m
+[32m+[m[32mconstexpr qreal kOverlayPenWidth = 3.2;[m
+[32m+[m[32mconst QColor kDefaultAnnotationColor(255, 96, 110);[m
+[32m+[m
+[32m+[m[32mQCursor penToolCursor()[m
+[32m+[m[32m{[m
+[32m+[m[32m    QIcon icon(QStringLiteral(":/icons/overlay_pen.svg"));[m
+[32m+[m[32m    if (icon.isNull())[m
+     {[m
+[31m-        if (screen == nullptr)[m
+[31m-        {[m
+[31m-            continue;[m
+[31m-        }[m
+[31m-[m
+[31m-        virtualDesktop = virtualDesktop.isNull()[m
+[31m-                             ? screen->geometry()[m
+[31m-                             : virtualDesktop.united(screen->geometry());[m
+[32m+[m[32m        return QCursor(Qt::CrossCursor);[m
+     }[m
+ [m
+[31m-    if (virtualDesktop.isNull())[m
+[32m+[m[32m    const QPixmap pixmap = icon.pixmap(24, 24);[m
+[32m+[m[32m    if (pixmap.isNull())[m
+     {[m
+[31m-        virtualDesktop = QRect(0, 0, 1280, 720);[m
+[32m+[m[32m        return QCursor(Qt::CrossCursor);[m
+     }[m
+ [m
+[31m-    setGeometry(virtualDesktop);[m
+[31m-    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);[m
+[31m-    setAttribute(Qt::WA_TranslucentBackground);[m
+[31m-    setAttribute(Qt::WA_DeleteOnClose, true);[m
+[31m-    setCursor(Qt::CrossCursor);[m
+[31m-    setFocusPolicy(Qt::StrongFocus);[m
+[31m-[m
+[31m-    auto *cancelShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);[m
+[31m-    cancelShortcut->setContext(Qt::ApplicationShortcut);[m
+[31m-    connect(cancelShortcut, &QShortcut::activated, this, [this]()[m
+[31m-    {[m
+[31m-        emit selectionCanceled();[m
+[31m-        close();[m
+[31m-    });[m
+[31m-[m
+[31m-    auto *confirmShortcut = new QShortcut(QKeySequence(Qt::Key_Return), this);[m
+[31m-    confirmShortcut->setContext(Qt::ApplicationShortcut);[m
+[31m-    connect(confirmShortcut, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);[m
+[31m-[m
+[31m-    auto *confirmShortcutEnter = new QShortcut(QKeySequence(Qt::Key_Enter), this);[m
+[31m-    confirmShortcutEnter->setContext(Qt::ApplicationShortcut);[m
+[31m-    connect(confirmShortcutEnter, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);[m
+[31m-[m
+[31m-    ensureToolbar();[m
+[31m-}[m
+[31m-[m
+[31m-QRect SelectionOverlay::selectedRect() const[m
+[31m-{[m
+[31m-    return m_selectedRect;[m
+[32m+[m[32m    return QCursor(pixmap, 3, 21);[m
+ }[m
+ [m
+[31m-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-void SelectionOverlay::setLongCaptureModeEnabled(bool enabled)[m
+[32m+[m[32mQRect cursorInfoPanelRect(const QRect &bounds, const QPoint &cursorPos)[m
+ {[m
+[31m-    const bool targetEnabled = enabled && m_hasSelection;[m
+[31m-    m_longCaptureEnabled = targetEnabled;[m
+[32m+[m[32m    int panelX = cursorPos.x() + kCursorInfoPanelOffset;[m
+[32m+[m[32m    int panelY = cursorPos.y() + kCursorInfoPanelOffset;[m
+ [m
+[31m-    if (m_btnLongCapture != nullptr)[m
+[32m+[m[32m    if (panelX + kCursorInfoPanelSize.width() > bounds.right() - kCursorInfoPanelMargin)[m
+     {[m
+[31m-        const bool blocked = m_btnLongCapture->blockSignals(true);[m
+[31m-        m_btnLongCapture->setChecked(targetEnabled);[m
+[31m-        m_btnLongCapture->blockSignals(blocked);[m
+[32m+[m[32m        panelX = cursorPos.x() - kCursorInfoPanelSize.width() - kCursorInfoPanelOffset;[m
+     }[m
+ [m
+[31m-    if (!targetEnabled)[m
+[32m+[m[32m    if (panelY + kCursorInfoPanelSize.height() > bounds.bottom() - kCursorInfoPanelMargin)[m
+     {[m
+[31m-        m_predictedLongCaptureHeight = currentRect().height();[m
+[31m-        m_committedLongCaptureHeight = currentRect().height();[m
+[31m-        m_longCaptureAnchorBottomLocal = -1;[m
+[31m-        m_captureQuality = CaptureQuality::Idle;[m
+[31m-        if (m_previewPanel != nullptr)[m
+[31m-        {[m
+[31m-            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[31m-            m_previewPanel->hide();[m
+[31m-        }[m
+[32m+[m[32m        panelY = cursorPos.y() - kCursorInfoPanelSize.height() - kCursorInfoPanelOffset;[m
+     }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        const QRect current = currentRect();[m
+[31m-        m_longCaptureAnchorBottomLocal = current.bottom();[m
+[31m-        m_committedLongCaptureHeight = qMax(current.height(), m_committedLongCaptureHeight);[m
+[31m-        m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+ [m
+[31m-        if (m_previewPanel != nullptr)[m
+[31m-        {[m
+[31m-            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[31m-            updatePreviewPanelPosition();[m
+[31m-            m_previewPanel->show();[m
+[31m-            m_previewPanel->raise();[m
+[31m-        }[m
+[31m-    }[m
+[32m+[m[32m    const int minX = bounds.left() + kCursorInfoPanelMargin;[m
+[32m+[m[32m    const int maxX = qMax(minX, bounds.right() - kCursorInfoPanelSize.width() - kCursorInfoPanelMargin);[m
+[32m+[m[32m    const int minY = bounds.top() + kCursorInfoPanelMargin;[m
+[32m+[m[32m    const int maxY = qMax(minY, bounds.bottom() - kCursorInfoPanelSize.height() - kCursorInfoPanelMargin);[m
+ [m
+[31m-    updateStatusLabel();[m
+[31m-    updateToolbarPosition();[m
+[31m-    update();[m
+[32m+[m[32m    panelX = qBound(minX, panelX, maxX);[m
+[32m+[m[32m    panelY = qBound(minY, panelY, maxY);[m
+[32m+[m[32m    return QRect(QPoint(panelX, panelY), kCursorInfoPanelSize);[m
+ }[m
+ [m
+[31m-void SelectionOverlay::setPredictedLongCaptureHeight(int height)[m
+[32m+[m[32mQPoint clampedSamplePoint(const QImage &image, const QPoint &point)[m
+ {[m
+[31m-    m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, height);[m
+[31m-    if (m_previewPanel != nullptr)[m
+[32m+[m[32m    if (image.isNull())[m
+     {[m
+[31m-        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[32m+[m[32m        return QPoint();[m
+     }[m
+ [m
+[31m-    if (m_hasSelection)[m
+[31m-    {[m
+[31m-        updatePreviewPanelPosition();[m
+[31m-        update();[m
+[31m-    }[m
+[32m+[m[32m    return QPoint(qBound(0, point.x(), qMax(0, image.width() - 1)),[m
+[32m+[m[32m                  qBound(0, point.y(), qMax(0, image.height() - 1)));[m
+ }[m
+ [m
+[31m-void SelectionOverlay::setCommittedLongCaptureHeight(int height)[m
+[32m+[m[32mQImage magnifierSample(const QImage &image, const QPoint &center)[m
+ {[m
+[31m-    m_committedLongCaptureHeight = qMax(0, height);[m
+[31m-    if (m_predictedLongCaptureHeight < m_committedLongCaptureHeight)[m
+[31m-    {[m
+[31m-        m_predictedLongCaptureHeight = m_committedLongCaptureHeight;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (m_previewPanel != nullptr)[m
+[31m-    {[m
+[31m-        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[31m-    }[m
+[31m-[m
+[31m-    if (m_hasSelection)[m
+[31m-    {[m
+[31m-        updateToolbarPosition();[m
+[31m-        updatePreviewPanelPosition();[m
+[31m-        update();[m
+[31m-    }[m
+[31m-}[m
+[32m+[m[32m    QImage sample(kCursorMagnifierGrid, kCursorMagnifierGrid, QImage::Format_ARGB32_Premultiplied);[m
+[32m+[m[32m    sample.fill(QColor(18, 24, 35));[m
+ [m
+[31m-void SelectionOverlay::setLongCapturePreview(const QPixmap &preview)[m
+[31m-{[m
+[31m-    m_previewPixmap = preview;[m
+[31m-    if (m_previewPanel == nullptr)[m
+[32m+[m[32m    if (image.isNull())[m
+     {[m
+[31m-        return;[m
+[32m+[m[32m        return sample;[m
+     }[m
+ [m
+[31m-    if (m_previewPixmap.isNull())[m
+[32m+[m[32m    const int radius = kCursorMagnifierGrid / 2;[m
+[32m+[m[32m    for (int y = 0; y < kCursorMagnifierGrid; ++y)[m
+     {[m
+[31m-        m_previewPanel->clearPreview();[m
+[31m-        m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[31m-        if (!m_longCaptureEnabled)[m
+[32m+[m[32m        for (int x = 0; x < kCursorMagnifierGrid; ++x)[m
+         {[m
+[31m-            m_previewPanel->hide();[m
+[32m+[m[32m            const QPoint sourcePoint = clampedSamplePoint(image, center + QPoint(x - radius, y - radius));[m
+[32m+[m[32m            sample.setPixelColor(x, y, image.pixelColor(sourcePoint));[m
+         }[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    m_previewPanel->setPreview(m_previewPixmap);[m
+[31m-    m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[31m-    if (m_longCaptureEnabled)[m
+[31m-    {[m
+[31m-        updatePreviewPanelPosition();[m
+[31m-        m_previewPanel->show();[m
+[31m-        m_previewPanel->raise();[m
+     }[m
+[31m-}[m
+ [m
+[31m-void SelectionOverlay::setStatusText(const QString &text)[m
+[31m-{[m
+[31m-    m_statusText = text.trimmed();[m
+[31m-    updateStatusLabel();[m
+[32m+[m[32m    return sample;[m
+ }[m
+ [m
+[31m-void SelectionOverlay::setCaptureQuality(CaptureQuality quality)[m
+[32m+[m[32mQString hexColorText(const QColor &color)[m
+ {[m
+[31m-    m_captureQuality = quality;[m
+[31m-    updateStatusLabel();[m
+[31m-    update();[m
+[32m+[m[32m    return color.name(QColor::HexRgb).toUpper();[m
+ }[m
+ [m
+[31m-void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)[m
+[32m+[m[32mvoid drawCursorInfoPanel(QPainter *painter,[m
+[32m+[m[32m                         const QRect &bounds,[m
+[32m+[m[32m                         const QPoint &cursorPos,[m
+[32m+[m[32m                         const QPoint &globalCursorPos,[m
+[32m+[m[32m                         const QImage &desktopSnapshot)[m
+ {[m
+[31m-    if (m_captureDecorationsHidden == hidden)[m
+[32m+[m[32m    if (painter == nullptr || desktopSnapshot.isNull() || !bounds.contains(cursorPos))[m
+     {[m
+         return;[m
+     }[m
+ [m
+[31m-    m_captureDecorationsHidden = hidden;[m
+[31m-    const QRect captureRect = currentRect().adjusted(-2, -2, 2, 2);[m
+[31m-    if (hidden)[m
+[31m-    {[m
+[31m-        m_toolbarVisibleBeforeCapture = (m_toolbar != nullptr[m
+[31m-                                         && m_toolbar->isVisible()[m
+[31m-                                         && m_toolbar->geometry().intersects(captureRect));[m
+[31m-        if (m_toolbarVisibleBeforeCapture)[m
+[31m-        {[m
+[31m-            m_toolbar->hide();[m
+[31m-        }[m
+[31m-[m
+[31m-        m_statusLabelVisibleBeforeCapture = (m_statusLabel != nullptr[m
+[31m-                                             && m_statusLabel->isVisible()[m
+[31m-                                             && m_statusLabel->geometry().intersects(captureRect));[m
+[31m-        if (m_statusLabelVisibleBeforeCapture)[m
+[31m-        {[m
+[31m-            m_statusLabel->hide();[m
+[31m-        }[m
+[32m+[m[32m    const QRect panelRect = cursorInfoPanelRect(bounds, cursorPos);[m
+[32m+[m[32m    const QRect contentRect = panelRect.adjusted(8, 8, -8, -8);[m
+[32m+[m[32m    const QRect magnifierRect(contentRect.left(),[m
+[32m+[m[32m                              contentRect.top(),[m
+[32m+[m[32m                              contentRect.width(),[m
+[32m+[m[32m                              qMax(48, contentRect.height() - kCursorInfoBottomHeight - 6));[m
+[32m+[m[32m    const QRect infoRect(contentRect.left(),[m
+[32m+[m[32m                         magnifierRect.bottom() + 6,[m
+[32m+[m[32m                         contentRect.width(),[m
+[32m+[m[32m                         qMax(44, contentRect.bottom() - magnifierRect.bottom() - 6));[m
+[32m+[m
+[32m+[m[32m    painter->save();[m
+[32m+[m[32m    painter->setPen(Qt::NoPen);[m
+[32m+[m[32m    painter->setBrush(QColor(14, 20, 30, 236));[m
+[32m+[m[32m    painter->drawRoundedRect(panelRect, 12, 12);[m
+[32m+[m[32m    painter->setPen(QPen(QColor(136, 185, 255, 96), 1.0));[m
+[32m+[m[32m    painter->setBrush(Qt::NoBrush);[m
+[32m+[m[32m    painter->drawRoundedRect(panelRect.adjusted(0, 0, -1, -1), 12, 12);[m
+[32m+[m
+[32m+[m[32m    const QImage zoomed = magnifierSample(desktopSnapshot, cursorPos).scaled(magnifierRect.size(),[m
+[32m+[m[32m                                                                              Qt::IgnoreAspectRatio,[m
+[32m+[m[32m                                                                              Qt::FastTransformation);[m
+[32m+[m[32m    painter->save();[m
+[32m+[m[32m    painter->setClipRect(magnifierRect.adjusted(1, 1, -1, -1));[m
+[32m+[m[32m    painter->setRenderHint(QPainter::SmoothPixmapTransform, false);[m
+[32m+[m[32m    painter->drawImage(magnifierRect, zoomed);[m
+[32m+[m[32m    painter->restore();[m
+[32m+[m
+[32m+[m[32m    painter->setPen(QPen(QColor(228, 239, 255, 34), 1.0));[m
+[32m+[m[32m    const double cellWidth = magnifierRect.width() / static_cast<double>(kCursorMagnifierGrid);[m
+[32m+[m[32m    const double cellHeight = magnifierRect.height() / static_cast<double>(kCursorMagnifierGrid);[m
+[32m+[m[32m    for (int index = 1; index < kCursorMagnifierGrid; ++index)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        const int gridX = qRound(magnifierRect.left() + cellWidth * index);[m
+[32m+[m[32m        const int gridY = qRound(magnifierRect.top() + cellHeight * index);[m
+[32m+[m[32m        painter->drawLine(gridX, magnifierRect.top(), gridX, magnifierRect.bottom());[m
+[32m+[m[32m        painter->drawLine(magnifierRect.left(), gridY, magnifierRect.right(), gridY);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const int centerIndex = kCursorMagnifierGrid / 2;[m
+[32m+[m[32m    QRectF centerCell(magnifierRect.left() + cellWidth * centerIndex,[m
+[32m+[m[32m                      magnifierRect.top() + cellHeight * centerIndex,[m
+[32m+[m[32m                      cellWidth,[m
+[32m+[m[32m                      cellHeight);[m
+[32m+[m[32m    painter->setPen(QPen(QColor(41, 255, 157, 230), 1.6));[m
+[32m+[m[32m    painter->drawRect(centerCell.adjusted(0.8, 0.8, -0.8, -0.8));[m
+[32m+[m[32m    painter->drawLine(QPointF(centerCell.center().x(), magnifierRect.top()),[m
+[32m+[m[32m                      QPointF(centerCell.center().x(), magnifierRect.bottom()));[m
+[32m+[m[32m    painter->drawLine(QPointF(magnifierRect.left(), centerCell.center().y()),[m
+[32m+[m[32m                      QPointF(magnifierRect.right(), centerCell.center().y()));[m
+[32m+[m
+[32m+[m[32m    painter->setPen(QPen(QColor(136, 185, 255, 56), 1.0));[m
+[32m+[m[32m    painter->drawLine(infoRect.left(), infoRect.top() - 3, infoRect.right(), infoRect.top() - 3);[m
+[32m+[m
+[32m+[m[32m    const QColor sampledColor = desktopSnapshot.pixelColor(clampedSamplePoint(desktopSnapshot, cursorPos));[m
+[32m+[m[32m    const QString colorText = hexColorText(sampledColor);[m
+[32m+[m[32m    const QString coordText = QStringLiteral("%1, %2").arg(globalCursorPos.x()).arg(globalCursorPos.y());[m
+[32m+[m
+[32m+[m[32m    QFont labelFont = painter->font();[m
+[32m+[m[32m    labelFont.setFamily(QStringLiteral("Microsoft YaHei UI"));[m
+[32m+[m[32m    labelFont.setPointSizeF(8.8);[m
+[32m+[m[32m    labelFont.setWeight(QFont::Normal);[m
+[32m+[m
+[32m+[m[32m    QFont valueFont = labelFont;[m
+[32m+[m[32m    valueFont.setPointSizeF(9.6);[m
+[32m+[m[32m    valueFont.setWeight(QFont::DemiBold);[m
+[32m+[m
+[32m+[m[32m    const QRect coordRow(infoRect.left(), infoRect.top(), infoRect.width(), 18);[m
+[32m+[m[32m    const QRect colorRow(infoRect.left(), infoRect.top() + 20, infoRect.width(), 18);[m
+[32m+[m[32m    const QRect hintRow(infoRect.left(), infoRect.bottom() - 18, infoRect.width(), 18);[m
+[32m+[m
+[32m+[m[32m    painter->setFont(labelFont);[m
+[32m+[m[32m    painter->setPen(QColor(206, 220, 244, 170));[m
+[32m+[m[32m    painter->drawText(coordRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("坐标"));[m
+[32m+[m[32m    painter->drawText(colorRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("色值"));[m
+[32m+[m
+[32m+[m[32m    painter->setFont(valueFont);[m
+[32m+[m[32m    painter->setPen(QColor(248, 251, 255));[m
+[32m+[m[32m    painter->drawText(coordRow, Qt::AlignRight | Qt::AlignVCenter, coordText);[m
+[32m+[m[32m    painter->drawText(colorRow, Qt::AlignRight | Qt::AlignVCenter, colorText);[m
+[32m+[m
+[32m+[m[32m    painter->setFont(labelFont);[m
+[32m+[m[32m    painter->setPen(QColor(206, 220, 244, 154));[m
+[32m+[m[32m    painter->drawText(hintRow, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("按 Ctrl + C 复制色值"));[m
+[32m+[m[32m    painter->restore();[m
+[32m+[m[32m}[m
+[32m+[m[32m}[m
+ [m
+[31m-        m_previewPanelVisibleBeforeCapture = (m_previewPanel != nullptr[m
+[31m-                                              && m_previewPanel->isVisible()[m
+[31m-                                              && m_previewPanel->geometry().intersects(captureRect));[m
+[31m-        if (m_previewPanelVisibleBeforeCapture)[m
+[31m-        {[m
+[31m-            m_previewPanel->hide();[m
+[31m-        }[m
+[31m-    }[m
+[31m-    else[m
+[32m+[m[32mSelectionOverlay::SelectionOverlay(QWidget *parent)[m
+[32m+[m[32m    : QWidget(parent)[m
+[32m+[m[32m{[m
+[32m+[m[32m    QRect virtualDesktop;[m
+[32m+[m[32m    const QList<QScreen *> screens = QGuiApplication::screens();[m
+[32m+[m[32m    for (QScreen *screen : screens)[m
+     {[m
+[31m-        if (m_toolbarVisibleBeforeCapture && m_toolbar != nullptr && m_hasSelection)[m
+[31m-        {[m
+[31m-            updateToolbarPosition();[m
+[31m-        }[m
+[31m-        m_toolbarVisibleBeforeCapture = false;[m
+[31m-[m
+[31m-        if (m_statusLabelVisibleBeforeCapture && m_statusLabel != nullptr && m_hasSelection)[m
+[32m+[m[32m        if (screen == nullptr)[m
+         {[m
+[31m-            updateStatusPosition();[m
+[32m+[m[32m            continue;[m
+         }[m
+[31m-        m_statusLabelVisibleBeforeCapture = false;[m
+ [m
+[31m-        if (m_previewPanelVisibleBeforeCapture && m_previewPanel != nullptr && m_longCaptureEnabled)[m
+[31m-        {[m
+[31m-            updatePreviewPanelPosition();[m
+[31m-            m_previewPanel->show();[m
+[31m-            m_previewPanel->raise();[m
+[31m-        }[m
+[31m-        m_previewPanelVisibleBeforeCapture = false;[m
+[32m+[m[32m        virtualDesktop = virtualDesktop.isNull()[m
+[32m+[m[32m                             ? screen->geometry()[m
+[32m+[m[32m                             : virtualDesktop.united(screen->geometry());[m
+     }[m
+ [m
+[31m-    update();[m
+[31m-}[m
+[31m-#endif[m
+[31m-[m
+[31m-void SelectionOverlay::mousePressEvent(QMouseEvent *event)[m
+[31m-{[m
+[31m-    if (event == nullptr)[m
+[32m+[m[32m    if (virtualDesktop.isNull())[m
+     {[m
+[31m-        return;[m
+[32m+[m[32m        virtualDesktop = QRect(0, 0, 1280, 720);[m
+     }[m
+ [m
+[31m-    if (event->button() == Qt::RightButton)[m
+[32m+[m[32m    setGeometry(virtualDesktop);[m
+[32m+[m[32m    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);[m
+[32m+[m[32m    setAttribute(Qt::WA_TranslucentBackground);[m
+[32m+[m[32m    setAttribute(Qt::WA_DeleteOnClose, true);[m
+[32m+[m[32m    setCursor(Qt::CrossCursor);[m
+[32m+[m[32m    setFocusPolicy(Qt::StrongFocus);[m
+[32m+[m[32m    setMouseTracking(true);[m
+[32m+[m[32m    m_cursorPos = mapFromGlobal(QCursor::pos());[m
+[32m+[m
+[32m+[m[32m    auto *cancelShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);[m
+[32m+[m[32m    cancelShortcut->setContext(Qt::ApplicationShortcut);[m
+[32m+[m[32m    connect(cancelShortcut, &QShortcut::activated, this, [this]()[m
+     {[m
+[31m-        event->accept();[m
+         emit selectionCanceled();[m
+         close();[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (event->button() != Qt::LeftButton)[m
+[31m-    {[m
+[31m-        event->accept();[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    activateWindow();[m
+[31m-    raise();[m
+[31m-    setFocus();[m
+[32m+[m[32m    });[m
+ [m
+[31m-    if (m_toolbar != nullptr && m_toolbar->isVisible() && m_toolbar->geometry().contains(event->pos()))[m
+[31m-    {[m
+[31m-        QWidget::mousePressEvent(event);[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m    auto *confirmShortcut = new QShortcut(QKeySequence(Qt::Key_Return), this);[m
+[32m+[m[32m    confirmShortcut->setContext(Qt::ApplicationShortcut);[m
+[32m+[m[32m    connect(confirmShortcut, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);[m
+ [m
+[31m-    m_selecting = true;[m
+[31m-    m_hasSelection = false;[m
+[31m-    m_startPos = event->pos();[m
+[31m-    m_endPos = m_startPos;[m
+[31m-    m_selectedRect = QRect();[m
+[32m+[m[32m    auto *confirmShortcutEnter = new QShortcut(QKeySequence(Qt::Key_Enter), this);[m
+[32m+[m[32m    confirmShortcutEnter->setContext(Qt::ApplicationShortcut);[m
+[32m+[m[32m    connect(confirmShortcutEnter, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);[m
+ [m
+[31m-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    m_longCaptureEnabled = false;[m
+[31m-    m_predictedLongCaptureHeight = 0;[m
+[31m-    m_committedLongCaptureHeight = 0;[m
+[31m-    m_longCaptureAnchorBottomLocal = -1;[m
+[31m-    m_captureQuality = CaptureQuality::Idle;[m
+[31m-    m_statusText = QStringLiteral("拖动中");[m
+[31m-    m_previewPixmap = QPixmap();[m
+[32m+[m[32m    ensureToolbar();[m
+[32m+[m[32m    captureDesktopSnapshot();[m
+[32m+[m[32m}[m
+ [m
+[31m-    if (m_btnLongCapture != nullptr)[m
+[31m-    {[m
+[31m-        m_btnLongCapture->setChecked(false);[m
+[31m-    }[m
+[32m+[m[32mQRect SelectionOverlay::selectedRect() const[m
+[32m+[m[32m{[m
+[32m+[m[32m    return m_selectedRect;[m
+[32m+[m[32m}[m
+ [m
+[31m-    if (m_previewPanel != nullptr)[m
+[31m-    {[m
+[31m-        m_previewPanel->clearPreview();[m
+[31m-        m_previewPanel->hide();[m
+[31m-    }[m
+[32m+[m[32mQPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect &captureRect) const[m
+[32m+[m[32m{[m
+[32m+[m[32m    Q_UNUSED(captureRect)[m
+ [m
+[31m-    updateStatusLabel();[m
+[31m-#else[m
+[31m-    if (m_statusLabel != nullptr)[m
+[32m+[m[32m    if (pixmap.isNull() || m_penStrokes.isEmpty())[m
+     {[m
+[31m-        m_statusLabel->setText(QStringLiteral("拖动中"));[m
+[32m+[m[32m        return pixmap;[m
+     }[m
+[31m-#endif[m
+ [m
+[31m-    if (m_toolbar != nullptr)[m
+[32m+[m[32m    const QRect referenceRect = editableSelectionRect();[m
+[32m+[m[32m    if (!referenceRect.isValid())[m
+     {[m
+[31m-        m_toolbar->hide();[m
+[31m-    }[m
+[31m-    if (m_statusLabel != nullptr)[m
+[31m-    {[m
+[31m-        m_statusLabel->hide();[m
+[32m+[m[32m        return pixmap;[m
+     }[m
+ [m
+[31m-    event->accept();[m
+[31m-    update();[m
+[31m-}[m
+[31m-[m
+[31m-void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)[m
+[31m-{[m
+[31m-    if (event == nullptr)[m
+[32m+[m[32m    QImage annotated = pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);[m
+[32m+[m[32m    if (annotated.isNull())[m
+     {[m
+[31m-        return;[m
+[32m+[m[32m        return pixmap;[m
+     }[m
+ [m
+[31m-    if (!m_selecting)[m
+[31m-    {[m
+[31m-        QWidget::mouseMoveEvent(event);[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m    QPainter painter(&annotated);[m
+[32m+[m[32m    painter.setRenderHint(QPainter::Antialiasing, true);[m
+[32m+[m[32m    paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);[m
+[32m+[m[32m    painter.end();[m
+ [m
+[31m-    m_endPos = event->pos();[m
+[31m-    event->accept();[m
+[31m-    update();[m
+[32m+[m[32m    QPixmap result = QPixmap::fromImage(annotated);[m
+[32m+[m[32m    result.setDevicePixelRatio(pixmap.devicePixelRatio());[m
+[32m+[m[32m    return result;[m
+ }[m
+ [m
+[31m-void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)[m
+[32m+[m[32mvoid SelectionOverlay::captureDesktopSnapshot()void SelectionOverlay::captureDesktopSnapshot()[m
+ {[m
+[31m-    if (event == nullptr)[m
+[32m+[m[32m    if (width() <= 0 || height() <= 0)[m
+     {[m
+[32m+[m[32m        m_desktopSnapshot = QImage();[m
+         return;[m
+     }[m
+ [m
+[31m-    if (event->button() == Qt::RightButton)[m
+[31m-    {[m
+[31m-        event->accept();[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m    m_desktopSnapshot = QImage(size(), QImage::Format_ARGB32_Premultiplied);[m
+[32m+[m[32m    m_desktopSnapshot.fill(Qt::transparent);[m
+ [m
+[31m-    if (!m_selecting || event->button() != Qt::LeftButton)[m
+[32m+[m[32m    QPainter painter(&m_desktopSnapshot);[m
+[32m+[m[32m    const QPoint overlayTopLeft = geometry().topLeft();[m
+[32m+[m[32m    const QList<QScreen *> screens = QGuiApplication::screens();[m
+[32m+[m[32m    for (QScreen *screen : screens)[m
+     {[m
+[31m-        event->accept();[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    m_endPos = event->pos();[m
+[31m-    m_selecting = false;[m
+[32m+[m[32m        if (screen == nullptr)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            continue;[m
+[32m+[m[32m        }[m
+ [m
+[31m-    const QRect rect = currentRect();[m
+[31m-    if (rect.width() < 2 || rect.height() < 2)[m
+[31m-    {[m
+[31m-        resetSelection();[m
+[31m-        event->accept();[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m        const QPixmap screenshot = screen->grabWindow(0);[m
+[32m+[m[32m        if (screenshot.isNull())[m
+[32m+[m[32m        {[m
+[32m+[m[32m            continue;[m
+[32m+[m[32m        }[m
+ [m
+[31m-    m_hasSelection = true;[m
+[31m-    m_selectedRect = toGlobalRect(rect);[m
+[32m+[m[32m        QImage screenImage = screenshot.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);[m
+[32m+[m[32m        if (screenImage.size() != screen->geometry().size())[m
+[32m+[m[32m        {[m
+[32m+[m[32m            screenImage = screenImage.scaled(screen->geometry().size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);[m
+[32m+[m[32m        }[m
+ [m
+[31m-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    m_committedLongCaptureHeight = rect.height();[m
+[31m-    m_predictedLongCaptureHeight = rect.height();[m
+[31m-    m_longCaptureAnchorBottomLocal = rect.bottom();[m
+[31m-    m_captureQuality = CaptureQuality::Idle;[m
+[31m-    m_statusText = QStringLiteral("已选择区域");[m
+[31m-    updateStatusLabel();[m
+[31m-#else[m
+[31m-    if (m_statusLabel != nullptr)[m
+[31m-    {[m
+[31m-        m_statusLabel->setText(QStringLiteral("已选择区域"));[m
+[32m+[m[32m        painter.drawImage(screen->geometry().topLeft() - overlayTopLeft, screenImage);[m
+     }[m
+[31m-#endif[m
+[31m-[m
+[31m-    updateToolbarPosition();[m
+[31m-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    updatePreviewPanelPosition();[m
+[31m-#endif[m
+[31m-[m
+[31m-    activateWindow();[m
+[31m-    raise();[m
+[31m-    setFocus();[m
+[31m-[m
+[31m-    event->accept();[m
+[31m-    update();[m
+ }[m
+ [m
+[31m-void SelectionOverlay::keyPressEvent(QKeyEvent *event)[m
+[32m+[m[32mQString SelectionOverlay::copyCurrentColorValue()[m
+ {[m
+[31m-    if (event == nullptr)[m
+[31m-    {[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (event->key() == Qt::Key_Escape)[m
+[31m-    {[m
+[31m-        emit selectionCanceled();[m
+[31m-        close();[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)[m
+[32m+[m[32m    if (m_desktopSnapshot.isNull() || !rect().contains(m_cursorPos) || (m_hasSelection && !m_selecting))[m
+     {[m
+[31m-        confirmSelection();[m
+[31m-        return;[m
+[32m+[m[32m        return QString();[m
+     }[m
+ [m
+[31m-    QWidget::keyPressEvent(event);[m
+[32m+[m[32m    const QColor sampledColor = m_desktopSnapshot.pixelColor(clampedSamplePoint(m_desktopSnapshot, m_cursorPos));[m
+[32m+[m[32m    const QString colorText = hexColorText(sampledColor);[m
+[32m+[m[32m    QApplication::clipboard()->setText(colorText);[m
+[32m+[m[32m    return colorText;[m
+ }[m
+ [m
+[31m-void SelectionOverlay::paintEvent(QPaintEvent *event)[m
+[31m-{[m
+[31m-    Q_UNUSED(event)[m
+[31m-[m
+[31m-    QPainter painter(this);[m
+[31m-    painter.setRenderHint(QPainter::Antialiasing, true);[m
+[31m-[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    const bool hideCaptureDecorations = m_captureDecorationsHidden;[m
+[31m-    const QRect committedSelection = currentDisplayRect();[m
+[31m-    const QRect predictedSelection = predictedDisplayRect();[m
+[31m-    const QRect visibleSelection = predictedSelection.isValid() ? predictedSelection : committedSelection;[m
+[31m-#else[m
+[31m-    const bool hideCaptureDecorations = false;[m
+[31m-    const QRect committedSelection = currentRect();[m
+[31m-    const QRect visibleSelection = committedSelection;[m
+[31m-#endif[m
+[31m-    const bool validSelection = (m_selecting || m_hasSelection) && visibleSelection.width() > 1 && visibleSelection.height() > 1;[m
+[31m-[m
+[31m-    QPainterPath overlayPath;[m
+[31m-    overlayPath.addRect(rect());[m
+[32m+[m[32mvoid SelectionOverlay::setLongCaptureModeEnabled(bool enabled)[m
+[32m+[m[32m{[m
+[32m+[m[32m    const bool targetEnabled = enabled && m_hasSelection;[m
+[32m+[m[32m    m_longCaptureEnabled = targetEnabled;[m
+ [m
+[31m-    if (validSelection)[m
+[32m+[m[32m    if (m_btnLongCapture != nullptr)[m
+     {[m
+[31m-        QPainterPath holePath;[m
+[31m-        holePath.addRect(visibleSelection);[m
+[31m-        overlayPath = overlayPath.subtracted(holePath);[m
+[32m+[m[32m        const bool blocked = m_btnLongCapture->blockSignals(true);[m
+[32m+[m[32m        m_btnLongCapture->setChecked(targetEnabled);[m
+[32m+[m[32m        m_btnLongCapture->blockSignals(blocked);[m
+     }[m
+ [m
+[31m-    painter.fillPath(overlayPath, QColor(0, 0, 0, 122));[m
+[31m-[m
+[31m-    if (!validSelection)[m
+[32m+[m[32m    if (!targetEnabled)[m
+     {[m
+[31m-        if (!hideCaptureDecorations)[m
+[32m+[m[32m        m_predictedLongCaptureHeight = currentRect().height();[m
+[32m+[m[32m        m_committedLongCaptureHeight = currentRect().height();[m
+[32m+[m[32m        m_longCaptureAnchorBottomLocal = -1;[m
+[32m+[m[32m        m_captureQuality = CaptureQuality::Idle;[m
+[32m+[m[32m        if (m_previewPanel != nullptr)[m
+         {[m
+[31m-            painter.setPen(QColor(220, 230, 255, 160));[m
+[31m-            painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("拖动鼠标选择区域，右键或 ESC 取消"));[m
+[32m+[m[32m            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[32m+[m[32m            m_previewPanel->hide();[m
+         }[m
+[31m-        return;[m
+     }[m
+[31m-[m
+[31m-    painter.fillRect(visibleSelection, QColor(0, 0, 0, 1));[m
+[31m-[m
+[31m-    if (hideCaptureDecorations)[m
+[32m+[m[32m    else[m
+     {[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m        const QRect current = currentRect();[m
+[32m+[m[32m        m_longCaptureAnchorBottomLocal = current.bottom();[m
+[32m+[m[32m        m_committedLongCaptureHeight = qMax(current.height(), m_committedLongCaptureHeight);[m
+[32m+[m[32m        m_predictedLongCaptureHeight = qMax(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+ [m
+[31m-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    if (m_longCaptureEnabled && predictedSelection != committedSelection)[m
+[31m-    {[m
+[31m-        QPen predictedPen(QColor(155, 203, 255, 165), 1.0, Qt::DashLine);[m
+[31m-        predictedPen.setDashPattern({6.0, 4.0});[m
+[31m-        painter.setPen(predictedPen);[m
+[31m-        painter.setBrush(Qt::NoBrush);[m
+[31m-        painter.drawRoundedRect(predictedSelection.adjusted(0, 0, -1, -1), 4, 4);[m
+[32m+[m[32m        if (m_previewPanel != nullptr)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            m_previewPanel->setVisualHeights(m_committedLongCaptureHeight, m_predictedLongCaptureHeight);[m
+[32m+[m[32m            updatePreviewPanelPosition();[m
+[32m+[m[32m            m_previewPanel->show();[m
+[32m+[m[32m            m_previewPanel->raise();[m
+[32m+[m[32m        }[m
+     }[m
+[31m-#endif[m
+ [m
+[31m-    painter.setPen(QPen(QColor(76, 166, 255, 215), 1.4));[m
+[31m-    painter.setBrush(Qt::NoBrush);[m
+[31m-    painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);[m
+ [m
+[31m-    QString sizeText = QString::number(committedSelection.width())[m
+[31m-                       + QStringLiteral(" x ")[m
+[32m+[m[32m+ QStringLiteral(" x ")[m
+                        + QString::number(committedSelection.height());[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     const int predictedExtra = qMax(0, predictedSelection.height() - committedSelection.height());[m
+[36m@@ -541,6 +433,11 @@[m [mvoid SelectionOverlay::paintEvent(QPaintEvent *event)[m
+     painter.fillRect(textRect, QColor(12, 19, 30, 220));[m
+     painter.setPen(Qt::white);[m
+     painter.drawText(textRect, Qt::AlignCenter, sizeText);[m
+[32m+[m
+[32m+[m[32m    if (showCursorInfoPanel)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        drawCursorInfoPanel(&painter, rect(), m_cursorPos, mapToGlobal(m_cursorPos), m_desktopSnapshot);[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ void SelectionOverlay::contextMenuEvent(QContextMenuEvent *event)[m
+[36m@@ -608,7 +505,147 @@[m [mQRect SelectionOverlay::currentRect() const[m
+     return QRect(m_startPos, m_endPos).normalized();[m
+ }[m
+ [m
+[32m+[m[32mQRect SelectionOverlay::editableSelectionRect() const[m
+[32m+[m[32m{[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[32m+[m[32m    return m_longCaptureEnabled ? currentDisplayRect() : currentRect();[m
+[32m+[m[32m#else[m
+[32m+[m[32m    return currentRect();[m
+[32m+[m[32m#endif[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQPointF SelectionOverlay::clampPointToSelection(const QPoint &point) const[m
+[32m+[m[32m{[m
+[32m+[m[32m    const QRect selection = editableSelectionRect();[m
+[32m+[m[32m    if (!selection.isValid())[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return QPointF();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return QPointF(qBound(selection.left(), point.x(), selection.right()),[m
+[32m+[m[32m                   qBound(selection.top(), point.y(), selection.bottom()));[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mbool SelectionOverlay::shouldHandleToolAt(const QPoint &point) const[m
+[32m+[m[32m{[m
+[32m+[m[32m    if (!m_hasSelection || m_selecting || m_activeTool == ToolMode::None)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return editableSelectionRect().contains(point);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mbool SelectionOverlay::shouldHandlePenAt(const QPoint &point) const[m
+[32m+[m[32m{[m
+[32m+[m[32m    return m_activeTool == ToolMode::Pen && shouldHandleToolAt(point);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid SelectionOverlay::finishCurrentPenStroke()[m
+[32m+[m[32m{[m
+[32m+[m[32m    if (!m_currentPenStroke.isEmpty())[m
+[32m+[m[32m    {[m
+[32m+[m[32m        PenStroke stroke;[m
+[32m+[m[32m        stroke.points = m_currentPenStroke;[m
+[32m+[m[32m        stroke.color = m_currentPenColor;[m
+[32m+[m[32m        m_penStrokes.append(stroke);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    m_currentPenStroke.clear();[m
+[32m+[m[32m    m_currentPenColor = m_annotationColor;[m
+[32m+[m[32m    m_drawingPenStroke = false;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid SelectionOverlay::clearAnnotations()[m
+[32m+[m[32m{[m
+[32m+[m[32m    m_drawingPenStroke = false;[m
+[32m+[m[32m    m_currentPenStroke.clear();[m
+[32m+[m[32m    m_currentPenColor = m_annotationColor;[m
+[32m+[m[32m    m_penStrokes.clear();[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const[m
+[32m+[m[32m{[m
+[32m+[m[32m    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid())[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());[m
+[32m+[m[32m    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());[m
+[32m+[m[32m    const qreal strokeWidth = kOverlayPenWidth * (scaleX + scaleY) * 0.5;[m
+[32m+[m[32m    const qreal dotRadius = qMax<qreal>(1.6, strokeWidth * 0.5);[m
+[32m+[m
+[32m+[m[32m    auto drawStroke = [painter, scaleX, scaleY, dotRadius, strokeWidth, referenceRect](const QVector<QPointF> &points, const QColor &color)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (points.isEmpty())[m
+[32m+[m[32m        {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            return QPointF((point.x() - referenceRect.left()) * scaleX,[m
+[32m+[m[32m                           (point.y() - referenceRect.top()) * scaleY);[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        if (points.size() == 1)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            painter->save();[m
+[32m+[m[32m            painter->setPen(Qt::NoPen);[m
+[32m+[m[32m            painter->setBrush(color);[m
+[32m+[m[32m            painter->drawEllipse(mappedPoint(points.constFirst()), dotRadius, dotRadius);[m
+[32m+[m[32m            painter->restore();[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        QPainterPath path(mappedPoint(points.constFirst()));[m
+[32m+[m[32m        for (int index = 1; index < points.size(); ++index)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            path.lineTo(mappedPoint(points.at(index)));[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        painter->save();[m
+[32m+[m[32m        painter->setBrush(Qt::NoBrush);[m
+[32m+[m[32m        painter->setPen(QPen(color, strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));[m
+[32m+[m[32m        painter->drawPath(path);[m
+[32m+[m[32m        painter->restore();[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    painter->save();[m
+[32m+[m[32m    painter->translate(targetRect.topLeft());[m
+[32m+[m
+[32m+[m[32m    for (const PenStroke &stroke : m_penStrokes)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        drawStroke(stroke.points, stroke.color);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (includeActiveStroke)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        drawStroke(m_currentPenStroke, m_currentPenColor);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    painter->restore();[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid SelectionOverlay::prepareForOutputCapture()[m
+[32m+[m[32m{[m
+[32m+[m[32m    setAttribute(Qt::WA_TransparentForMouseEvents, true);[m
+[32m+[m[32m    hide();[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid SelectionOverlay::updateActiveCursor()[m
+[32m+[m[32m{[m
+[32m+[m[32m    if (m_activeTool == ToolMode::Pen && m_hasSelection)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        setCursor(penToolCursor());[m
+[32m+[m[32m        return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    setCursor(Qt::CrossCursor);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m#if SCREENCAPTURE_ENABLE_LONG_CAPTURE#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+ QRect SelectionOverlay::currentDisplayRect() const[m
+ {[m
+     return m_longCaptureEnabled[m
+[36m@@ -861,12 +898,68 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+     layout->setContentsMargins(10, 6, 10, 6);[m
+     layout->setSpacing(6);[m
+ [m
+[31m-    auto createTool = [this, layout](const QString &text, bool checkable = false)[m
+[32m+[m[32m    auto createTool = [this, layout](const QString &text,[m
+[32m+[m[32m                                     const QString &iconPath,[m
+[32m+[m[32m                                     const QSize &iconSize,[m
+[32m+[m[32m                                     bool checkable = false)[m
+     {[m
+         auto *button = new QToolButton(m_toolbar);[m
+[31m-        button->setText(text);[m
+         button->setCheckable(checkable);[m
+         button->setCursor(Qt::PointingHandCursor);[m
+[32m+[m[32m        button->setToolTip(text);[m
+[32m+[m[32m        button->setAccessibleName(text);[m
+[32m+[m[32m        button->setMinimumSize(36, 36);[m
+[32m+[m
+[32m+[m[32m        QIcon icon(iconPath);[m
+[32m+[m[32m        if (icon.isNull() && iconPath.startsWith(QStringLiteral(":/icons/")))[m
+[32m+[m[32m        {[m
+[32m+[m[32m            const QString fallback = QStringLiteral(":/icons/icons/") + iconPath.mid(QStringLiteral(":/icons/").size());[m
+[32m+[m[32m            icon = QIcon(fallback);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if (icon.isNull())[m
+[32m+[m[32m        {[m
+[32m+[m[32m            button->setText(text);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        else[m
+[32m+[m[32m        {[m
+[32m+[m[32m            button->setText(QString());[m
+[32m+[m[32m            button->setIcon(icon);[m
+[32m+[m[32m            button->setIconSize(iconSize);[m
+[32m+[m[32m            button->setToolButtonStyle(Qt::ToolButtonIconOnly);[m
+[32m+[m[32m        }[m
+[32m+[m[32m#if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[32m+[m[32m        button->installEventFilter(this);[m
+[32m+[m[32m#endif[m
+[32m+[m[32m        layout->addWidget(button);[m
+[32m+[m[32m        return button;[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    auto createColorSwatch = [this, layout](const QColor &color, bool checked = false)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        auto *button = new QToolButton(m_toolbar);[m
+[32m+[m[32m        button->setCheckable(true);[m
+[32m+[m[32m        button->setChecked(checked);[m
+[32m+[m[32m        button->setCursor(Qt::PointingHandCursor);[m
+[32m+[m[32m        button->setToolTip(color.name(QColor::HexRgb).toUpper());[m
+[32m+[m[32m        button->setAccessibleName(QStringLiteral("注释颜色 %1").arg(color.name(QColor::HexRgb).toUpper()));[m
+[32m+[m[32m        button->setFixedSize(24, 24);[m
+[32m+[m[32m        button->setStyleSheet(QStringLiteral([m
+[32m+[m[32m            "QToolButton {"[m
+[32m+[m[32m            "background: %1;"[m
+[32m+[m[32m            "border: 1px solid rgba(255, 255, 255, 72);"[m
+[32m+[m[32m            "border-radius: 12px;"[m
+[32m+[m[32m            "padding: 0px;"[m
+[32m+[m[32m            "min-width: 24px;"[m
+[32m+[m[32m            "min-height: 24px;"[m
+[32m+[m[32m            "}"[m
+[32m+[m[32m            "QToolButton:hover {"[m
+[32m+[m[32m            "border-color: rgba(255, 255, 255, 180);"[m
+[32m+[m[32m            "}"[m
+[32m+[m[32m            "QToolButton:checked {"[m
+[32m+[m[32m            "border: 2px solid #F7FBFF;"[m
+[32m+[m[32m            "}"[m
+[32m+[m[32m        ).arg(color.name(QColor::HexRgb)));[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+         button->installEventFilter(this);[m
+ #endif[m
+[36m@@ -875,13 +968,13 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+     };[m
+ [m
+     m_toolGroup = new QButtonGroup(this);[m
+[31m-    m_toolGroup->setExclusive(true);[m
+[32m+[m[32m    m_toolGroup->setExclusive(false);[m
+ [m
+[31m-    QToolButton *btnPen = createTool(QStringLiteral("画笔"), true);[m
+[31m-    QToolButton *btnRect = createTool(QStringLiteral("矩形"), true);[m
+[31m-    QToolButton *btnEllipse = createTool(QStringLiteral("圆形"), true);[m
+[31m-    QToolButton *btnMosaic = createTool(QStringLiteral("马赛克"), true);[m
+[31m-    QToolButton *btnText = createTool(QStringLiteral("文字"), true);[m
+[32m+[m[32m    QToolButton *btnPen = createTool(QStringLiteral("画笔"), QStringLiteral(":/icons/overlay_pen.svg"), QSize(18, 18), true);[m
+[32m+[m[32m    QToolButton *btnRect = createTool(QStringLiteral("矩形"), QStringLiteral(":/icons/overlay_rect.svg"), QSize(18, 18), true);[m
+[32m+[m[32m    QToolButton *btnEllipse = createTool(QStringLiteral("圆形"), QStringLiteral(":/icons/overlay_ellipse.svg"), QSize(18, 18), true);[m
+[32m+[m[32m    QToolButton *btnMosaic = createTool(QStringLiteral("马赛克"), QStringLiteral(":/icons/overlay_mosaic.svg"), QSize(18, 18), true);[m
+[32m+[m[32m    QToolButton *btnText = createTool(QStringLiteral("文字"), QStringLiteral(":/icons/overlay_text.svg"), QSize(18, 18), true);[m
+ [m
+     m_toolGroup->addButton(btnPen);[m
+     m_toolGroup->addButton(btnRect);[m
+[36m@@ -889,10 +982,68 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+     m_toolGroup->addButton(btnMosaic);[m
+     m_toolGroup->addButton(btnText);[m
+ [m
+[32m+[m[32m    auto bindToolToggle = [this](QToolButton *button, ToolMode mode)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        connect(button, &QToolButton::clicked, this, [this, button, mode]()[m
+[32m+[m[32m        {[m
+[32m+[m[32m            if (button->isChecked())[m
+[32m+[m[32m            {[m
+[32m+[m[32m                for (QAbstractButton *other : m_toolGroup->buttons())[m
+[32m+[m[32m                {[m
+[32m+[m[32m                    if (other == button)[m
+[32m+[m[32m                    {[m
+[32m+[m[32m                        continue;[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    const bool blocked = other->blockSignals(true);[m
+[32m+[m[32m                    other->setChecked(false);[m
+[32m+[m[32m                    other->blockSignals(blocked);[m
+[32m+[m[32m                }[m
+[32m+[m[32m                m_activeTool = mode;[m
+[32m+[m[32m            }[m
+[32m+[m[32m            else if (m_activeTool == mode)[m
+[32m+[m[32m            {[m
+[32m+[m[32m                m_activeTool = ToolMode::None;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            updateActiveCursor();[m
+[32m+[m[32m        });[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    bindToolToggle(btnPen, ToolMode::Pen);[m
+[32m+[m[32m    bindToolToggle(btnRect, ToolMode::Rectangle);[m
+[32m+[m[32m    bindToolToggle(btnEllipse, ToolMode::Ellipse);[m
+[32m+[m[32m    bindToolToggle(btnMosaic, ToolMode::Mosaic);[m
+[32m+[m[32m    bindToolToggle(btnText, ToolMode::Text);[m
+[32m+[m
+[32m+[m[32m    layout->addSpacing(4);    layout->addSpacing(4);[m
+[32m+[m
+[32m+[m[32m    auto *colorGroup = new QButtonGroup(this);[m
+[32m+[m[32m    colorGroup->setExclusive(true);[m
+[32m+[m
+[32m+[m[32m    const QList<QColor> colorPalette = {[m
+[32m+[m[32m        kDefaultAnnotationColor,[m
+[32m+[m[32m        QColor(255, 184, 0),[m
+[32m+[m[32m        QColor(42, 201, 124),[m
+[32m+[m[32m        QColor(76, 166, 255),[m
+[32m+[m[32m        QColor(255, 255, 255)[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    for (const QColor &color : colorPalette)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        auto *button = createColorSwatch(color, color == m_annotationColor);[m
+[32m+[m[32m        colorGroup->addButton(button);[m
+[32m+[m[32m        connect(button, &QToolButton::clicked, this, [this, color]()[m
+[32m+[m[32m        {[m
+[32m+[m[32m            m_annotationColor = color;[m
+[32m+[m[32m            update();[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+[32m+[m
+     layout->addSpacing(8);[m
+ [m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+[31m-    m_btnLongCapture = createTool(QStringLiteral("长截图"), true);[m
+[32m+[m[32m    m_btnLongCapture = createTool(QStringLiteral("长截图"), QStringLiteral(":/icons/overlay_scroll.svg"), QSize(18, 18), true);[m
+ [m
+     connect(m_btnLongCapture, &QToolButton::clicked, this, [this]()[m
+     {[m
+[36m@@ -943,9 +1094,9 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+     });[m
+ #endif[m
+ [m
+[31m-    m_btnSave = createTool(QStringLiteral("保存"));[m
+[31m-    m_btnCancel = createTool(QStringLiteral("✕"));[m
+[31m-    m_btnConfirm = createTool(QStringLiteral("✓"));[m
+[32m+[m[32m    m_btnSave = createTool(QStringLiteral("保存"), QStringLiteral(":/icons/overlay_save.svg"), QSize(18, 18));[m
+[32m+[m[32m    m_btnCancel = createTool(QStringLiteral("取消"), QStringLiteral(":/icons/overlay_close.svg"), QSize(18, 18));[m
+[32m+[m[32m    m_btnConfirm = createTool(QStringLiteral("完成"), QStringLiteral(":/icons/overlay_check.svg"), QSize(18, 18));[m
+ [m
+     connect(m_btnCancel, &QToolButton::clicked, this, [this]()[m
+     {[m
+[36m@@ -970,8 +1121,8 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+         }[m
+ #endif[m
+ [m
+[32m+[m[32m        prepareForOutputCapture();[m
+         emit saveRequested(m_selectedRect);[m
+[31m-        close();[m
+     });[m
+ [m
+     m_toolbar->setStyleSheet([m
+[36m@@ -985,7 +1136,9 @@[m [mvoid SelectionOverlay::ensureToolbar()[m
+         "background: transparent;"[m
+         "border: 1px solid transparent;"[m
+         "border-radius: 10px;"[m
+[31m-        "padding: 6px 10px;"[m
+[32m+[m[32m        "padding: 0px;"[m
+[32m+[m[32m        "min-width: 36px;"[m
+[32m+[m[32m        "min-height: 36px;"[m
+         "font: 10pt 'Microsoft YaHei UI';"[m
+         "}"[m
+         "QToolButton:hover {"[m
+[36m@@ -1062,6 +1215,7 @@[m [mvoid SelectionOverlay::resetSelection()[m
+ {[m
+     m_hasSelection = false;[m
+     m_selectedRect = QRect();[m
+[32m+[m[32m    clearAnnotations();[m
+ [m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     m_longCaptureEnabled = false;[m
+[36m@@ -1100,10 +1254,11 @@[m [mvoid SelectionOverlay::resetSelection()[m
+         m_statusLabel->hide();[m
+     }[m
+ [m
+[32m+[m[32m    updateActiveCursor();[m
+     update();[m
+ }[m
+ [m
+[31m-void SelectionOverlay::confirmSelection()[m
+[32m+[m[32mvoid SelectionOverlay::confirmSelection()void SelectionOverlay::confirmSelection()[m
+ {[m
+     if (!m_hasSelection)[m
+     {[m
+[36m@@ -1118,16 +1273,6 @@[m [mvoid SelectionOverlay::confirmSelection()[m
+     }[m
+ #endif[m
+ [m
+[32m+[m[32m    prepareForOutputCapture();[m
+     emit selectionFinished(m_selectedRect);[m
+[31m-    close();[m
+[31m-}[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/selectionoverlay.h b/selectionoverlay.h[m
+[1mindex 5c4fd18..7352561 100644[m
+[1m--- a/selectionoverlay.h[m
+[1m+++ b/selectionoverlay.h[m
+[36m@@ -18,9 +18,14 @@[m
+ #include "longcapturetypes.h"[m
+ [m
+ #include <QButtonGroup>[m
+[32m+[m[32m#include <QColor>[m
+[32m+[m[32m#include <QImage>[m
+ #include <QPoint>[m
+[32m+[m[32m#include <QPointF>[m
+ #include <QPixmap>[m
+ #include <QRect>[m
+[32m+[m[32m#include <QSize>[m
+[32m+[m[32m#include <QVector>[m
+ #include <QWidget>[m
+ [m
+ class QContextMenuEvent;[m
+[36m@@ -30,6 +35,7 @@[m [mclass QKeyEvent;[m
+ class QLabel;[m
+ class QMouseEvent;[m
+ class QPaintEvent;[m
+[32m+[m[32mclass QPainter;[m
+ class QToolButton;[m
+ class QWheelEvent;[m
+ [m
+[36m@@ -44,6 +50,7 @@[m [mclass SelectionOverlay : public QWidget[m
+ public:[m
+     explicit SelectionOverlay(QWidget *parent = nullptr);[m
+     QRect selectedRect() const;[m
+[32m+[m[32m    QPixmap applyEditsToPixmap(const QPixmap &pixmap, const QRect &captureRect) const;[m
+ [m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     void setLongCaptureModeEnabled(bool enabled);[m
+[36m@@ -59,6 +66,7 @@[m [msignals:[m
+     void selectionFinished(const QRect &rect);[m
+     void selectionCanceled();[m
+     void saveRequested(const QRect &rect);[m
+[32m+[m[32m    void colorValueCopied(const QString &colorText);[m
+ [m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     void longCaptureToggled(bool enabled, const QRect &rect);[m
+[36m@@ -80,7 +88,30 @@[m [mprotected:[m
+ #endif[m
+ [m
+ private:[m
+[32m+[m[32m    enum class ToolMode[m
+[32m+[m[32m    {[m
+[32m+[m[32m        None = 0,[m
+[32m+[m[32m        Pen,[m
+[32m+[m[32m        Rectangle,[m
+[32m+[m[32m        Ellipse,[m
+[32m+[m[32m        Mosaic,[m
+[32m+[m[32m        Text[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    struct PenStroke[m
+[32m+[m[32m    {[m
+[32m+[m[32m        QVector<QPointF> points;[m
+[32m+[m[32m        QColor color;[m
+[32m+[m[32m    };[m
+[32m+[m
+     QRect currentRect() const;[m
+[32m+[m[32m    QRect editableSelectionRect() const;[m
+[32m+[m[32m    QPointF clampPointToSelection(const QPoint &point) const;[m
+[32m+[m[32m    bool shouldHandlePenAt(const QPoint &point) const;[m
+[32m+[m[32m    void finishCurrentPenStroke();[m
+[32m+[m[32m    void clearAnnotations();[m
+[32m+[m[32m    void paintPenStrokes(QPainter *painter, const QRect &targetRect, const QSize &referenceSize, bool includeActiveStroke) const;[m
+[32m+[m[32m    void prepareForOutputCapture();[m
+ #if SCREENCAPTURE_ENABLE_LONG_CAPTURE[m
+     QRect currentDisplayRect() const;[m
+     QRect predictedDisplayRect() const;[m
+[36m@@ -90,6 +121,8 @@[m [mprivate:[m
+ #endif[m
+     QRect toGlobalRect(const QRect &rect) const;[m
+     QRect screenLocalRectForSelection(const QRect &selection) const;[m
+[32m+[m[32m    void captureDesktopSnapshot();[m
+[32m+[m[32m    QString copyCurrentColorValue();[m
+ [m
+     void updateToolbarPosition();[m
+     void updateStatusPosition();[m
+[36m@@ -107,10 +140,18 @@[m [mprivate:[m
+     QPoint m_startPos;[m
+     QPoint m_endPos;[m
+     QRect m_selectedRect;[m
+[32m+[m[32m    QPoint m_cursorPos;[m
+[32m+[m[32m    QImage m_desktopSnapshot;[m
+ [m
+     QFrame *m_toolbar = nullptr;[m
+     QButtonGroup *m_toolGroup = nullptr;[m
+     QLabel *m_statusLabel = nullptr;[m
+[32m+[m[32m    ToolMode m_activeTool = ToolMode::None;[m
+[32m+[m[32m    QColor m_annotationColor = QColor(255, 96, 110);[m
+[32m+[m[32m    bool m_drawingPenStroke = false;[m
+[32m+[m[32m    QVector<PenStroke> m_penStrokes;[m
+[32m+[m[32m    QVector<QPointF> m_currentPenStroke;[m
+[32m+[m[32m    QColor m_currentPenColor = QColor(255, 96, 110);[m
+     QToolButton *m_btnConfirm = nullptr;[m
+     QToolButton *m_btnCancel = nullptr;[m
+     QToolButton *m_btnSave = nullptr;[m
+[1mdiff --git a/styles/hyperos.qss b/styles/hyperos.qss[m
+[1mindex 2de5293..e7f195a 100644[m
+[1m--- a/styles/hyperos.qss[m
+[1m+++ b/styles/hyperos.qss[m
+[36m@@ -368,3 +368,143 @@[m [mQLabel#recentEmptyLabel {[m
+     background: rgba(243, 248, 255, 0.76);[m
+ }[m
+ [m
+[32m+[m
+[32m+[m[32m/* ========================================================================== */[m
+[32m+[m[32m/* Settings / About Dialogs                                                    */[m
+[32m+[m[32m/* ========================================================================== */[m
+[32m+[m[32mQDialog#CaptureSettingsDialog,[m
+[32m+[m[32mQDialog#AboutDialog {[m
+[32m+[m[32m    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,[m
+[32m+[m[32m                                stop:0 #DFEBF8,[m
+[32m+[m[32m                                stop:1 #D3E2F3);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QFrame#dialogCard,[m
+[32m+[m[32mQDialog#AboutDialog QFrame#dialogCard {[m
+[32m+[m[32m    background: rgba(255, 255, 255, 0.97);[m
+[32m+[m[32m    border: 1px solid rgba(196, 211, 232, 0.95);[m
+[32m+[m[32m    border-radius: 24px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QFrame#heroFrame,[m
+[32m+[m[32mQDialog#AboutDialog QFrame#heroFrame {[m
+[32m+[m[32m    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,[m
+[32m+[m[32m                                stop:0 rgba(243, 248, 255, 0.98),[m
+[32m+[m[32m                                stop:1 rgba(233, 241, 253, 0.98));[m
+[32m+[m[32m    border: 1px solid rgba(194, 210, 232, 0.92);[m
+[32m+[m[32m    border-radius: 20px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#heroBadgeLabel,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#heroBadgeLabel {[m
+[32m+[m[32m    min-height: 30px;[m
+[32m+[m[32m    padding: 0 12px;[m
+[32m+[m[32m    border-radius: 15px;[m
+[32m+[m[32m    color: #FFFFFF;[m
+[32m+[m[32m    font-size: 12px;[m
+[32m+[m[32m    font-weight: 700;[m
+[32m+[m[32m    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #3B78F2, stop:1 #5A98FF);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#subTitleLabel,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#subTitleLabel {[m
+[32m+[m[32m    font-size: 14px;[m
+[32m+[m[32m    color: #55657C;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QFrame#hotkeySection,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QFrame#directorySection,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QFrame#hintCard,[m
+[32m+[m[32mQDialog#AboutDialog QFrame#infoSection,[m
+[32m+[m[32mQDialog#AboutDialog QFrame#feedbackSection {[m
+[32m+[m[32m    background: rgba(246, 250, 255, 0.96);[m
+[32m+[m[32m    border: 1px solid rgba(201, 214, 232, 0.92);[m
+[32m+[m[32m    border-radius: 18px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#hotkeySectionTitle,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#directorySectionTitle,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#infoSectionTitle,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#feedbackTitleLabel {[m
+[32m+[m[32m    font-size: 16px;[m
+[32m+[m[32m    font-weight: 800;[m
+[32m+[m[32m    color: #243046;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#hotkeySectionDesc,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#directorySectionDesc,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#directoryTipLabel,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#hintLabel,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#contentLabel,[m
+[32m+[m[32mQDialog#AboutDialog QLabel#feedbackBodyLabel {[m
+[32m+[m[32m    font-size: 14px;[m
+[32m+[m[32m    color: #54647D;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#hotkeyLabel,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLabel#dirLabel {[m
+[32m+[m[32m    font-size: 14px;[m
+[32m+[m[32m    font-weight: 700;[m
+[32m+[m[32m    color: #314159;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLineEdit#autoSaveDirEdit,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QKeySequenceEdit#hotkeyEdit {[m
+[32m+[m[32m    min-height: 46px;[m
+[32m+[m[32m    border-radius: 16px;[m
+[32m+[m[32m    border: 1px solid rgba(190, 206, 229, 0.96);[m
+[32m+[m[32m    background: rgba(252, 254, 255, 0.98);[m
+[32m+[m[32m    padding: 0 14px;[m
+[32m+[m[32m    font-size: 15px;[m
+[32m+[m[32m    selection-background-color: rgba(89, 145, 255, 0.28);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLineEdit#autoSaveDirEdit[readOnly="true"] {[m
+[32m+[m[32m    color: #4E6078;[m
+[32m+[m[32m    background: rgba(244, 248, 255, 0.98);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QLineEdit#autoSaveDirEdit:focus,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QKeySequenceEdit#hotkeyEdit:focus {[m
+[32m+[m[32m    border: 1px solid rgba(90, 145, 235, 0.96);[m
+[32m+[m[32m    background: rgba(255, 255, 255, 1.0);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#resetHotkeyButton,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#browseDirButton,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#clearDirButton,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#cancelButton,[m
+[32m+[m[32mQDialog#AboutDialog QPushButton#closeButton {[m
+[32m+[m[32m    min-height: 46px;[m
+[32m+[m[32m    border-radius: 16px;[m
+[32m+[m[32m    border: 1px solid rgba(185, 203, 228, 0.92);[m
+[32m+[m[32m    background: rgba(245, 250, 255, 0.96);[m
+[32m+[m[32m    font-size: 15px;[m
+[32m+[m[32m    font-weight: 600;[m
+[32m+[m[32m    padding: 0 16px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#resetHotkeyButton:hover,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#browseDirButton:hover,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#clearDirButton:hover,[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#cancelButton:hover,[m
+[32m+[m[32mQDialog#AboutDialog QPushButton#closeButton:hover {[m
+[32m+[m[32m    background: rgba(233, 243, 255, 0.98);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#saveButton,[m
+[32m+[m[32mQDialog#AboutDialog QPushButton#copyInfoButton {[m
+[32m+[m[32m    min-height: 46px;[m
+[32m+[m[32m    border-radius: 16px;[m
+[32m+[m[32m    color: #FFFFFF;[m
+[32m+[m[32m    border: 1px solid rgba(82, 132, 222, 0.9);[m
+[32m+[m[32m    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #3B78F2, stop:1 #5A98FF);[m
+[32m+[m[32m    font-size: 15px;[m
+[32m+[m[32m    font-weight: 700;[m
+[32m+[m[32m    padding: 0 18px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mQDialog#CaptureSettingsDialog QPushButton#saveButton:hover,[m
+[32m+[m[32mQDialog#AboutDialog QPushButton#copyInfoButton:hover {[m
+[32m+[m[32m    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4C86F5, stop:1 #69A4FF);[m
+[32m+[m[32m}[m
+\ No newline at end of file[m

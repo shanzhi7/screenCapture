@@ -25,10 +25,10 @@ AboutDialog::AboutDialog(QWidget *parent)
     connect(ui->closeButton, &QPushButton::clicked, this, &QDialog::accept);
 
     const QString buildTime = QStringLiteral(__DATE__) + QStringLiteral(" ") + QStringLiteral(__TIME__);
-    ui->contentLabel->setText(QStringLiteral("轻影截图（LightShadowCapture）\n"
+    ui->contentLabel->setText(QStringLiteral("应用：轻影截图（LightShadowCapture）\n"
                                              "版本：v0.2\n"
-                                             "构建时间：%1\n\n"
-                                             "反馈建议：可在项目仓库提交 Issue，或联系维护者。")
+                                             "构建时间：%1\n"
+                                             "功能：全屏截图、区域截图、历史记录、长截图")
                                  .arg(buildTime));
 }
 
@@ -43,5 +43,5 @@ void AboutDialog::onCopyInfoClicked()
                          + QStringLiteral("\n复制时间：")
                          + QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
     QApplication::clipboard()->setText(info);
-    ui->copyInfoButton->setText(QStringLiteral("已复制"));
+    ui->copyInfoButton->setText(QStringLiteral("已复制信息"));
 }
