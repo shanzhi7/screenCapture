@@ -24,6 +24,7 @@
 #include <QPointF>
 #include <QPixmap>
 #include <QRect>
+#include <QString>
 #include <QVector>
 #include <QWidget>
 
@@ -32,6 +33,7 @@ class QEvent;
 class QFrame;
 class QKeyEvent;
 class QLabel;
+class QLineEdit;
 class QMouseEvent;
 class QPaintEvent;
 class QPainter;
@@ -83,8 +85,8 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void wheelEvent(QWheelEvent *event) override;
-    bool eventFilter(QObject *watched, QEvent *event) override;
 #endif
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     enum class ToolMode
@@ -115,6 +117,14 @@ private:
         QColor color;
     };
 
+    struct TextAnnotation
+    {
+        QPointF anchor;
+        QString text;
+        QColor color;
+        qreal fontPixelSize = 20.0;
+    };
+
     QRect currentRect() const;
     QRect editableSelectionRect() const;
     QPointF clampPointToSelection(const QPoint &point) const;
@@ -122,13 +132,17 @@ private:
     bool shouldHandlePenAt(const QPoint &point) const;
     bool shouldHandleRectangleAt(const QPoint &point) const;
     bool shouldHandleEllipseAt(const QPoint &point) const;
+    bool shouldHandleTextAt(const QPoint &point) const;
+    void beginTextEditingAt(const QPoint &point);
     void finishCurrentPenStroke();
     void finishCurrentRectangle();
     void finishCurrentEllipse();
+    void finishCurrentTextAnnotation(bool commit);
     void clearAnnotations();
     void paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const;
     void paintRectangles(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveRectangle) const;
     void paintEllipses(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveEllipse) const;
+    void paintTexts(QPainter *painter, const QRect &targetRect, const QRect &referenceRect) const;
     void prepareForOutputCapture();
     void updateActiveCursor();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -173,14 +187,19 @@ private:
     QVector<PenStroke> m_penStrokes;
     QVector<RectangleAnnotation> m_rectangles;
     QVector<EllipseAnnotation> m_ellipses;
+    QVector<TextAnnotation> m_texts;
     QVector<QPointF> m_currentPenStroke;
     QRectF m_currentRectangle;
     QPointF m_currentRectangleAnchor;
     QRectF m_currentEllipse;
     QPointF m_currentEllipseAnchor;
+    QPointF m_currentTextAnchor;
     QColor m_currentPenColor = QColor(255, 96, 110);
     QColor m_currentRectangleColor = QColor(255, 96, 110);
     QColor m_currentEllipseColor = QColor(255, 96, 110);
+    QColor m_currentTextColor = QColor(255, 96, 110);
+    qreal m_currentTextPixelSize = 20.0;
+    QLineEdit *m_textEditor = nullptr;
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;

@@ -12,6 +12,7 @@
 #include <QCursor>
 #include <QEvent>
 #include <QFont>
+#include <QFontMetricsF>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -19,6 +20,7 @@
 #include <QKeyEvent>
 #include <QKeySequence>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -38,7 +40,20 @@ constexpr int kCursorInfoPanelMargin = 10;
 constexpr int kCursorMagnifierGrid = 11;
 constexpr int kCursorInfoBottomHeight = 56;
 constexpr qreal kOverlayPenWidth = 3.2;
+constexpr qreal kOverlayTextPixelSize = 20.0;
+constexpr int kOverlayTextEditorMinWidth = 120;
+constexpr int kOverlayTextEditorMaxWidth = 280;
+constexpr int kOverlayTextEditorHeight = 34;
+constexpr int kOverlayTextEditorMargin = 6;
 const QColor kDefaultAnnotationColor(255, 96, 110);
+
+QFont annotationTextFont(qreal pixelSize)
+{
+    QFont font(QStringLiteral("Microsoft YaHei UI"));
+    font.setPixelSize(qMax(12, qRound(pixelSize)));
+    font.setWeight(QFont::DemiBold);
+    return font;
+}
 
 QCursor penToolCursor()
 {
@@ -281,7 +296,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
 {
     Q_UNUSED(captureRect)
 
-    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty() && m_ellipses.isEmpty()))
+    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty() && m_ellipses.isEmpty() && m_texts.isEmpty()))
     {
         return pixmap;
     }
@@ -303,6 +318,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
     paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
     paintRectangles(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
     paintEllipses(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
+    paintTexts(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect);
     painter.end();
 
     QPixmap result = QPixmap::fromImage(annotated);
@@ -613,6 +629,13 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (shouldHandleTextAt(event->pos()))
+    {
+        beginTextEditingAt(event->pos());
+        event->accept();
+        return;
+    }
+
     if (shouldHandleToolAt(event->pos()))
     {
         event->accept();
@@ -919,6 +942,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     paintPenStrokes(&painter, committedSelection, editableSelectionRect(), true);
     paintRectangles(&painter, committedSelection, editableSelectionRect(), true);
     paintEllipses(&painter, committedSelection, editableSelectionRect(), true);
+    paintTexts(&painter, committedSelection, editableSelectionRect());
 
     QString sizeText = QString::number(committedSelection.width())
                        + QStringLiteral(" x ")
@@ -994,11 +1018,45 @@ void SelectionOverlay::wheelEvent(QWheelEvent *event)
 
     QWidget::wheelEvent(event);
 }
+#endif
 
 bool SelectionOverlay::eventFilter(QObject *watched, QEvent *event)
 {
-    Q_UNUSED(watched)
+    if (watched == m_textEditor && event != nullptr)
+    {
+        if (event->type() == QEvent::ShortcutOverride)
+        {
+            auto *keyEvent = static_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Escape || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
+            {
+                keyEvent->accept();
+                return true;
+            }
+        }
+        else if (event->type() == QEvent::KeyPress)
+        {
+            auto *keyEvent = static_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Escape)
+            {
+                finishCurrentTextAnnotation(false);
+                setFocus();
+                return true;
+            }
 
+            if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
+            {
+                finishCurrentTextAnnotation(true);
+                setFocus();
+                return true;
+            }
+        }
+        else if (event->type() == QEvent::FocusOut)
+        {
+            finishCurrentTextAnnotation(true);
+        }
+    }
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     if (event != nullptr && event->type() == QEvent::Wheel && m_longCaptureEnabled && m_hasSelection)
     {
         auto *wheelEvent = static_cast<QWheelEvent *>(event);
@@ -1015,10 +1073,10 @@ bool SelectionOverlay::eventFilter(QObject *watched, QEvent *event)
             return true;
         }
     }
+#endif
 
     return QWidget::eventFilter(watched, event);
 }
-#endif
 
 QRect SelectionOverlay::currentRect() const
 {
@@ -1071,6 +1129,69 @@ bool SelectionOverlay::shouldHandleEllipseAt(const QPoint &point) const
     return m_activeTool == ToolMode::Ellipse && shouldHandleToolAt(point);
 }
 
+bool SelectionOverlay::shouldHandleTextAt(const QPoint &point) const
+{
+    return m_activeTool == ToolMode::Text && shouldHandleToolAt(point);
+}
+
+void SelectionOverlay::beginTextEditingAt(const QPoint &point)
+{
+    if (!m_hasSelection)
+    {
+        return;
+    }
+
+    finishCurrentTextAnnotation(true);
+
+    const QRect selection = editableSelectionRect();
+    if (!selection.isValid() || !selection.contains(point))
+    {
+        return;
+    }
+
+    const int availableWidth = qMax(60, selection.width() - kOverlayTextEditorMargin * 2);
+    const int editorWidth = qMin(kOverlayTextEditorMaxWidth,
+                                 qMax(kOverlayTextEditorMinWidth, availableWidth));
+    const int maxX = qMax(selection.left() + kOverlayTextEditorMargin,
+                          selection.right() - editorWidth - kOverlayTextEditorMargin + 1);
+    const int editorX = qBound(selection.left() + kOverlayTextEditorMargin, point.x(), maxX);
+
+    const int maxY = qMax(selection.top() + kOverlayTextEditorMargin,
+                          selection.bottom() - kOverlayTextEditorHeight - kOverlayTextEditorMargin + 1);
+    const int editorY = qBound(selection.top() + kOverlayTextEditorMargin, point.y(), maxY);
+
+    m_currentTextAnchor = QPointF(editorX, editorY);
+    m_currentTextColor = m_annotationColor;
+    m_currentTextPixelSize = kOverlayTextPixelSize;
+
+    auto *editor = new QLineEdit(this);
+    editor->setObjectName(QStringLiteral("overlayTextEditor"));
+    editor->setFont(annotationTextFont(m_currentTextPixelSize));
+    editor->setPlaceholderText(QStringLiteral("输入文字"));
+    editor->setFrame(false);
+    editor->setGeometry(editorX, editorY, editorWidth, kOverlayTextEditorHeight);
+    editor->setTextMargins(10, 0, 10, 0);
+    editor->setStyleSheet(QStringLiteral(
+        "QLineEdit#overlayTextEditor {"
+        "color: %1;"
+        "background: rgba(14, 20, 30, 228);"
+        "border: 1px solid rgba(170, 205, 255, 120);"
+        "border-radius: 10px;"
+        "selection-background-color: rgba(76, 166, 255, 128);"
+        "padding: 0 10px;"
+        "}"
+        "QLineEdit#overlayTextEditor::placeholder {"
+        "color: rgba(228, 239, 255, 128);"
+        "}").arg(m_currentTextColor.name(QColor::HexRgb)));
+    editor->installEventFilter(this);
+    editor->show();
+    editor->raise();
+    editor->setFocus();
+
+    m_textEditor = editor;
+    update();
+}
+
 void SelectionOverlay::finishCurrentPenStroke()
 {
     if (!m_currentPenStroke.isEmpty())
@@ -1118,22 +1239,63 @@ void SelectionOverlay::finishCurrentEllipse()
     m_drawingEllipse = false;
 }
 
+void SelectionOverlay::finishCurrentTextAnnotation(bool commit)
+{
+    if (m_textEditor == nullptr)
+    {
+        return;
+    }
+
+    QLineEdit *editor = m_textEditor;
+    m_textEditor = nullptr;
+    editor->removeEventFilter(this);
+
+    const QString text = editor->text().trimmed();
+    const QPointF anchor = m_currentTextAnchor;
+    const QColor color = m_currentTextColor;
+    const qreal fontPixelSize = m_currentTextPixelSize;
+
+    editor->hide();
+    editor->deleteLater();
+
+    m_currentTextAnchor = QPointF();
+    m_currentTextColor = m_annotationColor;
+    m_currentTextPixelSize = kOverlayTextPixelSize;
+
+    if (commit && !text.isEmpty())
+    {
+        TextAnnotation annotation;
+        annotation.anchor = anchor;
+        annotation.text = text;
+        annotation.color = color;
+        annotation.fontPixelSize = fontPixelSize;
+        m_texts.append(annotation);
+    }
+
+    update();
+}
+
 void SelectionOverlay::clearAnnotations()
 {
     m_drawingPenStroke = false;
     m_drawingRectangle = false;
     m_drawingEllipse = false;
+    finishCurrentTextAnnotation(false);
     m_currentPenStroke.clear();
     m_currentRectangle = QRectF();
     m_currentRectangleAnchor = QPointF();
     m_currentEllipse = QRectF();
     m_currentEllipseAnchor = QPointF();
+    m_currentTextAnchor = QPointF();
     m_currentPenColor = m_annotationColor;
     m_currentRectangleColor = m_annotationColor;
     m_currentEllipseColor = m_annotationColor;
+    m_currentTextColor = m_annotationColor;
+    m_currentTextPixelSize = kOverlayTextPixelSize;
     m_penStrokes.clear();
     m_rectangles.clear();
     m_ellipses.clear();
+    m_texts.clear();
 }
 
 void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const
@@ -1308,6 +1470,52 @@ void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect,
     painter->restore();
 }
 
+void SelectionOverlay::paintTexts(QPainter *painter, const QRect &targetRect, const QRect &referenceRect) const
+{
+    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid())
+    {
+        return;
+    }
+
+    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
+    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
+    const qreal fontScale = (scaleX + scaleY) * 0.5;
+
+    auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
+    {
+        return QPointF((point.x() - referenceRect.left()) * scaleX,
+                       (point.y() - referenceRect.top()) * scaleY);
+    };
+
+    painter->save();
+    painter->translate(targetRect.topLeft());
+    painter->setClipRect(QRect(QPoint(0, 0), targetRect.size()));
+    painter->setRenderHint(QPainter::TextAntialiasing, true);
+
+    for (const TextAnnotation &annotation : m_texts)
+    {
+        if (annotation.text.isEmpty())
+        {
+            continue;
+        }
+
+        const QPointF topLeft = mappedPoint(annotation.anchor);
+        const QFont font = annotationTextFont(annotation.fontPixelSize * fontScale);
+        const QFontMetricsF metrics(font);
+        const QPointF baseline(topLeft.x(), topLeft.y() + metrics.ascent());
+
+        painter->save();
+        painter->setFont(font);
+        painter->setPen(QColor(0, 0, 0, 160));
+        painter->drawText(baseline + QPointF(1.0, 1.0), annotation.text);
+        painter->setPen(annotation.color);
+        painter->drawText(baseline, annotation.text);
+        painter->restore();
+    }
+
+    painter->restore();
+}
+
 void SelectionOverlay::prepareForOutputCapture()
 {
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -1316,9 +1524,21 @@ void SelectionOverlay::prepareForOutputCapture()
 
 void SelectionOverlay::updateActiveCursor()
 {
-    if (m_activeTool == ToolMode::Pen && m_hasSelection)
+    if (!m_hasSelection)
+    {
+        setCursor(Qt::CrossCursor);
+        return;
+    }
+
+    if (m_activeTool == ToolMode::Pen)
     {
         setCursor(penToolCursor());
+        return;
+    }
+
+    if (m_activeTool == ToolMode::Text)
+    {
+        setCursor(Qt::IBeamCursor);
         return;
     }
 
@@ -1666,6 +1886,8 @@ void SelectionOverlay::ensureToolbar()
     {
         connect(button, &QToolButton::clicked, this, [this, button, mode]()
         {
+            const ToolMode previousTool = m_activeTool;
+
             if (button->isChecked())
             {
                 for (QAbstractButton *other : m_toolGroup->buttons())
@@ -1684,6 +1906,11 @@ void SelectionOverlay::ensureToolbar()
             else if (m_activeTool == mode)
             {
                 m_activeTool = ToolMode::None;
+            }
+
+            if (previousTool == ToolMode::Text && m_activeTool != ToolMode::Text)
+            {
+                finishCurrentTextAnnotation(true);
             }
 
             updateActiveCursor();
@@ -1805,6 +2032,10 @@ void SelectionOverlay::ensureToolbar()
         if (m_drawingEllipse)
         {
             finishCurrentEllipse();
+        }
+        if (m_textEditor != nullptr)
+        {
+            finishCurrentTextAnnotation(true);
         }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -1973,6 +2204,10 @@ void SelectionOverlay::confirmSelection()
     if (m_drawingEllipse)
     {
         finishCurrentEllipse();
+    }
+    if (m_textEditor != nullptr)
+    {
+        finishCurrentTextAnnotation(true);
     }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
