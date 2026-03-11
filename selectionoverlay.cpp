@@ -281,7 +281,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
 {
     Q_UNUSED(captureRect)
 
-    if (pixmap.isNull() || m_penStrokes.isEmpty())
+    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty()))
     {
         return pixmap;
     }
@@ -301,6 +301,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
     QPainter painter(&annotated);
     painter.setRenderHint(QPainter::Antialiasing, true);
     paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
+    paintRectangles(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
     painter.end();
 
     QPixmap result = QPixmap::fromImage(annotated);
@@ -589,6 +590,17 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (shouldHandleRectangleAt(event->pos()))
+    {
+        m_drawingRectangle = true;
+        m_currentRectangleColor = m_annotationColor;
+        m_currentRectangleAnchor = clampPointToSelection(event->pos());
+        m_currentRectangle = QRectF(m_currentRectangleAnchor, m_currentRectangleAnchor);
+        event->accept();
+        update();
+        return;
+    }
+
     if (shouldHandleToolAt(event->pos()))
     {
         event->accept();
@@ -667,6 +679,15 @@ void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)
         return;
     }
 
+    if (m_drawingRectangle)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        m_currentRectangle = QRectF(m_currentRectangleAnchor, point).normalized();
+        event->accept();
+        update();
+        return;
+    }
+
     if (m_selecting)
     {
         m_endPos = event->pos();
@@ -702,6 +723,16 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
             m_currentPenStroke.append(point);
         }
         finishCurrentPenStroke();
+        event->accept();
+        update();
+        return;
+    }
+
+    if (m_drawingRectangle && event->button() == Qt::LeftButton)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        m_currentRectangle = QRectF(m_currentRectangleAnchor, point).normalized();
+        finishCurrentRectangle();
         event->accept();
         update();
         return;
@@ -855,6 +886,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);
     paintPenStrokes(&painter, committedSelection, editableSelectionRect(), true);
+    paintRectangles(&painter, committedSelection, editableSelectionRect(), true);
 
     QString sizeText = QString::number(committedSelection.width())
                        + QStringLiteral(" x ")
@@ -997,6 +1029,11 @@ bool SelectionOverlay::shouldHandlePenAt(const QPoint &point) const
     return m_activeTool == ToolMode::Pen && shouldHandleToolAt(point);
 }
 
+bool SelectionOverlay::shouldHandleRectangleAt(const QPoint &point) const
+{
+    return m_activeTool == ToolMode::Rectangle && shouldHandleToolAt(point);
+}
+
 void SelectionOverlay::finishCurrentPenStroke()
 {
     if (!m_currentPenStroke.isEmpty())
@@ -1012,12 +1049,33 @@ void SelectionOverlay::finishCurrentPenStroke()
     m_drawingPenStroke = false;
 }
 
+void SelectionOverlay::finishCurrentRectangle()
+{
+    if (m_currentRectangle.width() >= 2.0 && m_currentRectangle.height() >= 2.0)
+    {
+        RectangleAnnotation rectangle;
+        rectangle.rect = m_currentRectangle.normalized();
+        rectangle.color = m_currentRectangleColor;
+        m_rectangles.append(rectangle);
+    }
+
+    m_currentRectangle = QRectF();
+    m_currentRectangleAnchor = QPointF();
+    m_currentRectangleColor = m_annotationColor;
+    m_drawingRectangle = false;
+}
+
 void SelectionOverlay::clearAnnotations()
 {
     m_drawingPenStroke = false;
+    m_drawingRectangle = false;
     m_currentPenStroke.clear();
+    m_currentRectangle = QRectF();
+    m_currentRectangleAnchor = QPointF();
     m_currentPenColor = m_annotationColor;
+    m_currentRectangleColor = m_annotationColor;
     m_penStrokes.clear();
+    m_rectangles.clear();
 }
 
 void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const
@@ -1079,6 +1137,60 @@ void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRec
     if (includeActiveStroke)
     {
         drawStroke(m_currentPenStroke, m_currentPenColor);
+    }
+
+    painter->restore();
+}
+
+void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveRectangle) const
+{
+    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid())
+    {
+        return;
+    }
+
+    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
+    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
+    const qreal strokeWidth = qMax<qreal>(1.8, kOverlayPenWidth * (scaleX + scaleY) * 0.5);
+
+    auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
+    {
+        return QPointF((point.x() - referenceRect.left()) * scaleX,
+                       (point.y() - referenceRect.top()) * scaleY);
+    };
+
+    auto drawRectangle = [painter, mappedPoint, strokeWidth](const QRectF &rect, const QColor &color, bool dashed)
+    {
+        if (!rect.isValid() || rect.width() < 1.0 || rect.height() < 1.0)
+        {
+            return;
+        }
+
+        QRectF mappedRect(mappedPoint(rect.topLeft()), mappedPoint(rect.bottomRight()));
+        mappedRect = mappedRect.normalized();
+
+        painter->save();
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(color,
+                             strokeWidth,
+                             dashed ? Qt::DashLine : Qt::SolidLine,
+                             Qt::RoundCap,
+                             Qt::RoundJoin));
+        painter->drawRoundedRect(mappedRect, 2.0, 2.0);
+        painter->restore();
+    };
+
+    painter->save();
+    painter->translate(targetRect.topLeft());
+
+    for (const RectangleAnnotation &rectangle : m_rectangles)
+    {
+        drawRectangle(rectangle.rect, rectangle.color, false);
+    }
+
+    if (includeActiveRectangle)
+    {
+        drawRectangle(m_currentRectangle, m_currentRectangleColor, true);
     }
 
     painter->restore();
@@ -1574,6 +1686,10 @@ void SelectionOverlay::ensureToolbar()
         {
             finishCurrentPenStroke();
         }
+        if (m_drawingRectangle)
+        {
+            finishCurrentRectangle();
+        }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
         if (m_longCaptureEnabled)
@@ -1733,6 +1849,10 @@ void SelectionOverlay::confirmSelection()
     if (m_drawingPenStroke)
     {
         finishCurrentPenStroke();
+    }
+    if (m_drawingRectangle)
+    {
+        finishCurrentRectangle();
     }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE

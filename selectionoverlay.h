@@ -103,14 +103,23 @@ private:
         QColor color;
     };
 
+    struct RectangleAnnotation
+    {
+        QRectF rect;
+        QColor color;
+    };
+
     QRect currentRect() const;
     QRect editableSelectionRect() const;
     QPointF clampPointToSelection(const QPoint &point) const;
     bool shouldHandleToolAt(const QPoint &point) const;
     bool shouldHandlePenAt(const QPoint &point) const;
+    bool shouldHandleRectangleAt(const QPoint &point) const;
     void finishCurrentPenStroke();
+    void finishCurrentRectangle();
     void clearAnnotations();
     void paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const;
+    void paintRectangles(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveRectangle) const;
     void prepareForOutputCapture();
     void updateActiveCursor();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -150,9 +159,14 @@ private:
     ToolMode m_activeTool = ToolMode::None;
     QColor m_annotationColor = QColor(255, 96, 110);
     bool m_drawingPenStroke = false;
+    bool m_drawingRectangle = false;
     QVector<PenStroke> m_penStrokes;
+    QVector<RectangleAnnotation> m_rectangles;
     QVector<QPointF> m_currentPenStroke;
+    QRectF m_currentRectangle;
+    QPointF m_currentRectangleAnchor;
     QColor m_currentPenColor = QColor(255, 96, 110);
+    QColor m_currentRectangleColor = QColor(255, 96, 110);
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;
