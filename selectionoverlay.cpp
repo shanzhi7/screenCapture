@@ -281,7 +281,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
 {
     Q_UNUSED(captureRect)
 
-    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty()))
+    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty() && m_ellipses.isEmpty()))
     {
         return pixmap;
     }
@@ -302,6 +302,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
     painter.setRenderHint(QPainter::Antialiasing, true);
     paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
     paintRectangles(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
+    paintEllipses(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
     painter.end();
 
     QPixmap result = QPixmap::fromImage(annotated);
@@ -601,6 +602,17 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (shouldHandleEllipseAt(event->pos()))
+    {
+        m_drawingEllipse = true;
+        m_currentEllipseColor = m_annotationColor;
+        m_currentEllipseAnchor = clampPointToSelection(event->pos());
+        m_currentEllipse = QRectF(m_currentEllipseAnchor, m_currentEllipseAnchor);
+        event->accept();
+        update();
+        return;
+    }
+
     if (shouldHandleToolAt(event->pos()))
     {
         event->accept();
@@ -688,6 +700,15 @@ void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)
         return;
     }
 
+    if (m_drawingEllipse)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        m_currentEllipse = QRectF(m_currentEllipseAnchor, point).normalized();
+        event->accept();
+        update();
+        return;
+    }
+
     if (m_selecting)
     {
         m_endPos = event->pos();
@@ -733,6 +754,16 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
         const QPointF point = clampPointToSelection(event->pos());
         m_currentRectangle = QRectF(m_currentRectangleAnchor, point).normalized();
         finishCurrentRectangle();
+        event->accept();
+        update();
+        return;
+    }
+
+    if (m_drawingEllipse && event->button() == Qt::LeftButton)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        m_currentEllipse = QRectF(m_currentEllipseAnchor, point).normalized();
+        finishCurrentEllipse();
         event->accept();
         update();
         return;
@@ -887,6 +918,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);
     paintPenStrokes(&painter, committedSelection, editableSelectionRect(), true);
     paintRectangles(&painter, committedSelection, editableSelectionRect(), true);
+    paintEllipses(&painter, committedSelection, editableSelectionRect(), true);
 
     QString sizeText = QString::number(committedSelection.width())
                        + QStringLiteral(" x ")
@@ -1034,6 +1066,11 @@ bool SelectionOverlay::shouldHandleRectangleAt(const QPoint &point) const
     return m_activeTool == ToolMode::Rectangle && shouldHandleToolAt(point);
 }
 
+bool SelectionOverlay::shouldHandleEllipseAt(const QPoint &point) const
+{
+    return m_activeTool == ToolMode::Ellipse && shouldHandleToolAt(point);
+}
+
 void SelectionOverlay::finishCurrentPenStroke()
 {
     if (!m_currentPenStroke.isEmpty())
@@ -1065,17 +1102,38 @@ void SelectionOverlay::finishCurrentRectangle()
     m_drawingRectangle = false;
 }
 
+void SelectionOverlay::finishCurrentEllipse()
+{
+    if (m_currentEllipse.width() >= 2.0 && m_currentEllipse.height() >= 2.0)
+    {
+        EllipseAnnotation ellipse;
+        ellipse.rect = m_currentEllipse.normalized();
+        ellipse.color = m_currentEllipseColor;
+        m_ellipses.append(ellipse);
+    }
+
+    m_currentEllipse = QRectF();
+    m_currentEllipseAnchor = QPointF();
+    m_currentEllipseColor = m_annotationColor;
+    m_drawingEllipse = false;
+}
+
 void SelectionOverlay::clearAnnotations()
 {
     m_drawingPenStroke = false;
     m_drawingRectangle = false;
+    m_drawingEllipse = false;
     m_currentPenStroke.clear();
     m_currentRectangle = QRectF();
     m_currentRectangleAnchor = QPointF();
+    m_currentEllipse = QRectF();
+    m_currentEllipseAnchor = QPointF();
     m_currentPenColor = m_annotationColor;
     m_currentRectangleColor = m_annotationColor;
+    m_currentEllipseColor = m_annotationColor;
     m_penStrokes.clear();
     m_rectangles.clear();
+    m_ellipses.clear();
 }
 
 void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const
@@ -1191,6 +1249,60 @@ void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRec
     if (includeActiveRectangle)
     {
         drawRectangle(m_currentRectangle, m_currentRectangleColor, true);
+    }
+
+    painter->restore();
+}
+
+void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveEllipse) const
+{
+    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid())
+    {
+        return;
+    }
+
+    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
+    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
+    const qreal strokeWidth = qMax<qreal>(1.8, kOverlayPenWidth * (scaleX + scaleY) * 0.5);
+
+    auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
+    {
+        return QPointF((point.x() - referenceRect.left()) * scaleX,
+                       (point.y() - referenceRect.top()) * scaleY);
+    };
+
+    auto drawEllipse = [painter, mappedPoint, strokeWidth](const QRectF &rect, const QColor &color, bool dashed)
+    {
+        if (!rect.isValid() || rect.width() < 1.0 || rect.height() < 1.0)
+        {
+            return;
+        }
+
+        QRectF mappedRect(mappedPoint(rect.topLeft()), mappedPoint(rect.bottomRight()));
+        mappedRect = mappedRect.normalized();
+
+        painter->save();
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(color,
+                             strokeWidth,
+                             dashed ? Qt::DashLine : Qt::SolidLine,
+                             Qt::RoundCap,
+                             Qt::RoundJoin));
+        painter->drawEllipse(mappedRect);
+        painter->restore();
+    };
+
+    painter->save();
+    painter->translate(targetRect.topLeft());
+
+    for (const EllipseAnnotation &ellipse : m_ellipses)
+    {
+        drawEllipse(ellipse.rect, ellipse.color, false);
+    }
+
+    if (includeActiveEllipse)
+    {
+        drawEllipse(m_currentEllipse, m_currentEllipseColor, true);
     }
 
     painter->restore();
@@ -1690,6 +1802,10 @@ void SelectionOverlay::ensureToolbar()
         {
             finishCurrentRectangle();
         }
+        if (m_drawingEllipse)
+        {
+            finishCurrentEllipse();
+        }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
         if (m_longCaptureEnabled)
@@ -1853,6 +1969,10 @@ void SelectionOverlay::confirmSelection()
     if (m_drawingRectangle)
     {
         finishCurrentRectangle();
+    }
+    if (m_drawingEllipse)
+    {
+        finishCurrentEllipse();
     }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
