@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>540</width>
-    <height>300</height>
+    <width>620</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,91 +15,219 @@
   </property>
   <layout class="QVBoxLayout" name="rootLayout">
    <property name="leftMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="topMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="rightMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="bottomMargin">
-    <number>18</number>
+    <number>22</number>
    </property>
    <property name="spacing">
-    <number>12</number>
+    <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="aboutCard">
+    <widget class="QFrame" name="dialogCard">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>
      <layout class="QVBoxLayout" name="cardLayout">
       <property name="leftMargin">
-       <number>18</number>
+       <number>24</number>
       </property>
       <property name="topMargin">
-       <number>16</number>
+       <number>24</number>
       </property>
       <property name="rightMargin">
-       <number>18</number>
+       <number>24</number>
       </property>
       <property name="bottomMargin">
-       <number>16</number>
+       <number>24</number>
       </property>
       <property name="spacing">
-       <number>12</number>
+       <number>16</number>
       </property>
       <item>
-       <widget class="QLabel" name="titleLabel">
-        <property name="text">
-         <string>关于轻影截图</string>
+       <widget class="QFrame" name="heroFrame">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
         </property>
+        <layout class="QVBoxLayout" name="heroLayout">
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>20</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="heroBadgeLabel">
+           <property name="text">
+            <string>轻影截图</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="titleLabel">
+           <property name="text">
+            <string>关于轻影截图</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="subTitleLabel">
+           <property name="text">
+            <string>一款轻快顺手的截图工具，适合日常快速截图与保存。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="contentLabel">
-        <property name="text">
-         <string/>
+       <widget class="QFrame" name="infoSection">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
         </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
+        <layout class="QVBoxLayout" name="infoSectionLayout">
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="infoSectionTitle">
+           <property name="text">
+            <string>应用信息</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="contentLabel">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="feedbackSection">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <layout class="QVBoxLayout" name="feedbackSectionLayout">
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="feedbackTitleLabel">
+           <property name="text">
+            <string>反馈建议</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="feedbackBodyLabel">
+           <property name="text">
+            <string>如果遇到问题或想提出建议，可以先复制应用信息，再附上截图或现象描述进行反馈。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="footerLayout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="copyInfoButton">
+          <property name="minimumSize">
+           <size>
+            <width>132</width>
+            <height>46</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>复制信息</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="footerSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="closeButton">
+          <property name="minimumSize">
+           <size>
+            <width>108</width>
+            <height>46</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>关闭</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="footerLayout">
-     <item>
-      <widget class="QPushButton" name="copyInfoButton">
-       <property name="text">
-        <string>复制信息</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="footerSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="closeButton">
-       <property name="text">
-        <string>关闭</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

@@ -12,6 +12,15 @@
         <file alias="history.svg">icons/history.svg</file>
         <file alias="plus_white.svg">icons/plus_white.svg</file>
         <file alias="info.svg">icons/info.svg</file>
+        <file alias="overlay_pen.svg">icons/overlay_pen.svg</file>
+        <file alias="overlay_rect.svg">icons/overlay_rect.svg</file>
+        <file alias="overlay_ellipse.svg">icons/overlay_ellipse.svg</file>
+        <file alias="overlay_mosaic.svg">icons/overlay_mosaic.svg</file>
+        <file alias="overlay_text.svg">icons/overlay_text.svg</file>
+        <file alias="overlay_scroll.svg">icons/overlay_scroll.svg</file>
+        <file alias="overlay_save.svg">icons/overlay_save.svg</file>
+        <file alias="overlay_close.svg">icons/overlay_close.svg</file>
+        <file alias="overlay_check.svg">icons/overlay_check.svg</file>
     </qresource>
     <qresource prefix="/">
         <file alias="icon.ico">icon.ico</file>

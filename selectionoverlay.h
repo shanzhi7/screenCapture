@@ -18,9 +18,13 @@
 #include "longcapturetypes.h"
 
 #include <QButtonGroup>
+#include <QColor>
+#include <QImage>
 #include <QPoint>
+#include <QPointF>
 #include <QPixmap>
 #include <QRect>
+#include <QVector>
 #include <QWidget>
 
 class QContextMenuEvent;
@@ -30,6 +34,7 @@ class QKeyEvent;
 class QLabel;
 class QMouseEvent;
 class QPaintEvent;
+class QPainter;
 class QToolButton;
 class QWheelEvent;
 
@@ -44,6 +49,7 @@ class SelectionOverlay : public QWidget
 public:
     explicit SelectionOverlay(QWidget *parent = nullptr);
     QRect selectedRect() const;
+    QPixmap applyEditsToPixmap(const QPixmap &pixmap, const QRect &captureRect) const;
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void setLongCaptureModeEnabled(bool enabled);
@@ -59,6 +65,7 @@ signals:
     void selectionFinished(const QRect &rect);
     void selectionCanceled();
     void saveRequested(const QRect &rect);
+    void colorValueCopied(const QString &colorText);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void longCaptureToggled(bool enabled, const QRect &rect);
@@ -80,7 +87,32 @@ protected:
 #endif
 
 private:
+    enum class ToolMode
+    {
+        None = 0,
+        Pen,
+        Rectangle,
+        Ellipse,
+        Mosaic,
+        Text
+    };
+
+    struct PenStroke
+    {
+        QVector<QPointF> points;
+        QColor color;
+    };
+
     QRect currentRect() const;
+    QRect editableSelectionRect() const;
+    QPointF clampPointToSelection(const QPoint &point) const;
+    bool shouldHandleToolAt(const QPoint &point) const;
+    bool shouldHandlePenAt(const QPoint &point) const;
+    void finishCurrentPenStroke();
+    void clearAnnotations();
+    void paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const;
+    void prepareForOutputCapture();
+    void updateActiveCursor();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     QRect currentDisplayRect() const;
     QRect predictedDisplayRect() const;
@@ -90,6 +122,8 @@ private:
 #endif
     QRect toGlobalRect(const QRect &rect) const;
     QRect screenLocalRectForSelection(const QRect &selection) const;
+    void captureDesktopSnapshot();
+    QString copyCurrentColorValue();
 
     void updateToolbarPosition();
     void updateStatusPosition();
@@ -107,10 +141,18 @@ private:
     QPoint m_startPos;
     QPoint m_endPos;
     QRect m_selectedRect;
+    QPoint m_cursorPos;
+    QImage m_desktopSnapshot;
 
     QFrame *m_toolbar = nullptr;
     QButtonGroup *m_toolGroup = nullptr;
     QLabel *m_statusLabel = nullptr;
+    ToolMode m_activeTool = ToolMode::None;
+    QColor m_annotationColor = QColor(255, 96, 110);
+    bool m_drawingPenStroke = false;
+    QVector<PenStroke> m_penStrokes;
+    QVector<QPointF> m_currentPenStroke;
+    QColor m_currentPenColor = QColor(255, 96, 110);
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;
@@ -133,5 +175,3 @@ private:
 };
 
 #endif // SELECTIONOVERLAY_H
-
-
