@@ -392,6 +392,12 @@ void LongCaptureSessionController::cancel()
     releaseCaptureSuppression();
 }
 
+void LongCaptureSessionController::detachOverlay()
+{
+    m_overlay = nullptr;
+    m_overlayCaptureSuppressed = false;
+}
+
 bool LongCaptureSessionController::isActive() const
 {
     const LongCaptureSession::State state = m_session.state();

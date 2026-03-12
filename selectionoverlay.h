@@ -103,18 +103,28 @@ private:
     {
         QVector<QPointF> points;
         QColor color;
+        qreal width = 4.8;
     };
 
     struct RectangleAnnotation
     {
         QRectF rect;
         QColor color;
+        qreal strokeWidth = 4.0;
     };
 
     struct EllipseAnnotation
     {
         QRectF rect;
         QColor color;
+        qreal strokeWidth = 4.0;
+    };
+
+    struct MosaicAnnotation
+    {
+        QVector<QPointF> points;
+        qreal brushSize = 28.0;
+        int blockSize = 12;
     };
 
     struct TextAnnotation
@@ -125,6 +135,15 @@ private:
         qreal fontPixelSize = 20.0;
     };
 
+    struct AnnotationSnapshot
+    {
+        QVector<PenStroke> penStrokes;
+        QVector<RectangleAnnotation> rectangles;
+        QVector<EllipseAnnotation> ellipses;
+        QVector<MosaicAnnotation> mosaics;
+        QVector<TextAnnotation> texts;
+    };
+
     QRect currentRect() const;
     QRect editableSelectionRect() const;
     QPointF clampPointToSelection(const QPoint &point) const;
@@ -132,16 +151,26 @@ private:
     bool shouldHandlePenAt(const QPoint &point) const;
     bool shouldHandleRectangleAt(const QPoint &point) const;
     bool shouldHandleEllipseAt(const QPoint &point) const;
+    bool shouldHandleMosaicAt(const QPoint &point) const;
     bool shouldHandleTextAt(const QPoint &point) const;
     void beginTextEditingAt(const QPoint &point);
     void finishCurrentPenStroke();
     void finishCurrentRectangle();
     void finishCurrentEllipse();
+    void finishCurrentMosaic();
     void finishCurrentTextAnnotation(bool commit);
     void clearAnnotations();
+    AnnotationSnapshot currentAnnotationSnapshot() const;
+    void applyAnnotationSnapshot(const AnnotationSnapshot &snapshot);
+    void resetAnnotationHistory();
+    void commitAnnotationHistory();
+    void undoLastAnnotation();
+    void redoLastAnnotation();
+    void updateHistoryButtons();
     void paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const;
     void paintRectangles(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveRectangle) const;
     void paintEllipses(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveEllipse) const;
+    void paintMosaics(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, const QImage &sourceImage, bool includeActiveMosaic) const;
     void paintTexts(QPainter *painter, const QRect &targetRect, const QRect &referenceRect) const;
     void prepareForOutputCapture();
     void updateActiveCursor();
@@ -157,9 +186,23 @@ private:
     void captureDesktopSnapshot();
     QString copyCurrentColorValue();
 
+    bool toolSupportsStyleToolbar(ToolMode mode) const;
+    bool toolUsesColor(ToolMode mode) const;
+    QColor selectedColorForTool(ToolMode mode) const;
+    void setSelectedColorForTool(ToolMode mode, const QColor &color);
+    int selectedThicknessIndexForTool(ToolMode mode) const;
+    void setSelectedThicknessIndexForTool(ToolMode mode, int index);
+    qreal penWidthForIndex(int index) const;
+    qreal shapeStrokeWidthForIndex(int index) const;
+    qreal mosaicBrushSizeForIndex(int index) const;
+    int mosaicBlockSizeForIndex(int index) const;
+    qreal textPixelSizeForIndex(int index) const;
     void updateToolbarPosition();
+    void updateStyleToolbarPosition();
     void updateStatusPosition();
     void ensureToolbar();
+    void ensureStyleToolbar();
+    void rebuildStyleToolbar();
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void updatePreviewPanelPosition();
 #endif
@@ -177,29 +220,50 @@ private:
     QImage m_desktopSnapshot;
 
     QFrame *m_toolbar = nullptr;
+    QFrame *m_styleToolbar = nullptr;
     QButtonGroup *m_toolGroup = nullptr;
     QLabel *m_statusLabel = nullptr;
     ToolMode m_activeTool = ToolMode::None;
-    QColor m_annotationColor = QColor(255, 96, 110);
+    QColor m_penColor = QColor(255, 96, 110);
+    QColor m_rectangleColor = QColor(255, 96, 110);
+    QColor m_ellipseColor = QColor(255, 96, 110);
+    QColor m_textColor = QColor(255, 96, 110);
+    int m_penThicknessIndex = 1;
+    int m_rectangleThicknessIndex = 1;
+    int m_ellipseThicknessIndex = 1;
+    int m_mosaicThicknessIndex = 1;
+    int m_textThicknessIndex = 1;
     bool m_drawingPenStroke = false;
     bool m_drawingRectangle = false;
     bool m_drawingEllipse = false;
+    bool m_drawingMosaic = false;
     QVector<PenStroke> m_penStrokes;
     QVector<RectangleAnnotation> m_rectangles;
     QVector<EllipseAnnotation> m_ellipses;
+    QVector<MosaicAnnotation> m_mosaics;
     QVector<TextAnnotation> m_texts;
     QVector<QPointF> m_currentPenStroke;
     QRectF m_currentRectangle;
     QPointF m_currentRectangleAnchor;
     QRectF m_currentEllipse;
     QPointF m_currentEllipseAnchor;
+    QVector<QPointF> m_currentMosaicStroke;
     QPointF m_currentTextAnchor;
     QColor m_currentPenColor = QColor(255, 96, 110);
     QColor m_currentRectangleColor = QColor(255, 96, 110);
     QColor m_currentEllipseColor = QColor(255, 96, 110);
     QColor m_currentTextColor = QColor(255, 96, 110);
-    qreal m_currentTextPixelSize = 20.0;
+    qreal m_currentPenWidth = 4.8;
+    qreal m_currentRectangleStrokeWidth = 4.0;
+    qreal m_currentEllipseStrokeWidth = 4.0;
+    qreal m_currentMosaicBrushSize = 28.0;
+    int m_currentMosaicBlockSize = 12;
+    qreal m_currentTextPixelSize = 24.0;
     QLineEdit *m_textEditor = nullptr;
+    QVector<AnnotationSnapshot> m_annotationHistory;
+    int m_annotationHistoryIndex = -1;
+    QToolButton *m_btnUndo = nullptr;
+    QToolButton *m_btnRedo = nullptr;
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;

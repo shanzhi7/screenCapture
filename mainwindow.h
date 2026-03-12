@@ -20,6 +20,7 @@
 #include <QKeySequence>
 #include <QMainWindow>
 #include <QPixmap>
+#include <QPointer>
 #include <QRect>
 #include <QSystemTrayIcon>
 
@@ -143,8 +144,12 @@ private:
     void updateModeSegmentVisuals();
     QPixmap captureRegion(const QRect &rect) const;
     void resetLongCaptureState();
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    void stopLongCaptureForClosingOverlay();
+#endif
     void ensureTrayIcon();
     void dismissOverlay();
+    bool copyPixmapToClipboard(const QPixmap &pixmap) const;
     void updatePreview(const QPixmap &pixmap);
     void showTip(const QString &text);
     void loadCaptureHotkey();
@@ -154,7 +159,7 @@ private:
 
 private:
     Ui::MainWindow *ui;
-    SelectionOverlay *m_overlay = nullptr;
+    QPointer<SelectionOverlay> m_overlay;
     std::unique_ptr<TipPresenter> m_tipPresenter;
     std::unique_ptr<CaptureUiStateCoordinator> m_uiStateCoordinator;
     std::unique_ptr<CaptureResultHandler> m_captureResultHandler;
@@ -176,6 +181,7 @@ private:
     QMenu *m_trayMenu = nullptr;
     QAction *m_actionTrayShow = nullptr;
     QAction *m_actionTrayExit = nullptr;
+    bool m_overlayClosing = false;
     bool m_forceQuit = false;
 
 #ifdef Q_OS_WIN
