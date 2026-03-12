@@ -24,6 +24,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPainterPathStroker>
 #include <QPen>
 #include <QScreen>
 #include <QShortcut>
@@ -40,7 +41,13 @@ constexpr int kCursorInfoPanelMargin = 10;
 constexpr int kCursorMagnifierGrid = 11;
 constexpr int kCursorInfoBottomHeight = 56;
 constexpr qreal kOverlayPenWidth = 3.2;
+constexpr int kOverlayMosaicBlockSize = 12;
 constexpr qreal kOverlayTextPixelSize = 20.0;
+constexpr qreal kOverlayPenWidths[3] = {2.6, 4.8, 8.0};
+constexpr qreal kOverlayShapeWidths[3] = {2.0, 4.0, 6.0};
+constexpr qreal kOverlayMosaicBrushSizes[3] = {18.0, 28.0, 40.0};
+constexpr int kOverlayMosaicBlockSizes[3] = {8, 12, 18};
+constexpr qreal kOverlayTextSizes[3] = {18.0, 24.0, 32.0};
 constexpr int kOverlayTextEditorMinWidth = 120;
 constexpr int kOverlayTextEditorMaxWidth = 280;
 constexpr int kOverlayTextEditorHeight = 34;
@@ -283,6 +290,7 @@ SelectionOverlay::SelectionOverlay(QWidget *parent)
     connect(confirmShortcutEnter, &QShortcut::activated, this, &SelectionOverlay::confirmSelection);
 
     ensureToolbar();
+    resetAnnotationHistory();
     captureDesktopSnapshot();
     updateActiveCursor();
 }
@@ -296,7 +304,7 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
 {
     Q_UNUSED(captureRect)
 
-    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty() && m_ellipses.isEmpty() && m_texts.isEmpty()))
+    if (pixmap.isNull() || (m_penStrokes.isEmpty() && m_rectangles.isEmpty() && m_ellipses.isEmpty() && m_mosaics.isEmpty() && m_texts.isEmpty()))
     {
         return pixmap;
     }
@@ -307,22 +315,35 @@ QPixmap SelectionOverlay::applyEditsToPixmap(const QPixmap &pixmap, const QRect 
         return pixmap;
     }
 
-    QImage annotated = pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
-    if (annotated.isNull())
+    QPixmap result = pixmap;
+    QImage mosaicSource;
+    if (!m_mosaics.isEmpty())
+    {
+        mosaicSource = pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        if (mosaicSource.isNull())
+        {
+            return pixmap;
+        }
+    }
+
+    QPainter painter(&result);
+    if (!painter.isActive())
     {
         return pixmap;
     }
 
-    QPainter painter(&annotated);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    paintPenStrokes(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
-    paintRectangles(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
-    paintEllipses(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect, false);
-    paintTexts(&painter, QRect(QPoint(0, 0), annotated.size()), referenceRect);
+    const QRect outputRect(QPoint(0, 0), result.size());
+    if (!m_mosaics.isEmpty())
+    {
+        paintMosaics(&painter, outputRect, referenceRect, mosaicSource, false);
+    }
+    paintPenStrokes(&painter, outputRect, referenceRect, false);
+    paintRectangles(&painter, outputRect, referenceRect, false);
+    paintEllipses(&painter, outputRect, referenceRect, false);
+    paintTexts(&painter, outputRect, referenceRect);
     painter.end();
 
-    QPixmap result = QPixmap::fromImage(annotated);
-    result.setDevicePixelRatio(pixmap.devicePixelRatio());
     return result;
 }
 
@@ -590,7 +611,8 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     raise();
     setFocus();
 
-    if (m_toolbar != nullptr && m_toolbar->isVisible() && m_toolbar->geometry().contains(event->pos()))
+    if ((m_toolbar != nullptr && m_toolbar->isVisible() && m_toolbar->geometry().contains(event->pos()))
+        || (m_styleToolbar != nullptr && m_styleToolbar->isVisible() && m_styleToolbar->geometry().contains(event->pos())))
     {
         QWidget::mousePressEvent(event);
         return;
@@ -599,7 +621,8 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     if (shouldHandlePenAt(event->pos()))
     {
         m_drawingPenStroke = true;
-        m_currentPenColor = m_annotationColor;
+        m_currentPenColor = m_penColor;
+        m_currentPenWidth = penWidthForIndex(m_penThicknessIndex);
         m_currentPenStroke.clear();
         m_currentPenStroke.append(clampPointToSelection(event->pos()));
         event->accept();
@@ -610,7 +633,8 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     if (shouldHandleRectangleAt(event->pos()))
     {
         m_drawingRectangle = true;
-        m_currentRectangleColor = m_annotationColor;
+        m_currentRectangleColor = m_rectangleColor;
+        m_currentRectangleStrokeWidth = shapeStrokeWidthForIndex(m_rectangleThicknessIndex);
         m_currentRectangleAnchor = clampPointToSelection(event->pos());
         m_currentRectangle = QRectF(m_currentRectangleAnchor, m_currentRectangleAnchor);
         event->accept();
@@ -621,9 +645,22 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     if (shouldHandleEllipseAt(event->pos()))
     {
         m_drawingEllipse = true;
-        m_currentEllipseColor = m_annotationColor;
+        m_currentEllipseColor = m_ellipseColor;
+        m_currentEllipseStrokeWidth = shapeStrokeWidthForIndex(m_ellipseThicknessIndex);
         m_currentEllipseAnchor = clampPointToSelection(event->pos());
         m_currentEllipse = QRectF(m_currentEllipseAnchor, m_currentEllipseAnchor);
+        event->accept();
+        update();
+        return;
+    }
+
+    if (shouldHandleMosaicAt(event->pos()))
+    {
+        m_drawingMosaic = true;
+        m_currentMosaicBrushSize = mosaicBrushSizeForIndex(m_mosaicThicknessIndex);
+        m_currentMosaicBlockSize = mosaicBlockSizeForIndex(m_mosaicThicknessIndex);
+        m_currentMosaicStroke.clear();
+        m_currentMosaicStroke.append(clampPointToSelection(event->pos()));
         event->accept();
         update();
         return;
@@ -683,6 +720,10 @@ void SelectionOverlay::mousePressEvent(QMouseEvent *event)
     {
         m_toolbar->hide();
     }
+    if (m_styleToolbar != nullptr)
+    {
+        m_styleToolbar->hide();
+    }
     if (m_statusLabel != nullptr)
     {
         m_statusLabel->hide();
@@ -727,6 +768,18 @@ void SelectionOverlay::mouseMoveEvent(QMouseEvent *event)
     {
         const QPointF point = clampPointToSelection(event->pos());
         m_currentEllipse = QRectF(m_currentEllipseAnchor, point).normalized();
+        event->accept();
+        update();
+        return;
+    }
+
+    if (m_drawingMosaic)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        if (m_currentMosaicStroke.isEmpty() || m_currentMosaicStroke.constLast() != point)
+        {
+            m_currentMosaicStroke.append(point);
+        }
         event->accept();
         update();
         return;
@@ -792,6 +845,19 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
 
+    if (m_drawingMosaic && event->button() == Qt::LeftButton)
+    {
+        const QPointF point = clampPointToSelection(event->pos());
+        if (m_currentMosaicStroke.isEmpty() || m_currentMosaicStroke.constLast() != point)
+        {
+            m_currentMosaicStroke.append(point);
+        }
+        finishCurrentMosaic();
+        event->accept();
+        update();
+        return;
+    }
+
     if (!m_selecting || event->button() != Qt::LeftButton)
     {
         event->accept();
@@ -811,6 +877,7 @@ void SelectionOverlay::mouseReleaseEvent(QMouseEvent *event)
 
     m_hasSelection = true;
     m_selectedRect = toGlobalRect(rect);
+    updateHistoryButtons();
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     m_committedLongCaptureHeight = rect.height();
@@ -856,6 +923,18 @@ void SelectionOverlay::keyPressEvent(QKeyEvent *event)
             close();
             return;
         }
+    }
+
+    if (event->matches(QKeySequence::Undo))
+    {
+        undoLastAnnotation();
+        return;
+    }
+
+    if (event->matches(QKeySequence::Redo))
+    {
+        redoLastAnnotation();
+        return;
     }
 
     if (event->key() == Qt::Key_Escape)
@@ -939,6 +1018,7 @@ void SelectionOverlay::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(76, 166, 255, 215), 1.4));
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(committedSelection.adjusted(0, 0, -1, -1), 4, 4);
+    paintMosaics(&painter, committedSelection, editableSelectionRect(), m_desktopSnapshot, true);
     paintPenStrokes(&painter, committedSelection, editableSelectionRect(), true);
     paintRectangles(&painter, committedSelection, editableSelectionRect(), true);
     paintEllipses(&painter, committedSelection, editableSelectionRect(), true);
@@ -1092,6 +1172,136 @@ QRect SelectionOverlay::editableSelectionRect() const
 #endif
 }
 
+bool SelectionOverlay::toolSupportsStyleToolbar(ToolMode mode) const
+{
+    return mode == ToolMode::Pen
+           || mode == ToolMode::Rectangle
+           || mode == ToolMode::Ellipse
+           || mode == ToolMode::Mosaic
+           || mode == ToolMode::Text;
+}
+
+bool SelectionOverlay::toolUsesColor(ToolMode mode) const
+{
+    return mode == ToolMode::Pen
+           || mode == ToolMode::Rectangle
+           || mode == ToolMode::Ellipse
+           || mode == ToolMode::Text;
+}
+
+QColor SelectionOverlay::selectedColorForTool(ToolMode mode) const
+{
+    switch (mode)
+    {
+        case ToolMode::Pen:
+            return m_penColor;
+        case ToolMode::Rectangle:
+            return m_rectangleColor;
+        case ToolMode::Ellipse:
+            return m_ellipseColor;
+        case ToolMode::Text:
+            return m_textColor;
+        case ToolMode::Mosaic:
+        case ToolMode::None:
+        default:
+            return kDefaultAnnotationColor;
+    }
+}
+
+void SelectionOverlay::setSelectedColorForTool(ToolMode mode, const QColor &color)
+{
+    switch (mode)
+    {
+        case ToolMode::Pen:
+            m_penColor = color;
+            break;
+        case ToolMode::Rectangle:
+            m_rectangleColor = color;
+            break;
+        case ToolMode::Ellipse:
+            m_ellipseColor = color;
+            break;
+        case ToolMode::Text:
+            m_textColor = color;
+            break;
+        case ToolMode::Mosaic:
+        case ToolMode::None:
+        default:
+            break;
+    }
+}
+
+int SelectionOverlay::selectedThicknessIndexForTool(ToolMode mode) const
+{
+    switch (mode)
+    {
+        case ToolMode::Pen:
+            return m_penThicknessIndex;
+        case ToolMode::Rectangle:
+            return m_rectangleThicknessIndex;
+        case ToolMode::Ellipse:
+            return m_ellipseThicknessIndex;
+        case ToolMode::Mosaic:
+            return m_mosaicThicknessIndex;
+        case ToolMode::Text:
+            return m_textThicknessIndex;
+        case ToolMode::None:
+        default:
+            return 1;
+    }
+}
+
+void SelectionOverlay::setSelectedThicknessIndexForTool(ToolMode mode, int index)
+{
+    const int clamped = qBound(0, index, 2);
+    switch (mode)
+    {
+        case ToolMode::Pen:
+            m_penThicknessIndex = clamped;
+            break;
+        case ToolMode::Rectangle:
+            m_rectangleThicknessIndex = clamped;
+            break;
+        case ToolMode::Ellipse:
+            m_ellipseThicknessIndex = clamped;
+            break;
+        case ToolMode::Mosaic:
+            m_mosaicThicknessIndex = clamped;
+            break;
+        case ToolMode::Text:
+            m_textThicknessIndex = clamped;
+            break;
+        case ToolMode::None:
+        default:
+            break;
+    }
+}
+
+qreal SelectionOverlay::penWidthForIndex(int index) const
+{
+    return kOverlayPenWidths[qBound(0, index, 2)];
+}
+
+qreal SelectionOverlay::shapeStrokeWidthForIndex(int index) const
+{
+    return kOverlayShapeWidths[qBound(0, index, 2)];
+}
+
+qreal SelectionOverlay::mosaicBrushSizeForIndex(int index) const
+{
+    return kOverlayMosaicBrushSizes[qBound(0, index, 2)];
+}
+
+int SelectionOverlay::mosaicBlockSizeForIndex(int index) const
+{
+    return kOverlayMosaicBlockSizes[qBound(0, index, 2)];
+}
+
+qreal SelectionOverlay::textPixelSizeForIndex(int index) const
+{
+    return kOverlayTextSizes[qBound(0, index, 2)];
+}
+
 QPointF SelectionOverlay::clampPointToSelection(const QPoint &point) const
 {
     const QRect selection = editableSelectionRect();
@@ -1129,6 +1339,11 @@ bool SelectionOverlay::shouldHandleEllipseAt(const QPoint &point) const
     return m_activeTool == ToolMode::Ellipse && shouldHandleToolAt(point);
 }
 
+bool SelectionOverlay::shouldHandleMosaicAt(const QPoint &point) const
+{
+    return m_activeTool == ToolMode::Mosaic && shouldHandleToolAt(point);
+}
+
 bool SelectionOverlay::shouldHandleTextAt(const QPoint &point) const
 {
     return m_activeTool == ToolMode::Text && shouldHandleToolAt(point);
@@ -1161,8 +1376,8 @@ void SelectionOverlay::beginTextEditingAt(const QPoint &point)
     const int editorY = qBound(selection.top() + kOverlayTextEditorMargin, point.y(), maxY);
 
     m_currentTextAnchor = QPointF(editorX, editorY);
-    m_currentTextColor = m_annotationColor;
-    m_currentTextPixelSize = kOverlayTextPixelSize;
+    m_currentTextColor = m_textColor;
+    m_currentTextPixelSize = textPixelSizeForIndex(m_textThicknessIndex);
 
     auto *editor = new QLineEdit(this);
     editor->setObjectName(QStringLiteral("overlayTextEditor"));
@@ -1199,11 +1414,14 @@ void SelectionOverlay::finishCurrentPenStroke()
         PenStroke stroke;
         stroke.points = m_currentPenStroke;
         stroke.color = m_currentPenColor;
+        stroke.width = m_currentPenWidth;
         m_penStrokes.append(stroke);
+        commitAnnotationHistory();
     }
 
     m_currentPenStroke.clear();
-    m_currentPenColor = m_annotationColor;
+    m_currentPenColor = m_penColor;
+    m_currentPenWidth = penWidthForIndex(m_penThicknessIndex);
     m_drawingPenStroke = false;
 }
 
@@ -1214,12 +1432,15 @@ void SelectionOverlay::finishCurrentRectangle()
         RectangleAnnotation rectangle;
         rectangle.rect = m_currentRectangle.normalized();
         rectangle.color = m_currentRectangleColor;
+        rectangle.strokeWidth = m_currentRectangleStrokeWidth;
         m_rectangles.append(rectangle);
+        commitAnnotationHistory();
     }
 
     m_currentRectangle = QRectF();
     m_currentRectangleAnchor = QPointF();
-    m_currentRectangleColor = m_annotationColor;
+    m_currentRectangleColor = m_rectangleColor;
+    m_currentRectangleStrokeWidth = shapeStrokeWidthForIndex(m_rectangleThicknessIndex);
     m_drawingRectangle = false;
 }
 
@@ -1230,13 +1451,34 @@ void SelectionOverlay::finishCurrentEllipse()
         EllipseAnnotation ellipse;
         ellipse.rect = m_currentEllipse.normalized();
         ellipse.color = m_currentEllipseColor;
+        ellipse.strokeWidth = m_currentEllipseStrokeWidth;
         m_ellipses.append(ellipse);
+        commitAnnotationHistory();
     }
 
     m_currentEllipse = QRectF();
     m_currentEllipseAnchor = QPointF();
-    m_currentEllipseColor = m_annotationColor;
+    m_currentEllipseColor = m_ellipseColor;
+    m_currentEllipseStrokeWidth = shapeStrokeWidthForIndex(m_ellipseThicknessIndex);
     m_drawingEllipse = false;
+}
+
+void SelectionOverlay::finishCurrentMosaic()
+{
+    if (!m_currentMosaicStroke.isEmpty())
+    {
+        MosaicAnnotation mosaic;
+        mosaic.points = m_currentMosaicStroke;
+        mosaic.brushSize = m_currentMosaicBrushSize;
+        mosaic.blockSize = m_currentMosaicBlockSize;
+        m_mosaics.append(mosaic);
+        commitAnnotationHistory();
+    }
+
+    m_currentMosaicStroke.clear();
+    m_currentMosaicBrushSize = mosaicBrushSizeForIndex(m_mosaicThicknessIndex);
+    m_currentMosaicBlockSize = mosaicBlockSizeForIndex(m_mosaicThicknessIndex);
+    m_drawingMosaic = false;
 }
 
 void SelectionOverlay::finishCurrentTextAnnotation(bool commit)
@@ -1259,8 +1501,8 @@ void SelectionOverlay::finishCurrentTextAnnotation(bool commit)
     editor->deleteLater();
 
     m_currentTextAnchor = QPointF();
-    m_currentTextColor = m_annotationColor;
-    m_currentTextPixelSize = kOverlayTextPixelSize;
+    m_currentTextColor = m_textColor;
+    m_currentTextPixelSize = textPixelSizeForIndex(m_textThicknessIndex);
 
     if (commit && !text.isEmpty())
     {
@@ -1270,6 +1512,7 @@ void SelectionOverlay::finishCurrentTextAnnotation(bool commit)
         annotation.color = color;
         annotation.fontPixelSize = fontPixelSize;
         m_texts.append(annotation);
+        commitAnnotationHistory();
     }
 
     update();
@@ -1280,22 +1523,131 @@ void SelectionOverlay::clearAnnotations()
     m_drawingPenStroke = false;
     m_drawingRectangle = false;
     m_drawingEllipse = false;
+    m_drawingMosaic = false;
     finishCurrentTextAnnotation(false);
     m_currentPenStroke.clear();
     m_currentRectangle = QRectF();
     m_currentRectangleAnchor = QPointF();
     m_currentEllipse = QRectF();
     m_currentEllipseAnchor = QPointF();
+    m_currentMosaicStroke.clear();
     m_currentTextAnchor = QPointF();
-    m_currentPenColor = m_annotationColor;
-    m_currentRectangleColor = m_annotationColor;
-    m_currentEllipseColor = m_annotationColor;
-    m_currentTextColor = m_annotationColor;
-    m_currentTextPixelSize = kOverlayTextPixelSize;
+    m_currentPenColor = m_penColor;
+    m_currentRectangleColor = m_rectangleColor;
+    m_currentEllipseColor = m_ellipseColor;
+    m_currentTextColor = m_textColor;
+    m_currentPenWidth = penWidthForIndex(m_penThicknessIndex);
+    m_currentRectangleStrokeWidth = shapeStrokeWidthForIndex(m_rectangleThicknessIndex);
+    m_currentEllipseStrokeWidth = shapeStrokeWidthForIndex(m_ellipseThicknessIndex);
+    m_currentMosaicBrushSize = mosaicBrushSizeForIndex(m_mosaicThicknessIndex);
+    m_currentMosaicBlockSize = mosaicBlockSizeForIndex(m_mosaicThicknessIndex);
+    m_currentTextPixelSize = textPixelSizeForIndex(m_textThicknessIndex);
     m_penStrokes.clear();
     m_rectangles.clear();
     m_ellipses.clear();
+    m_mosaics.clear();
     m_texts.clear();
+    resetAnnotationHistory();
+}
+
+SelectionOverlay::AnnotationSnapshot SelectionOverlay::currentAnnotationSnapshot() const
+{
+    AnnotationSnapshot snapshot;
+    snapshot.penStrokes = m_penStrokes;
+    snapshot.rectangles = m_rectangles;
+    snapshot.ellipses = m_ellipses;
+    snapshot.mosaics = m_mosaics;
+    snapshot.texts = m_texts;
+    return snapshot;
+}
+
+void SelectionOverlay::applyAnnotationSnapshot(const AnnotationSnapshot &snapshot)
+{
+    m_drawingPenStroke = false;
+    m_drawingRectangle = false;
+    m_drawingEllipse = false;
+    m_drawingMosaic = false;
+    m_currentPenStroke.clear();
+    m_currentRectangle = QRectF();
+    m_currentRectangleAnchor = QPointF();
+    m_currentEllipse = QRectF();
+    m_currentEllipseAnchor = QPointF();
+    m_currentMosaicStroke.clear();
+    m_penStrokes = snapshot.penStrokes;
+    m_rectangles = snapshot.rectangles;
+    m_ellipses = snapshot.ellipses;
+    m_mosaics = snapshot.mosaics;
+    m_texts = snapshot.texts;
+    update();
+}
+
+void SelectionOverlay::resetAnnotationHistory()
+{
+    m_annotationHistory.clear();
+    m_annotationHistory.append(currentAnnotationSnapshot());
+    m_annotationHistoryIndex = 0;
+    updateHistoryButtons();
+}
+
+void SelectionOverlay::commitAnnotationHistory()
+{
+    if (m_annotationHistoryIndex < 0)
+    {
+        resetAnnotationHistory();
+    }
+
+    while (m_annotationHistory.size() > m_annotationHistoryIndex + 1)
+    {
+        m_annotationHistory.removeLast();
+    }
+
+    m_annotationHistory.append(currentAnnotationSnapshot());
+    m_annotationHistoryIndex = m_annotationHistory.size() - 1;
+    updateHistoryButtons();
+}
+
+void SelectionOverlay::undoLastAnnotation()
+{
+    if (m_annotationHistoryIndex <= 0)
+    {
+        updateHistoryButtons();
+        return;
+    }
+
+    --m_annotationHistoryIndex;
+    applyAnnotationSnapshot(m_annotationHistory.at(m_annotationHistoryIndex));
+    updateHistoryButtons();
+}
+
+void SelectionOverlay::redoLastAnnotation()
+{
+    if (m_annotationHistoryIndex < 0 || m_annotationHistoryIndex + 1 >= m_annotationHistory.size())
+    {
+        updateHistoryButtons();
+        return;
+    }
+
+    ++m_annotationHistoryIndex;
+    applyAnnotationSnapshot(m_annotationHistory.at(m_annotationHistoryIndex));
+    updateHistoryButtons();
+}
+
+void SelectionOverlay::updateHistoryButtons()
+{
+    const bool canUndo = m_hasSelection && m_annotationHistoryIndex > 0;
+    const bool canRedo = m_hasSelection
+                         && m_annotationHistoryIndex >= 0
+                         && m_annotationHistoryIndex + 1 < m_annotationHistory.size();
+
+    if (m_btnUndo != nullptr)
+    {
+        m_btnUndo->setEnabled(canUndo);
+    }
+
+    if (m_btnRedo != nullptr)
+    {
+        m_btnRedo->setEnabled(canRedo);
+    }
 }
 
 void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, bool includeActiveStroke) const
@@ -1307,15 +1659,17 @@ void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRec
 
     const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
     const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
-    const qreal strokeWidth = kOverlayPenWidth * (scaleX + scaleY) * 0.5;
-    const qreal dotRadius = qMax<qreal>(1.6, strokeWidth * 0.5);
+    const qreal scale = (scaleX + scaleY) * 0.5;
 
-    auto drawStroke = [painter, scaleX, scaleY, dotRadius, strokeWidth, referenceRect](const QVector<QPointF> &points, const QColor &color)
+    auto drawStroke = [painter, scaleX, scaleY, scale, referenceRect](const QVector<QPointF> &points, const QColor &color, qreal width)
     {
         if (points.isEmpty())
         {
             return;
         }
+
+        const qreal strokeWidth = qMax<qreal>(1.4, width * scale);
+        const qreal dotRadius = qMax<qreal>(1.6, strokeWidth * 0.5);
 
         auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
         {
@@ -1351,12 +1705,12 @@ void SelectionOverlay::paintPenStrokes(QPainter *painter, const QRect &targetRec
 
     for (const PenStroke &stroke : m_penStrokes)
     {
-        drawStroke(stroke.points, stroke.color);
+        drawStroke(stroke.points, stroke.color, stroke.width);
     }
 
     if (includeActiveStroke)
     {
-        drawStroke(m_currentPenStroke, m_currentPenColor);
+        drawStroke(m_currentPenStroke, m_currentPenColor, m_currentPenWidth);
     }
 
     painter->restore();
@@ -1371,7 +1725,7 @@ void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRec
 
     const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
     const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
-    const qreal strokeWidth = qMax<qreal>(1.8, kOverlayPenWidth * (scaleX + scaleY) * 0.5);
+    const qreal scale = (scaleX + scaleY) * 0.5;
 
     auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
     {
@@ -1379,7 +1733,7 @@ void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRec
                        (point.y() - referenceRect.top()) * scaleY);
     };
 
-    auto drawRectangle = [painter, mappedPoint, strokeWidth](const QRectF &rect, const QColor &color, bool dashed)
+    auto drawRectangle = [painter, mappedPoint, scale](const QRectF &rect, const QColor &color, qreal width, bool dashed)
     {
         if (!rect.isValid() || rect.width() < 1.0 || rect.height() < 1.0)
         {
@@ -1388,6 +1742,7 @@ void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRec
 
         QRectF mappedRect(mappedPoint(rect.topLeft()), mappedPoint(rect.bottomRight()));
         mappedRect = mappedRect.normalized();
+        const qreal strokeWidth = qMax<qreal>(1.4, width * scale);
 
         painter->save();
         painter->setBrush(Qt::NoBrush);
@@ -1405,12 +1760,12 @@ void SelectionOverlay::paintRectangles(QPainter *painter, const QRect &targetRec
 
     for (const RectangleAnnotation &rectangle : m_rectangles)
     {
-        drawRectangle(rectangle.rect, rectangle.color, false);
+        drawRectangle(rectangle.rect, rectangle.color, rectangle.strokeWidth, false);
     }
 
     if (includeActiveRectangle)
     {
-        drawRectangle(m_currentRectangle, m_currentRectangleColor, true);
+        drawRectangle(m_currentRectangle, m_currentRectangleColor, m_currentRectangleStrokeWidth, true);
     }
 
     painter->restore();
@@ -1425,7 +1780,7 @@ void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect,
 
     const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
     const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
-    const qreal strokeWidth = qMax<qreal>(1.8, kOverlayPenWidth * (scaleX + scaleY) * 0.5);
+    const qreal scale = (scaleX + scaleY) * 0.5;
 
     auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
     {
@@ -1433,7 +1788,7 @@ void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect,
                        (point.y() - referenceRect.top()) * scaleY);
     };
 
-    auto drawEllipse = [painter, mappedPoint, strokeWidth](const QRectF &rect, const QColor &color, bool dashed)
+    auto drawEllipse = [painter, mappedPoint, scale](const QRectF &rect, const QColor &color, qreal width, bool dashed)
     {
         if (!rect.isValid() || rect.width() < 1.0 || rect.height() < 1.0)
         {
@@ -1442,6 +1797,7 @@ void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect,
 
         QRectF mappedRect(mappedPoint(rect.topLeft()), mappedPoint(rect.bottomRight()));
         mappedRect = mappedRect.normalized();
+        const qreal strokeWidth = qMax<qreal>(1.4, width * scale);
 
         painter->save();
         painter->setBrush(Qt::NoBrush);
@@ -1459,12 +1815,115 @@ void SelectionOverlay::paintEllipses(QPainter *painter, const QRect &targetRect,
 
     for (const EllipseAnnotation &ellipse : m_ellipses)
     {
-        drawEllipse(ellipse.rect, ellipse.color, false);
+        drawEllipse(ellipse.rect, ellipse.color, ellipse.strokeWidth, false);
     }
 
     if (includeActiveEllipse)
     {
-        drawEllipse(m_currentEllipse, m_currentEllipseColor, true);
+        drawEllipse(m_currentEllipse, m_currentEllipseColor, m_currentEllipseStrokeWidth, true);
+    }
+
+    painter->restore();
+}
+
+void SelectionOverlay::paintMosaics(QPainter *painter, const QRect &targetRect, const QRect &referenceRect, const QImage &sourceImage, bool includeActiveMosaic) const
+{
+    if (painter == nullptr || targetRect.width() <= 0 || targetRect.height() <= 0 || !referenceRect.isValid() || sourceImage.isNull())
+    {
+        return;
+    }
+
+    const qreal scaleX = static_cast<qreal>(targetRect.width()) / static_cast<qreal>(referenceRect.width());
+    const qreal scaleY = static_cast<qreal>(targetRect.height()) / static_cast<qreal>(referenceRect.height());
+    const qreal scale = (scaleX + scaleY) * 0.5;
+
+    auto mappedPoint = [scaleX, scaleY, referenceRect](const QPointF &point)
+    {
+        return QPointF((point.x() - referenceRect.left()) * scaleX,
+                       (point.y() - referenceRect.top()) * scaleY);
+    };
+
+    auto clipPathForStroke = [mappedPoint, scale](const QVector<QPointF> &points, qreal brushSize)
+    {
+        QPainterPath clipPath;
+        if (points.isEmpty())
+        {
+            return clipPath;
+        }
+
+        const qreal scaledBrushSize = qMax<qreal>(6.0, brushSize * scale);
+        if (points.size() == 1)
+        {
+            clipPath.addEllipse(mappedPoint(points.constFirst()), scaledBrushSize * 0.5, scaledBrushSize * 0.5);
+            return clipPath;
+        }
+
+        QPainterPath strokePath(mappedPoint(points.constFirst()));
+        for (int index = 1; index < points.size(); ++index)
+        {
+            strokePath.lineTo(mappedPoint(points.at(index)));
+        }
+
+        QPainterPathStroker stroker;
+        stroker.setWidth(scaledBrushSize);
+        stroker.setCapStyle(Qt::RoundCap);
+        stroker.setJoinStyle(Qt::RoundJoin);
+        return stroker.createStroke(strokePath);
+    };
+
+    auto drawMosaic = [painter, targetRect, &sourceImage, scale, clipPathForStroke](const QVector<QPointF> &points,
+                                                                                      qreal brushSize,
+                                                                                      int blockSize,
+                                                                                      bool showBorder)
+    {
+        if (points.isEmpty())
+        {
+            return;
+        }
+
+        const QPainterPath clipPath = clipPathForStroke(points, brushSize);
+        const QRect sourceRect = clipPath.boundingRect().toAlignedRect().translated(targetRect.topLeft()).intersected(sourceImage.rect());
+        if (!sourceRect.isValid() || sourceRect.width() < 1 || sourceRect.height() < 1)
+        {
+            return;
+        }
+
+        const int scaledBlockSize = qMax(4, qRound(blockSize * scale));
+        const QSize reducedSize(qMax(1, sourceRect.width() / scaledBlockSize),
+                                qMax(1, sourceRect.height() / scaledBlockSize));
+        const QImage mosaic = sourceImage.copy(sourceRect)
+                                  .scaled(reducedSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                                  .scaled(sourceRect.size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+        const QRect localRect = sourceRect.translated(-targetRect.topLeft());
+
+        painter->save();
+        painter->setClipPath(clipPath);
+        painter->drawImage(localRect, mosaic);
+        painter->restore();
+
+        if (showBorder)
+        {
+            painter->save();
+            QPen borderPen(QColor(220, 230, 255, 190), 1.0, Qt::DashLine);
+            borderPen.setDashPattern({5.0, 3.0});
+            painter->setPen(borderPen);
+            painter->setBrush(Qt::NoBrush);
+            painter->drawPath(clipPath);
+            painter->restore();
+        }
+    };
+
+    painter->save();
+    painter->translate(targetRect.topLeft());
+
+    for (const MosaicAnnotation &mosaic : m_mosaics)
+    {
+        drawMosaic(mosaic.points, mosaic.brushSize, mosaic.blockSize, false);
+    }
+
+    if (includeActiveMosaic)
+    {
+        drawMosaic(m_currentMosaicStroke, m_currentMosaicBrushSize, m_currentMosaicBlockSize, true);
     }
 
     painter->restore();
@@ -1682,8 +2141,19 @@ QRect SelectionOverlay::screenLocalRectForSelection(const QRect &selection) cons
 
 void SelectionOverlay::updateToolbarPosition()
 {
-    if (m_toolbar == nullptr || !m_hasSelection)
+    if (m_toolbar == nullptr)
     {
+        return;
+    }
+
+    if (!m_hasSelection)
+    {
+        m_toolbar->hide();
+        if (m_styleToolbar != nullptr)
+        {
+            m_styleToolbar->hide();
+        }
+        updateHistoryButtons();
         return;
     }
 
@@ -1725,11 +2195,56 @@ void SelectionOverlay::updateToolbarPosition()
     m_toolbar->move(toolbarX, toolbarY);
     m_toolbar->show();
     m_toolbar->raise();
+
+    rebuildStyleToolbar();
+    updateStyleToolbarPosition();
     updateStatusPosition();
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     updatePreviewPanelPosition();
 #endif
+}
+
+void SelectionOverlay::updateStyleToolbarPosition()
+{
+    if (m_styleToolbar == nullptr)
+    {
+        return;
+    }
+
+    if (!m_hasSelection || !toolSupportsStyleToolbar(m_activeTool))
+    {
+        m_styleToolbar->hide();
+        return;
+    }
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    const QRect selection = predictedDisplayRect();
+#else
+    const QRect selection = currentRect();
+#endif
+    const QRect screenRect = screenLocalRectForSelection(selection);
+    const int toolbarWidth = m_styleToolbar->width();
+    const int toolbarHeight = m_styleToolbar->height();
+    const int margin = 8;
+    const int minX = screenRect.left() + margin;
+    const int maxX = screenRect.right() - toolbarWidth - margin;
+
+    int toolbarX = m_toolbar->geometry().center().x() - toolbarWidth / 2;
+    toolbarX = qMax(minX, qMin(maxX, toolbarX));
+
+    int toolbarY = m_toolbar->geometry().bottom() + 8;
+    const int minY = screenRect.top() + margin;
+    const int maxY = screenRect.bottom() - toolbarHeight - margin;
+    if (toolbarY > maxY)
+    {
+        toolbarY = m_toolbar->y() - toolbarHeight - 8;
+    }
+    toolbarY = qMax(minY, qMin(maxY, toolbarY));
+
+    m_styleToolbar->move(toolbarX, toolbarY);
+    m_styleToolbar->show();
+    m_styleToolbar->raise();
 }
 
 void SelectionOverlay::updateStatusPosition()
@@ -1753,16 +2268,26 @@ void SelectionOverlay::updateStatusPosition()
     int labelX = selection.center().x() - labelSize.width() / 2;
     labelX = qMax(minX, qMin(maxX, labelX));
 
-    int labelY = selection.top() - labelSize.height() - 12;
+    QRect toolbarGeometry;
     if (m_toolbar != nullptr && m_toolbar->isVisible())
     {
-        if (m_toolbar->y() < selection.top())
+        toolbarGeometry = m_toolbar->geometry();
+        if (m_styleToolbar != nullptr && m_styleToolbar->isVisible())
         {
-            labelY = m_toolbar->y() - labelSize.height() - 8;
+            toolbarGeometry = toolbarGeometry.united(m_styleToolbar->geometry());
+        }
+    }
+
+    int labelY = selection.top() - labelSize.height() - 12;
+    if (!toolbarGeometry.isNull())
+    {
+        if (toolbarGeometry.y() < selection.top())
+        {
+            labelY = toolbarGeometry.y() - labelSize.height() - 8;
         }
         else
         {
-            labelY = m_toolbar->geometry().bottom() + 8;
+            labelY = toolbarGeometry.bottom() + 8;
         }
     }
 
@@ -1835,38 +2360,6 @@ void SelectionOverlay::ensureToolbar()
         return button;
     };
 
-    auto createColorSwatch = [this, layout](const QColor &color, bool checked = false)
-    {
-        auto *button = new QToolButton(m_toolbar);
-        button->setCheckable(true);
-        button->setChecked(checked);
-        button->setCursor(Qt::PointingHandCursor);
-        button->setToolTip(color.name(QColor::HexRgb).toUpper());
-        button->setAccessibleName(QStringLiteral("注释颜色 %1").arg(color.name(QColor::HexRgb).toUpper()));
-        button->setFixedSize(24, 24);
-        button->setStyleSheet(QStringLiteral(
-            "QToolButton {"
-            "background: %1;"
-            "border: 1px solid rgba(255, 255, 255, 72);"
-            "border-radius: 12px;"
-            "padding: 0px;"
-            "min-width: 24px;"
-            "min-height: 24px;"
-            "}"
-            "QToolButton:hover {"
-            "border-color: rgba(255, 255, 255, 180);"
-            "}"
-            "QToolButton:checked {"
-            "border: 2px solid #F7FBFF;"
-            "}"
-        ).arg(color.name(QColor::HexRgb)));
-#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
-        button->installEventFilter(this);
-#endif
-        layout->addWidget(button);
-        return button;
-    };
-
     m_toolGroup = new QButtonGroup(this);
     m_toolGroup->setExclusive(false);
 
@@ -1914,6 +2407,7 @@ void SelectionOverlay::ensureToolbar()
             }
 
             updateActiveCursor();
+            updateToolbarPosition();
         });
     };
 
@@ -1925,27 +2419,20 @@ void SelectionOverlay::ensureToolbar()
 
     layout->addSpacing(4);
 
-    auto *colorGroup = new QButtonGroup(this);
-    colorGroup->setExclusive(true);
+    m_btnUndo = createTool(QStringLiteral("撤销"), QStringLiteral(":/icons/overlay_undo.svg"), QSize(18, 18));
+    m_btnRedo = createTool(QStringLiteral("重做"), QStringLiteral(":/icons/overlay_redo.svg"), QSize(18, 18));
+    m_btnUndo->setEnabled(false);
+    m_btnRedo->setEnabled(false);
 
-    const QList<QColor> colorPalette = {
-        kDefaultAnnotationColor,
-        QColor(255, 184, 0),
-        QColor(42, 201, 124),
-        QColor(76, 166, 255),
-        QColor(255, 255, 255)
-    };
-
-    for (const QColor &color : colorPalette)
+    connect(m_btnUndo, &QToolButton::clicked, this, [this]()
     {
-        auto *button = createColorSwatch(color, color == m_annotationColor);
-        colorGroup->addButton(button);
-        connect(button, &QToolButton::clicked, this, [this, color]()
-        {
-            m_annotationColor = color;
-            update();
-        });
-    }
+        undoLastAnnotation();
+    });
+
+    connect(m_btnRedo, &QToolButton::clicked, this, [this]()
+    {
+        redoLastAnnotation();
+    });
 
     layout->addSpacing(8);
 
@@ -2033,6 +2520,10 @@ void SelectionOverlay::ensureToolbar()
         {
             finishCurrentEllipse();
         }
+        if (m_drawingMosaic)
+        {
+            finishCurrentMosaic();
+        }
         if (m_textEditor != nullptr)
         {
             finishCurrentTextAnnotation(true);
@@ -2073,6 +2564,9 @@ void SelectionOverlay::ensureToolbar()
         "QToolButton:checked {"
         "background: rgba(114, 166, 255, 72);"
         "border-color: rgba(176, 214, 255, 120);"
+        "}"
+        "QToolButton:disabled {"
+        "color: rgba(234, 242, 255, 110);"
         "}");
 
     m_statusLabel = new QLabel(QStringLiteral("等待选区"), this);
@@ -2099,6 +2593,210 @@ void SelectionOverlay::ensureToolbar()
 
     m_toolbar->adjustSize();
     m_toolbar->hide();
+    ensureStyleToolbar();
+}
+
+void SelectionOverlay::ensureStyleToolbar()
+{
+    if (m_styleToolbar != nullptr)
+    {
+        return;
+    }
+
+    m_styleToolbar = new QFrame(this);
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_styleToolbar->installEventFilter(this);
+#endif
+    m_styleToolbar->setObjectName(QStringLiteral("overlayStyleToolbar"));
+    m_styleToolbar->setFixedHeight(42);
+    auto *layout = new QHBoxLayout(m_styleToolbar);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+    layout->setContentsMargins(8, 6, 8, 6);
+    layout->setSpacing(6);
+    m_styleToolbar->setStyleSheet(
+        "QFrame#overlayStyleToolbar {"
+        "background: rgba(10, 16, 24, 222);"
+        "border: 1px solid rgba(132, 180, 255, 72);"
+        "border-radius: 14px;"
+        "}"
+        "QToolButton {"
+        "color: #EAF2FF;"
+        "background: transparent;"
+        "border: 1px solid rgba(170, 205, 255, 38);"
+        "border-radius: 9px;"
+        "min-width: 30px;"
+        "min-height: 28px;"
+        "padding: 0 8px;"
+        "font: 9pt 'Microsoft YaHei UI';"
+        "}"
+        "QToolButton:hover {"
+        "background: rgba(126, 170, 255, 28);"
+        "border-color: rgba(170, 205, 255, 90);"
+        "}"
+        "QToolButton:checked {"
+        "background: rgba(114, 166, 255, 62);"
+        "border-color: rgba(176, 214, 255, 120);"
+        "}"
+        "QToolButton:disabled {"
+        "border-color: rgba(255, 255, 255, 20);"
+        "color: rgba(234, 242, 255, 92);"
+        "}");
+    m_styleToolbar->hide();
+}
+
+void SelectionOverlay::rebuildStyleToolbar()
+{
+    ensureStyleToolbar();
+    if (m_styleToolbar == nullptr)
+    {
+        return;
+    }
+
+    auto *layout = qobject_cast<QHBoxLayout *>(m_styleToolbar->layout());
+    if (layout == nullptr)
+    {
+        return;
+    }
+
+    while (QLayoutItem *item = layout->takeAt(0))
+    {
+        if (QWidget *widget = item->widget())
+        {
+            delete widget;
+        }
+        else if (QLayout *childLayout = item->layout())
+        {
+            delete childLayout;
+        }
+        delete item;
+    }
+    const auto buttonGroups = m_styleToolbar->findChildren<QButtonGroup *>(QString(), Qt::FindDirectChildrenOnly);
+    for (QButtonGroup *group : buttonGroups)
+    {
+        delete group;
+    }
+    layout->invalidate();
+
+    if (!m_hasSelection || !toolSupportsStyleToolbar(m_activeTool))
+    {
+        m_styleToolbar->hide();
+        return;
+    }
+
+    const int selectedThickness = selectedThicknessIndexForTool(m_activeTool);
+    const QList<QColor> colorPalette = {
+        kDefaultAnnotationColor,
+        QColor(255, 184, 0),
+        QColor(42, 201, 124),
+        QColor(76, 166, 255),
+        QColor(255, 255, 255)
+    };
+
+    auto *thicknessGroup = new QButtonGroup(m_styleToolbar);
+    thicknessGroup->setExclusive(true);
+    const QStringList thicknessLabels = {
+        QStringLiteral("细"),
+        QStringLiteral("中"),
+        QStringLiteral("粗")
+    };
+
+    for (int index = 0; index < thicknessLabels.size(); ++index)
+    {
+        auto *button = new QToolButton(m_styleToolbar);
+        button->setCheckable(true);
+        button->setChecked(index == selectedThickness);
+        button->setCursor(Qt::PointingHandCursor);
+        button->setText(thicknessLabels.at(index));
+        button->setToolTip(QStringLiteral("%1").arg(thicknessLabels.at(index)));
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+        button->installEventFilter(this);
+#endif
+        thicknessGroup->addButton(button);
+        layout->addWidget(button);
+        connect(button, &QToolButton::clicked, this, [this, index]()
+        {
+            setSelectedThicknessIndexForTool(m_activeTool, index);
+            if (m_activeTool == ToolMode::Text && m_textEditor != nullptr)
+            {
+                m_currentTextPixelSize = textPixelSizeForIndex(m_textThicknessIndex);
+                m_textEditor->setFont(annotationTextFont(m_currentTextPixelSize));
+            }
+            update();
+        });
+    }
+
+    layout->addSpacing(4);
+
+    const bool enableColors = toolUsesColor(m_activeTool);
+    auto *colorGroup = new QButtonGroup(m_styleToolbar);
+    colorGroup->setExclusive(true);
+    const QColor selectedColor = selectedColorForTool(m_activeTool);
+
+    for (const QColor &color : colorPalette)
+    {
+        auto *button = new QToolButton(m_styleToolbar);
+        button->setCheckable(true);
+        button->setChecked(enableColors && color == selectedColor);
+        button->setEnabled(enableColors);
+        button->setCursor(Qt::PointingHandCursor);
+        button->setFixedSize(24, 24);
+        button->setToolTip(enableColors ? color.name(QColor::HexRgb).toUpper() : QStringLiteral("马赛克不使用颜色"));
+        button->setAccessibleName(QStringLiteral("注释颜色 %1").arg(color.name(QColor::HexRgb).toUpper()));
+        button->setStyleSheet(QStringLiteral(
+            "QToolButton {"
+            "background: %1;"
+            "border: 1px solid rgba(255, 255, 255, 72);"
+            "border-radius: 12px;"
+            "padding: 0px;"
+            "min-width: 24px;"
+            "min-height: 24px;"
+            "}"
+            "QToolButton:hover {"
+            "border-color: rgba(255, 255, 255, 180);"
+            "}"
+            "QToolButton:checked {"
+            "border: 2px solid #F7FBFF;"
+            "}"
+            "QToolButton:disabled {"
+            "border-color: rgba(255, 255, 255, 28);"
+            "}").arg(color.name(QColor::HexRgb)));
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+        button->installEventFilter(this);
+#endif
+        colorGroup->addButton(button);
+        layout->addWidget(button);
+
+        if (enableColors)
+        {
+            connect(button, &QToolButton::clicked, this, [this, color]()
+            {
+                setSelectedColorForTool(m_activeTool, color);
+                if (m_activeTool == ToolMode::Text && m_textEditor != nullptr)
+                {
+                    m_currentTextColor = color;
+                    m_textEditor->setStyleSheet(QStringLiteral(
+                        "QLineEdit#overlayTextEditor {"
+                        "color: %1;"
+                        "background: rgba(14, 20, 30, 228);"
+                        "border: 1px solid rgba(170, 205, 255, 120);"
+                        "border-radius: 10px;"
+                        "selection-background-color: rgba(76, 166, 255, 128);"
+                        "padding: 0 10px;"
+                        "}"
+                        "QLineEdit#overlayTextEditor::placeholder {"
+                        "color: rgba(228, 239, 255, 128);"
+                        "}").arg(m_currentTextColor.name(QColor::HexRgb)));
+                    m_textEditor->update();
+                }
+                update();
+            });
+        }
+    }
+
+    layout->activate();
+    m_styleToolbar->updateGeometry();
+    const int toolbarWidth = qMax(1, layout->sizeHint().width());
+    m_styleToolbar->setFixedWidth(toolbarWidth);
 }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -2177,6 +2875,10 @@ void SelectionOverlay::resetSelection()
     {
         m_toolbar->hide();
     }
+    if (m_styleToolbar != nullptr)
+    {
+        m_styleToolbar->hide();
+    }
     if (m_statusLabel != nullptr)
     {
         m_statusLabel->hide();
@@ -2204,6 +2906,10 @@ void SelectionOverlay::confirmSelection()
     if (m_drawingEllipse)
     {
         finishCurrentEllipse();
+    }
+    if (m_drawingMosaic)
+    {
+        finishCurrentMosaic();
     }
     if (m_textEditor != nullptr)
     {

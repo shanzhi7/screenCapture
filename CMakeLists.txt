@@ -101,6 +101,8 @@ qt_add_resources(screenCapture app_resources
         icons/overlay_ellipse.svg
         icons/overlay_mosaic.svg
         icons/overlay_text.svg
+        icons/overlay_undo.svg
+        icons/overlay_redo.svg
         icons/overlay_scroll.svg
         icons/overlay_save.svg
         icons/overlay_close.svg

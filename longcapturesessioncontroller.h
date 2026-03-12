@@ -44,6 +44,7 @@ public:
     void confirmCopy();
     void saveAs();
     void cancel();
+    void detachOverlay();
 
     bool isActive() const;
     LongCaptureSession::State state() const;
