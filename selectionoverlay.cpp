@@ -541,6 +541,14 @@ void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
             m_toolbar->hide();
         }
 
+        m_styleToolbarVisibleBeforeCapture = (m_styleToolbar != nullptr
+                                              && m_styleToolbar->isVisible()
+                                              && m_styleToolbar->geometry().intersects(captureRect));
+        if (m_styleToolbarVisibleBeforeCapture)
+        {
+            m_styleToolbar->hide();
+        }
+
         m_statusLabelVisibleBeforeCapture = (m_statusLabel != nullptr
                                              && m_statusLabel->isVisible()
                                              && m_statusLabel->geometry().intersects(captureRect));
@@ -559,11 +567,23 @@ void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
     }
     else
     {
+        bool toolbarRestored = false;
         if (m_toolbarVisibleBeforeCapture && m_toolbar != nullptr && m_hasSelection)
         {
             updateToolbarPosition();
+            toolbarRestored = true;
         }
         m_toolbarVisibleBeforeCapture = false;
+
+        if (!toolbarRestored
+            && m_styleToolbarVisibleBeforeCapture
+            && m_styleToolbar != nullptr
+            && m_hasSelection
+            && toolSupportsStyleToolbar(m_activeTool))
+        {
+            updateStyleToolbarPosition();
+        }
+        m_styleToolbarVisibleBeforeCapture = false;
 
         if (m_statusLabelVisibleBeforeCapture && m_statusLabel != nullptr && m_hasSelection)
         {

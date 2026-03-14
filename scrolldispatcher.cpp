@@ -1,4 +1,4 @@
-#include "scrolldispatcher.h"
+﻿#include "scrolldispatcher.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -112,6 +112,35 @@ bool ScrollDispatcher::advanceFallbackTarget()
 #endif
 
     return false;
+}
+
+ScrollTargetContext ScrollDispatcher::currentTargetContext(const QPoint &screenPos) const
+{
+    ScrollTargetContext context;
+    context.injectionPoint = screenPos;
+
+    if (!hasTarget())
+    {
+        return context;
+    }
+
+    context.valid = true;
+    context.targetIndex = m_targetIndex;
+    for (void *candidate : m_targetCandidates)
+    {
+        context.candidateWindows.append(reinterpret_cast<quintptr>(candidate));
+    }
+
+    if (m_targetIndex >= 0 && m_targetIndex < context.candidateWindows.size())
+    {
+        context.targetWindow = context.candidateWindows.at(m_targetIndex);
+    }
+    if (!context.candidateWindows.isEmpty())
+    {
+        context.rootWindow = context.candidateWindows.constLast();
+    }
+
+    return context;
 }
 
 #ifdef Q_OS_WIN
@@ -249,5 +278,3 @@ bool ScrollDispatcher::dispatchWheelToWindow(void *windowHandle, int delta, cons
     return ok != FALSE;
 }
 #endif
-
-

@@ -15,11 +15,22 @@
 #include <QMetaType>
 #include <QPoint>
 #include <QString>
+#include <QVector>
 #include <QtGlobal>
 
 struct ScrollDispatchResult
 {
     bool dispatched = false;
+    QPoint injectionPoint;
+};
+
+struct ScrollTargetContext
+{
+    bool valid = false;
+    quintptr targetWindow = 0;
+    quintptr rootWindow = 0;
+    QVector<quintptr> candidateWindows;
+    int targetIndex = -1;
     QPoint injectionPoint;
 };
 
@@ -56,6 +67,22 @@ enum class MatchRejectReason
     Unknown
 };
 
+enum class ScrollAnchorKind
+{
+    None,
+    Win32ScrollInfo,
+    UiaScrollPattern,
+    UiaRangeValue,
+    VisualScrollbar
+};
+
+enum class ShiftConstraintMode
+{
+    None,
+    Range,
+    Strict
+};
+
 struct MotionAnalysis
 {
     bool moved = false;
@@ -65,6 +92,38 @@ struct MotionAnalysis
     int maxShiftPx = 0;
     double confidence = 0.0;
     QString reason;
+};
+
+struct ScrollAnchorSnapshot
+{
+    bool valid = false;
+    ScrollAnchorKind kind = ScrollAnchorKind::None;
+    quintptr sourceWindow = 0;
+    double position = 0.0;
+    double minimum = 0.0;
+    double maximum = 0.0;
+    double pageSize = 0.0;
+    double viewportRatio = 0.0;
+    double thumbTopRatio = 0.0;
+    double thumbHeightRatio = 0.0;
+    bool atTop = false;
+    bool atBottom = false;
+    double confidence = 0.0;
+    qint64 timestampMs = 0;
+};
+
+struct ShiftConstraint
+{
+    bool valid = false;
+    ShiftConstraintMode mode = ShiftConstraintMode::None;
+    ScrollAnchorKind source = ScrollAnchorKind::None;
+    int preferredShiftPx = 0;
+    int minShiftPx = 0;
+    int maxShiftPx = 0;
+    bool anchorMoved = false;
+    bool indicatesEndOfContent = false;
+    bool directionConflict = false;
+    double confidence = 0.0;
 };
 
 struct StableFrameResult

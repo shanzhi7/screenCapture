@@ -4,6 +4,7 @@
 #include "dxgiduplicationbackend.h"
 #include "motiondetector.h"
 #include "overlapmatcher.h"
+#include "scrollanchorprovider.h"
 #include "scrolldispatcher.h"
 #include "selectionoverlay.h"
 #include "showtip.h"
@@ -15,6 +16,7 @@
 #include <QCursor>
 #include <QDateTime>
 #include <QEventLoop>
+#include <QLoggingCategory>
 #include <QPainter>
 #include <QThread>
 #include <QWidget>
@@ -25,7 +27,118 @@
 
 namespace
 {
+Q_LOGGING_CATEGORY(lcAnchorControllerLog, "lc.anchor")
+
 constexpr int kLongCaptureExpansionWheelSign = -1;
+
+bool isDownwardRequest(int delta)
+{
+    return (delta * kLongCaptureExpansionWheelSign) > 0;
+}
+
+bool isStrongAnchorKind(ScrollAnchorKind kind)
+{
+    return kind == ScrollAnchorKind::Win32ScrollInfo
+           || kind == ScrollAnchorKind::UiaScrollPattern;
+}
+
+bool isWeakAnchorKind(ScrollAnchorKind kind)
+{
+    return kind == ScrollAnchorKind::UiaRangeValue
+           || kind == ScrollAnchorKind::VisualScrollbar;
+}
+
+QString anchorKindName(ScrollAnchorKind kind)
+{
+    switch (kind)
+    {
+    case ScrollAnchorKind::Win32ScrollInfo:
+        return QStringLiteral("Win32ScrollInfo");
+    case ScrollAnchorKind::UiaScrollPattern:
+        return QStringLiteral("UiaScrollPattern");
+    case ScrollAnchorKind::UiaRangeValue:
+        return QStringLiteral("UiaRangeValue");
+    case ScrollAnchorKind::VisualScrollbar:
+        return QStringLiteral("VisualScrollbar");
+    case ScrollAnchorKind::None:
+    default:
+        return QStringLiteral("None");
+    }
+}
+
+QString constraintModeName(ShiftConstraintMode mode)
+{
+    switch (mode)
+    {
+    case ShiftConstraintMode::Strict:
+        return QStringLiteral("Strict");
+    case ShiftConstraintMode::Range:
+        return QStringLiteral("Range");
+    case ShiftConstraintMode::None:
+    default:
+        return QStringLiteral("None");
+    }
+}
+
+double normalizedAnchorPosition(const ScrollAnchorSnapshot &snapshot)
+{
+    const double range = snapshot.maximum - snapshot.minimum;
+    if (range > 0.0)
+    {
+        return qBound(0.0, (snapshot.position - snapshot.minimum) / range, 1.0);
+    }
+    return qBound(0.0, snapshot.position, 1.0);
+}
+
+double effectiveViewportRatio(const ScrollAnchorSnapshot &snapshot)
+{
+    if (snapshot.viewportRatio > 0.0)
+    {
+        return snapshot.viewportRatio;
+    }
+    if (snapshot.pageSize > 0.0 && snapshot.maximum > snapshot.minimum)
+    {
+        const double range = snapshot.maximum - snapshot.minimum;
+        return snapshot.pageSize / qMax(1.0, range + snapshot.pageSize);
+    }
+    if (snapshot.thumbHeightRatio > 0.0)
+    {
+        return snapshot.thumbHeightRatio;
+    }
+    return 0.0;
+}
+
+QString formatAnchorSnapshot(const ScrollAnchorSnapshot &snapshot)
+{
+    if (!snapshot.valid)
+    {
+        return QStringLiteral("invalid");
+    }
+    return QStringLiteral("kind=%1 pos=%2 page=%3 viewport=%4 conf=%5 bottom=%6")
+        .arg(anchorKindName(snapshot.kind))
+        .arg(snapshot.position, 0, 'f', 4)
+        .arg(snapshot.pageSize, 0, 'f', 4)
+        .arg(effectiveViewportRatio(snapshot), 0, 'f', 4)
+        .arg(snapshot.confidence, 0, 'f', 3)
+        .arg(snapshot.atBottom ? QStringLiteral("true") : QStringLiteral("false"));
+}
+
+QString formatShiftConstraint(const ShiftConstraint &constraint)
+{
+    if (!constraint.valid)
+    {
+        return QStringLiteral("invalid");
+    }
+    return QStringLiteral("mode=%1 source=%2 preferred=%3 range=[%4,%5] moved=%6 bottom=%7 conf=%8")
+        .arg(constraintModeName(constraint.mode))
+        .arg(anchorKindName(constraint.source))
+        .arg(constraint.preferredShiftPx)
+        .arg(constraint.minShiftPx)
+        .arg(constraint.maxShiftPx)
+        .arg(constraint.anchorMoved ? QStringLiteral("true") : QStringLiteral("false"))
+        .arg(constraint.indicatesEndOfContent ? QStringLiteral("true") : QStringLiteral("false"))
+        .arg(constraint.confidence, 0, 'f', 3);
+}
 
 class ScopedOverlayCaptureSuppression
 {
@@ -232,6 +345,7 @@ std::unique_ptr<LongCaptureBackend> createBestBackend(const QRect &captureRect,
 LongCaptureSessionController::LongCaptureSessionController(QObject *parent)
     : QObject(parent)
     , m_scrollDispatcher(std::make_unique<ScrollDispatcher>())
+    , m_scrollAnchorResolver(std::make_unique<ScrollAnchorResolver>())
     , m_motionDetector(std::make_unique<MotionDetector>())
     , m_stableCollector(std::make_unique<StableFrameCollector>())
     , m_overlapMatcher(std::make_unique<OverlapMatcher>())
@@ -260,6 +374,7 @@ bool LongCaptureSessionController::start(const QRect &selectedRect, WId overlayW
     m_requestSerial = 0;
     m_pendingRequests.clear();
     resetObservationState();
+    clearEndOfContentState();
 
     ShowTip::setCaptureSuppressed(true);
 
@@ -311,10 +426,26 @@ void LongCaptureSessionController::requestManualScroll(int delta)
         return;
     }
 
+    if (m_endOfContentReached)
+    {
+        m_wheelAccumulator = 0;
+        setCaptureQuality(CaptureQuality::Idle);
+        emit statusTextChanged(QStringLiteral("已到页面底部"));
+        return;
+    }
+
     m_wheelAccumulator += delta;
     while (qAbs(m_wheelAccumulator) >= 120)
     {
         const int stepDelta = (m_wheelAccumulator > 0) ? 120 : -120;
+        m_wheelAccumulator -= stepDelta;
+
+        // Long capture stays more stable when only one future scroll step is queued.
+        if (!m_pendingRequests.isEmpty())
+        {
+            continue;
+        }
+
         PendingRequest request;
         request.id = ++m_requestSerial;
         request.delta = stepDelta;
@@ -322,7 +453,6 @@ void LongCaptureSessionController::requestManualScroll(int delta)
         m_session.setLastRequestId(request.id);
         m_session.adjustPredictedVisualHeight(request.predictedAppendedHeight);
         m_pendingRequests.enqueue(request);
-        m_wheelAccumulator -= stepDelta;
 
         emit predictedVisualHeightChanged(m_session.predictedVisualHeight());
         setCaptureQuality(CaptureQuality::Predicting);
@@ -331,7 +461,6 @@ void LongCaptureSessionController::requestManualScroll(int delta)
 
     processPendingRequests();
 }
-
 void LongCaptureSessionController::confirmCopy()
 {
     if (!isActive() || !m_stitchComposer->hasResult())
@@ -367,6 +496,7 @@ void LongCaptureSessionController::cancel()
     m_wheelAccumulator = 0;
     m_forceTargetRefresh = true;
     m_pendingRequests.clear();
+    clearEndOfContentState();
     m_scrollDispatcher->reset();
     m_stitchComposer->reset();
     m_backend.reset();
@@ -450,10 +580,21 @@ void LongCaptureSessionController::onObserveTimeout()
         m_activeRequest.motion = analysis;
         m_activeRequest.motionLocked = true;
         m_stableCollector->begin(frame);
+        const ScrollAnchorSnapshot previewAnchor = captureAnchorSnapshot(m_activeRequest.targetContext,
+                                                                         frame.image,
+                                                                         m_activeRequest.beforeAnchor.kind);
+        const ShiftConstraint previewConstraint = buildShiftConstraint(m_activeRequest.beforeAnchor,
+                                                                       previewAnchor,
+                                                                       analysis,
+                                                                       m_activeRequest.predictedAppendedHeight);
+        const int previewShift = (previewConstraint.valid && previewConstraint.preferredShiftPx > 0)
+                                     ? previewConstraint.preferredShiftPx
+                                     : (analysis.estimatedShiftPx > 0
+                                            ? analysis.estimatedShiftPx
+                                            : m_activeRequest.predictedAppendedHeight);
         const QPixmap transientPreview = buildTransientPreview(frame.image,
-                                                              analysis.estimatedShiftPx > 0
-                                                                  ? analysis.estimatedShiftPx
-                                                                  : m_activeRequest.predictedAppendedHeight);
+                                                              previewShift,
+                                                              previewConstraint.valid ? &previewConstraint : nullptr);
         if (!transientPreview.isNull())
         {
             emit previewUpdated(transientPreview);
@@ -466,10 +607,21 @@ void LongCaptureSessionController::onObserveTimeout()
 
     ++m_activeRequest.stableAttempts;
     const StableFrameResult stableResult = m_stableCollector->ingest(frame);
+    const ScrollAnchorSnapshot previewAnchor = captureAnchorSnapshot(m_activeRequest.targetContext,
+                                                                     frame.image,
+                                                                     m_activeRequest.beforeAnchor.kind);
+    const ShiftConstraint previewConstraint = buildShiftConstraint(m_activeRequest.beforeAnchor,
+                                                                   previewAnchor,
+                                                                   m_activeRequest.motion,
+                                                                   m_activeRequest.predictedAppendedHeight);
+    const int previewShift = (previewConstraint.valid && previewConstraint.preferredShiftPx > 0)
+                                 ? previewConstraint.preferredShiftPx
+                                 : (m_activeRequest.motion.estimatedShiftPx > 0
+                                        ? m_activeRequest.motion.estimatedShiftPx
+                                        : m_activeRequest.predictedAppendedHeight);
     const QPixmap transientPreview = buildTransientPreview(frame.image,
-                                                          m_activeRequest.motion.estimatedShiftPx > 0
-                                                              ? m_activeRequest.motion.estimatedShiftPx
-                                                              : m_activeRequest.predictedAppendedHeight);
+                                                          previewShift,
+                                                          previewConstraint.valid ? &previewConstraint : nullptr);
     if (!transientPreview.isNull())
     {
         emit previewUpdated(transientPreview);
@@ -483,7 +635,13 @@ void LongCaptureSessionController::onObserveTimeout()
                 return;
             }
 
-            handleObservationFailure(QStringLiteral("等待稳定帧超时"));
+            const QString failureReason = m_activeRequest.lastCommitReason.isEmpty()
+                                              ? QStringLiteral("等待稳定帧超时")
+                                              : m_activeRequest.lastCommitReason;
+            const MatchRejectReason failureRejectReason = m_activeRequest.lastCommitReason.isEmpty()
+                                                              ? MatchRejectReason::Unknown
+                                                              : m_activeRequest.lastCommitRejectReason;
+            handleObservationFailure(failureReason, failureRejectReason);
             return;
         }
 
@@ -499,7 +657,13 @@ void LongCaptureSessionController::onObserveTimeout()
 
     if (m_activeRequest.stableAttempts >= 14)
     {
-        handleObservationFailure(QStringLiteral("本次追加未通过校验"));
+        const QString failureReason = m_activeRequest.lastCommitReason.isEmpty()
+                                          ? QStringLiteral("本次追加未通过校验")
+                                          : m_activeRequest.lastCommitReason;
+        const MatchRejectReason failureRejectReason = m_activeRequest.lastCommitReason.isEmpty()
+                                                          ? MatchRejectReason::Unknown
+                                                          : m_activeRequest.lastCommitRejectReason;
+        handleObservationFailure(failureReason, failureRejectReason);
         return;
     }
 
@@ -551,7 +715,7 @@ bool LongCaptureSessionController::ensureTargetResolved(bool forceRefresh)
 
 bool LongCaptureSessionController::dispatchNextRequest()
 {
-    if (!isActive() || m_observeTimer.isActive() || m_activeRequest.valid || m_pendingRequests.isEmpty())
+    if (!isActive() || m_endOfContentReached || m_observeTimer.isActive() || m_activeRequest.valid || m_pendingRequests.isEmpty())
     {
         return false;
     }
@@ -567,7 +731,7 @@ bool LongCaptureSessionController::dispatchNextRequest()
 
 bool LongCaptureSessionController::dispatchActiveRequest()
 {
-    if (!isActive() || !m_activeRequest.valid || m_observeTimer.isActive())
+    if (!isActive() || m_endOfContentReached || !m_activeRequest.valid || m_observeTimer.isActive())
     {
         return false;
     }
@@ -581,10 +745,15 @@ bool LongCaptureSessionController::dispatchActiveRequest()
 
     m_forceTargetRefresh = false;
 
+    const QPoint injectionPoint = scrollInjectionPoint();
+    m_activeRequest.targetContext = m_scrollDispatcher->currentTargetContext(injectionPoint);
+    m_activeRequest.beforeAnchor = captureAnchorSnapshot(m_activeRequest.targetContext,
+                                                         m_stitchComposer->lastAcceptedFrame());
+
     ScrollDispatchResult dispatchResult;
     {
         ScopedOverlayInputPassthrough overlayPassthrough(m_overlay);
-        dispatchResult = m_scrollDispatcher->dispatchWheel(m_activeRequest.delta, scrollInjectionPoint());
+        dispatchResult = m_scrollDispatcher->dispatchWheel(m_activeRequest.delta, injectionPoint);
     }
     if (!dispatchResult.dispatched)
     {
@@ -609,6 +778,10 @@ void LongCaptureSessionController::beginObservation()
     m_activeRequest.stableAttempts = 0;
     m_activeRequest.motionLocked = false;
     m_activeRequest.motion = MotionAnalysis();
+    m_activeRequest.afterAnchor = ScrollAnchorSnapshot();
+    m_activeRequest.shiftConstraint = ShiftConstraint();
+    m_activeRequest.lastCommitReason.clear();
+    m_activeRequest.lastCommitRejectReason = MatchRejectReason::Unknown;
     m_stableCollector->reset();
     m_session.setState(LongCaptureSession::State::Observing);
     setCaptureQuality(CaptureQuality::WaitingForMotion);
@@ -631,7 +804,17 @@ void LongCaptureSessionController::handleObservationFailure(const QString &reaso
         return;
     }
 
-    if ((reason == QStringLiteral("未检测到滚动位移") || reason == QStringLiteral("画面变化过小"))
+    const int weakMotionThreshold = qMax(18, m_session.predictionStepHeight() / 4);
+    const bool weakBottomReject = (rejectReason == MatchRejectReason::WeakWinnerReject
+                                   || rejectReason == MatchRejectReason::LowConfidenceReject
+                                   || rejectReason == MatchRejectReason::SeamBreakReject
+                                   || rejectReason == MatchRejectReason::OutOfRangeReject)
+                                  && m_activeRequest.motion.estimatedShiftPx > 0
+                                  && m_activeRequest.motion.estimatedShiftPx <= weakMotionThreshold;
+    const bool noAppendFailure = isNoAppendReason(reason)
+                                 || rejectReason == MatchRejectReason::DuplicateReject
+                                 || weakBottomReject;
+    if (noAppendFailure
         && m_scrollDispatcher->advanceFallbackTarget())
     {
         emit statusTextChanged(QStringLiteral("切换滚动目标后重试"));
@@ -641,6 +824,22 @@ void LongCaptureSessionController::handleObservationFailure(const QString &reaso
         {
             return;
         }
+    }
+
+    if (noAppendFailure)
+    {
+        ++m_consecutiveNoAppendFailures;
+        if (m_consecutiveNoAppendFailures >= 2)
+        {
+            markEndOfContentReached();
+            resetObservationState();
+            m_session.setState(LongCaptureSession::State::Armed);
+            return;
+        }
+    }
+    else
+    {
+        m_consecutiveNoAppendFailures = 0;
     }
 
     m_session.noteFailedRequest();
@@ -662,22 +861,100 @@ bool LongCaptureSessionController::tryCommitFrame(const QImage &frame, const QSt
         return false;
     }
 
+    m_activeRequest.lastCommitReason.clear();
+    m_activeRequest.lastCommitRejectReason = MatchRejectReason::Unknown;
+
     const int preferredShift = m_session.lastStableAppendHeight() > 0
                                    ? m_session.lastStableAppendHeight()
                                    : m_activeRequest.motion.estimatedShiftPx;
+    m_activeRequest.afterAnchor = captureAnchorSnapshot(m_activeRequest.targetContext,
+                                                        frame,
+                                                        m_activeRequest.beforeAnchor.kind);
+    m_activeRequest.shiftConstraint = buildShiftConstraint(m_activeRequest.beforeAnchor,
+                                                           m_activeRequest.afterAnchor,
+                                                           m_activeRequest.motion,
+                                                           preferredShift > 0 ? preferredShift : m_activeRequest.predictedAppendedHeight);
+    if (m_activeRequest.shiftConstraint.valid)
+    {
+        qCInfo(lcAnchorControllerLog).noquote() << QStringLiteral("constraint %1")
+                                                       .arg(formatShiftConstraint(m_activeRequest.shiftConstraint));
+    }
+
+    if (m_activeRequest.shiftConstraint.directionConflict)
+    {
+        m_activeRequest.lastCommitReason = QStringLiteral("锚点方向冲突");
+        m_activeRequest.lastCommitRejectReason = MatchRejectReason::OutOfRangeReject;
+        return false;
+    }
+
+    if (m_activeRequest.shiftConstraint.indicatesEndOfContent)
+    {
+        m_activeRequest.lastCommitReason = QStringLiteral("锚点确认已到底部");
+        m_activeRequest.lastCommitRejectReason = MatchRejectReason::OutOfRangeReject;
+        return false;
+    }
+
+    if (m_activeRequest.beforeAnchor.valid && m_activeRequest.afterAnchor.valid && !m_activeRequest.shiftConstraint.anchorMoved)
+    {
+        m_activeRequest.lastCommitReason = m_activeRequest.afterAnchor.atBottom
+                                               ? QStringLiteral("锚点确认已到底部")
+                                               : QStringLiteral("锚点未检测到滚动位移");
+        m_activeRequest.lastCommitRejectReason = MatchRejectReason::OutOfRangeReject;
+        return false;
+    }
+
     const MatchDecision decision = m_overlapMatcher->match(m_stitchComposer->lastAcceptedFrame(),
                                                            frame,
-                                                           m_activeRequest.motion.estimatedShiftPx,
-                                                           preferredShift);
+                                                           m_activeRequest.shiftConstraint,
+                                                           m_activeRequest.motion);
 
     int appendedHeight = decision.appendedHeight;
     QString commitMode;
-    if (decision.accepted && m_stitchComposer->append(frame, decision.appendedHeight))
+    const bool appendedByDecision = (decision.accepted && m_stitchComposer->append(frame, decision.appendedHeight));
+    if (appendedByDecision)
     {
+        appendedHeight = m_stitchComposer->lastAppendHeight();
         commitMode = successTextSuffix;
     }
     else
     {
+        if (decision.accepted)
+        {
+            m_activeRequest.lastCommitReason = QStringLiteral("检测到重复条带");
+            m_activeRequest.lastCommitRejectReason = MatchRejectReason::DuplicateReject;
+            return false;
+        }
+
+        if (!decision.reason.isEmpty())
+        {
+            m_activeRequest.lastCommitReason = decision.reason;
+        }
+        if (decision.rejectReason != MatchRejectReason::None)
+        {
+            m_activeRequest.lastCommitRejectReason = decision.rejectReason;
+        }
+
+        const bool allowVisualFallback = !m_activeRequest.shiftConstraint.valid;
+        if (!allowVisualFallback)
+        {
+            if (m_activeRequest.lastCommitReason.isEmpty())
+            {
+                m_activeRequest.lastCommitReason = QStringLiteral("锚点约束未通过");
+            }
+            if (m_activeRequest.lastCommitRejectReason == MatchRejectReason::None)
+            {
+                m_activeRequest.lastCommitRejectReason = MatchRejectReason::OutOfRangeReject;
+            }
+            return false;
+        }
+
+        const bool disallowMotionFallback = (decision.rejectReason != MatchRejectReason::None
+                                             && decision.rejectReason != MatchRejectReason::Unknown);
+        if (disallowMotionFallback)
+        {
+            return false;
+        }
+
         const int motionFallbackHeight = qBound(4,
                                                 m_activeRequest.motion.estimatedShiftPx > 0
                                                     ? m_activeRequest.motion.estimatedShiftPx
@@ -685,16 +962,19 @@ bool LongCaptureSessionController::tryCommitFrame(const QImage &frame, const QSt
                                                 qMax(4, frame.height() - 1));
         if (motionFallbackHeight <= 0 || !m_stitchComposer->append(frame, motionFallbackHeight))
         {
+            m_activeRequest.lastCommitReason = QStringLiteral("检测到重复条带");
+            m_activeRequest.lastCommitRejectReason = MatchRejectReason::DuplicateReject;
             return false;
         }
 
-        appendedHeight = motionFallbackHeight;
+        appendedHeight = m_stitchComposer->lastAppendHeight();
         commitMode = successTextSuffix.isEmpty()
                          ? QStringLiteral("位移回退")
                          : successTextSuffix + QStringLiteral(" · 位移回退");
     }
 
     const QPixmap preview = m_stitchComposer->resultPixmap();
+    clearEndOfContentState();
     m_session.recordCommittedAppend(appendedHeight);
     m_session.updateResult(m_stitchComposer->lastAcceptedFrame(),
                            preview,
@@ -747,7 +1027,171 @@ CaptureFrame LongCaptureSessionController::captureObservationFrame()
     return fallbackFrame;
 }
 
-QPixmap LongCaptureSessionController::buildTransientPreview(const QImage &frame, int appendedHeight) const
+ScrollAnchorSnapshot LongCaptureSessionController::captureAnchorSnapshot(const ScrollTargetContext &context,
+                                                                         const QImage &frameHint,
+                                                                         ScrollAnchorKind preferredKind) const
+{
+    if (m_scrollAnchorResolver == nullptr || !context.valid)
+    {
+        return ScrollAnchorSnapshot();
+    }
+
+    const ScrollAnchorSnapshot snapshot = m_scrollAnchorResolver->captureBestSnapshot(context,
+                                                                                       m_session.captureRect(),
+                                                                                       frameHint,
+                                                                                       preferredKind);
+    qCInfo(lcAnchorControllerLog).noquote() << QStringLiteral("target=0x%1 preferred=%2 snapshot=%3")
+                                                   .arg(QString::number(static_cast<qulonglong>(context.targetWindow), 16))
+                                                   .arg(anchorKindName(preferredKind))
+                                                   .arg(formatAnchorSnapshot(snapshot));
+    return snapshot;
+}
+
+ShiftConstraint LongCaptureSessionController::buildShiftConstraint(const ScrollAnchorSnapshot &before,
+                                                                   const ScrollAnchorSnapshot &after,
+                                                                   const MotionAnalysis &motion,
+                                                                   int fallbackShift) const
+{
+    Q_UNUSED(motion)
+
+    ShiftConstraint constraint;
+    if (!before.valid || !after.valid)
+    {
+        return constraint;
+    }
+
+    if (before.kind != after.kind)
+    {
+        return constraint;
+    }
+
+    if (before.sourceWindow != 0 && after.sourceWindow != 0 && before.sourceWindow != after.sourceWindow)
+    {
+        return constraint;
+    }
+
+    constraint.valid = true;
+    constraint.source = after.kind;
+    constraint.confidence = qMin(before.confidence, after.confidence);
+    if (constraint.confidence < ((after.kind == ScrollAnchorKind::VisualScrollbar) ? 0.40 : 0.55))
+    {
+        return ShiftConstraint();
+    }
+
+    const bool downwardRequest = isDownwardRequest(m_activeRequest.delta);
+    const bool strongAnchor = isStrongAnchorKind(after.kind);
+    const bool weakAnchor = isWeakAnchorKind(after.kind);
+    const double beforePosition = normalizedAnchorPosition(before);
+    const double afterPosition = normalizedAnchorPosition(after);
+    const double deltaPosition = afterPosition - beforePosition;
+    const double epsilon = (after.kind == ScrollAnchorKind::VisualScrollbar) ? 0.010 : 0.0015;
+    const int observedMotionShift = qMax(motion.estimatedShiftPx, motion.secondaryShiftPx);
+    const bool motionSuggestsMovement = motion.moved && observedMotionShift >= qMax(18, fallbackShift / 4);
+
+    if (downwardRequest && deltaPosition < -epsilon)
+    {
+        if (weakAnchor && motionSuggestsMovement)
+        {
+            return ShiftConstraint();
+        }
+
+        if (!strongAnchor)
+        {
+            return ShiftConstraint();
+        }
+
+        constraint.directionConflict = true;
+        constraint.mode = ShiftConstraintMode::Strict;
+        constraint.preferredShiftPx = qMax(0, fallbackShift);
+        return constraint;
+    }
+
+    if (downwardRequest && (after.atBottom || before.atBottom) && deltaPosition <= epsilon)
+    {
+        if (weakAnchor && motionSuggestsMovement)
+        {
+            return ShiftConstraint();
+        }
+
+        constraint.indicatesEndOfContent = true;
+        constraint.mode = ShiftConstraintMode::Strict;
+        constraint.anchorMoved = false;
+        return constraint;
+    }
+
+    if (qAbs(deltaPosition) <= epsilon)
+    {
+        if (weakAnchor && motionSuggestsMovement)
+        {
+            return ShiftConstraint();
+        }
+
+        constraint.mode = ShiftConstraintMode::Strict;
+        constraint.anchorMoved = false;
+        return constraint;
+    }
+
+    double viewportRatio = qMax(effectiveViewportRatio(before), effectiveViewportRatio(after));
+    if (viewportRatio <= 0.0 && after.kind == ScrollAnchorKind::VisualScrollbar)
+    {
+        viewportRatio = qMax(before.thumbHeightRatio, after.thumbHeightRatio);
+    }
+    if (viewportRatio <= 0.0)
+    {
+        return ShiftConstraint();
+    }
+
+    const int viewportPx = qMax(1, m_session.captureRect().height());
+    const double estimatedShift = viewportPx * qAbs(deltaPosition) / qMax(0.02, viewportRatio);
+    const int preferredShiftPx = qBound(4,
+                                        qRound(estimatedShift),
+                                        qMax(4, m_session.captureRect().height() - 1));
+    if (preferredShiftPx <= 0)
+    {
+        return ShiftConstraint();
+    }
+
+    constraint.anchorMoved = true;
+    constraint.preferredShiftPx = preferredShiftPx;
+    switch (after.kind)
+    {
+    case ScrollAnchorKind::Win32ScrollInfo:
+        constraint.mode = ShiftConstraintMode::Strict;
+        break;
+    case ScrollAnchorKind::UiaScrollPattern:
+        constraint.mode = ShiftConstraintMode::Strict;
+        break;
+    case ScrollAnchorKind::UiaRangeValue:
+        constraint.mode = ShiftConstraintMode::Range;
+        break;
+    case ScrollAnchorKind::VisualScrollbar:
+        constraint.mode = ShiftConstraintMode::Range;
+        break;
+    case ScrollAnchorKind::None:
+    default:
+        constraint.mode = ShiftConstraintMode::None;
+        break;
+    }
+
+    const int tolerance = (constraint.mode == ShiftConstraintMode::Strict)
+                              ? qMax(8, preferredShiftPx / 10)
+                              : qMax(24, preferredShiftPx / 3);
+    constraint.minShiftPx = qMax(4, preferredShiftPx - tolerance);
+    constraint.maxShiftPx = qMin(qMax(4, viewportPx - 1), preferredShiftPx + tolerance);
+
+    if (fallbackShift > 0 && constraint.mode == ShiftConstraintMode::Range)
+    {
+        constraint.minShiftPx = qMax(4, qMin(constraint.minShiftPx, fallbackShift - qMax(18, fallbackShift / 4)));
+        constraint.maxShiftPx = qMin(qMax(4, viewportPx - 1),
+                                     qMax(constraint.maxShiftPx, fallbackShift + qMax(18, fallbackShift / 4)));
+    }
+
+    return constraint;
+}
+
+QPixmap LongCaptureSessionController::buildTransientPreview(const QImage &frame,
+                                                            int appendedHeight,
+                                                            const ShiftConstraint *constraint) const
 {
     if (frame.isNull())
     {
@@ -766,8 +1210,14 @@ QPixmap LongCaptureSessionController::buildTransientPreview(const QImage &frame,
         current = current.scaled(m_session.lastAcceptedFrame().size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
+    int previewHeight = appendedHeight;
+    if (constraint != nullptr && constraint->valid && constraint->preferredShiftPx > 0)
+    {
+        previewHeight = constraint->preferredShiftPx;
+    }
+
     const int safeAppendHeight = qBound(1,
-                                        appendedHeight,
+                                        previewHeight,
                                         qMax(1, current.height() - 1));
     const QImage appendStrip = current.copy(0,
                                             current.height() - safeAppendHeight,
@@ -869,12 +1319,41 @@ void LongCaptureSessionController::resetObservationState(bool keepActiveRequest)
 
 void LongCaptureSessionController::processPendingRequests()
 {
-    if (!isActive() || m_observeTimer.isActive() || m_activeRequest.valid)
+    if (!isActive() || m_endOfContentReached || m_observeTimer.isActive() || m_activeRequest.valid)
     {
         return;
     }
 
     dispatchNextRequest();
+}
+
+void LongCaptureSessionController::clearEndOfContentState()
+{
+    m_endOfContentReached = false;
+    m_consecutiveNoAppendFailures = 0;
+}
+
+void LongCaptureSessionController::markEndOfContentReached()
+{
+    m_endOfContentReached = true;
+    m_wheelAccumulator = 0;
+    m_forceTargetRefresh = true;
+    m_pendingRequests.clear();
+    m_session.alignPredictedToCommitted();
+    m_session.resetFailedRequests();
+    emit previewUpdated(m_session.previewPixmap());
+    emit predictedVisualHeightChanged(m_session.predictedVisualHeight());
+    setCaptureQuality(CaptureQuality::Idle);
+    emit statusTextChanged(QStringLiteral("已到页面底部"));
+}
+
+bool LongCaptureSessionController::isNoAppendReason(const QString &reason) const
+{
+    return reason == QStringLiteral("未检测到滚动位移")
+           || reason == QStringLiteral("画面变化过小")
+           || reason == QStringLiteral("检测到重复条带")
+           || reason == QStringLiteral("锚点未检测到滚动位移")
+           || reason == QStringLiteral("锚点确认已到底部");
 }
 
 void LongCaptureSessionController::setCaptureQuality(CaptureQuality quality)

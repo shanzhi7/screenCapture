@@ -59,6 +59,8 @@ if (SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE AND WIN32)
         dxgiduplicationbackend.h
         scrolldispatcher.cpp
         scrolldispatcher.h
+        scrollanchorprovider.cpp
+        scrollanchorprovider.h
         motiondetector.cpp
         motiondetector.h
         stableframecollector.cpp
@@ -118,7 +120,7 @@ target_link_libraries(screenCapture
 )
 
 if (SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE AND WIN32)
-    target_link_libraries(screenCapture PRIVATE d3d11 dxgi)
+    target_link_libraries(screenCapture PRIVATE d3d11 dxgi ole32 oleaut32 oleacc uuid)
 endif()
 
 include(GNUInstallDirs)

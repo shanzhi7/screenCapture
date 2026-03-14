@@ -22,8 +22,8 @@ public:
 
     MatchDecision match(const QImage &previousFrame,
                         const QImage &currentFrame,
-                        int expectedShiftPx,
-                        int preferredShiftPx) const;
+                        const ShiftConstraint &constraint,
+                        const MotionAnalysis &motion) const;
 
 private:
     double scoreForAppend(const QImage &previousFrame,
@@ -40,9 +40,8 @@ private:
                                    int appendedHeight) const;
     MatchDecision tryLegacyFallback(const QImage &previousFrame,
                                     const QImage &currentFrame,
-                                    int expectedShiftPx,
-                                    int preferredShiftPx) const;
+                                    const ShiftConstraint &constraint,
+                                    const MotionAnalysis &motion) const;
 };
 
 #endif // OVERLAPMATCHER_H
-
