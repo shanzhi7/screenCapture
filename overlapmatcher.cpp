@@ -1,8 +1,11 @@
 ﻿#include "overlapmatcher.h"
 
+#include <QLoggingCategory>
 #include <QtMath>
 
 #include <limits>
+
+Q_LOGGING_CATEGORY(lcMatchLog, "lc.match")
 
 namespace
 {
@@ -11,15 +14,99 @@ int overlapLuma(QRgb rgb)
     return (qRed(rgb) * 38 + qGreen(rgb) * 75 + qBlue(rgb) * 15) >> 7;
 }
 
+QString anchorKindName(ScrollAnchorKind kind)
+{
+    switch (kind)
+    {
+    case ScrollAnchorKind::Win32ScrollInfo:
+        return QStringLiteral("Win32ScrollInfo");
+    case ScrollAnchorKind::UiaScrollPattern:
+        return QStringLiteral("UiaScrollPattern");
+    case ScrollAnchorKind::UiaRangeValue:
+        return QStringLiteral("UiaRangeValue");
+    case ScrollAnchorKind::VisualScrollbar:
+        return QStringLiteral("VisualScrollbar");
+    case ScrollAnchorKind::None:
+    default:
+        return QStringLiteral("None");
+    }
+}
+
+QString constraintModeName(ShiftConstraintMode mode)
+{
+    switch (mode)
+    {
+    case ShiftConstraintMode::Strict:
+        return QStringLiteral("Strict");
+    case ShiftConstraintMode::Range:
+        return QStringLiteral("Range");
+    case ShiftConstraintMode::None:
+    default:
+        return QStringLiteral("None");
+    }
+}
+
 struct OverlapCandidate
 {
     int appendedHeight = 0;
     double totalScore = std::numeric_limits<double>::max();
+    double leftScore = std::numeric_limits<double>::max();
     double centerScore = std::numeric_limits<double>::max();
     double rightScore = std::numeric_limits<double>::max();
     double seamScore = std::numeric_limits<double>::max();
     double duplicateScore = std::numeric_limits<double>::max();
 };
+
+bool hasAnchorConstraint(const ShiftConstraint &constraint)
+{
+    return constraint.valid && constraint.mode != ShiftConstraintMode::None;
+}
+
+bool isOutsideConstraintRange(int appendedHeight, const ShiftConstraint &constraint)
+{
+    if (!hasAnchorConstraint(constraint) || constraint.minShiftPx <= 0 || constraint.maxShiftPx <= 0)
+    {
+        return false;
+    }
+
+    return appendedHeight < constraint.minShiftPx || appendedHeight > constraint.maxShiftPx;
+}
+
+double preferredShiftPenalty(int appendedHeight, const ShiftConstraint &constraint)
+{
+    if (!hasAnchorConstraint(constraint) || constraint.preferredShiftPx <= 0)
+    {
+        return 0.0;
+    }
+
+    const double deviation = qAbs(appendedHeight - constraint.preferredShiftPx);
+    const double softTolerance = (constraint.mode == ShiftConstraintMode::Strict)
+                                     ? qMax(8.0, constraint.preferredShiftPx * 0.08)
+                                     : qMax(14.0, constraint.preferredShiftPx * 0.18);
+    if (deviation <= softTolerance)
+    {
+        return 0.0;
+    }
+
+    const double penaltyScale = (constraint.mode == ShiftConstraintMode::Strict)
+                                    ? qMax(6.0, constraint.preferredShiftPx * 0.06)
+                                    : qMax(10.0, constraint.preferredShiftPx * 0.12);
+    return qMin((constraint.mode == ShiftConstraintMode::Strict) ? 4.8 : 3.4,
+                (deviation - softTolerance) / penaltyScale);
+}
+
+double rangePenalty(int appendedHeight, const ShiftConstraint &constraint)
+{
+    if (!hasAnchorConstraint(constraint) || constraint.mode != ShiftConstraintMode::Range || !isOutsideConstraintRange(appendedHeight, constraint))
+    {
+        return 0.0;
+    }
+
+    const int deviation = (appendedHeight < constraint.minShiftPx)
+                              ? (constraint.minShiftPx - appendedHeight)
+                              : (appendedHeight - constraint.maxShiftPx);
+    return 4.2 + static_cast<double>(deviation) / qMax(10.0, constraint.preferredShiftPx * 0.10);
+}
 }
 
 OverlapMatcher::OverlapMatcher()
@@ -28,8 +115,8 @@ OverlapMatcher::OverlapMatcher()
 
 MatchDecision OverlapMatcher::match(const QImage &previousFrame,
                                     const QImage &currentFrame,
-                                    int expectedShiftPx,
-                                    int preferredShiftPx) const
+                                    const ShiftConstraint &constraint,
+                                    const MotionAnalysis &motion) const
 {
     MatchDecision decision;
     decision.reason = QStringLiteral("未命中可靠 overlap");
@@ -57,10 +144,19 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
         return decision;
     }
 
-    const int baseShift = preferredShiftPx > 0 ? preferredShiftPx : expectedShiftPx;
+    const bool anchorAvailable = hasAnchorConstraint(constraint);
+    const int baseShift = (anchorAvailable && constraint.preferredShiftPx > 0)
+                              ? constraint.preferredShiftPx
+                              : (motion.estimatedShiftPx > 0 ? motion.estimatedShiftPx : motion.secondaryShiftPx);
+
     int searchMin = minAppend;
     int searchMax = maxAppend;
-    if (baseShift > 0)
+    if (anchorAvailable && constraint.mode == ShiftConstraintMode::Strict)
+    {
+        searchMin = qMax(minAppend, constraint.minShiftPx);
+        searchMax = qMin(maxAppend, constraint.maxShiftPx);
+    }
+    else if (baseShift > 0)
     {
         const int window = qMax(18, baseShift / 4);
         searchMin = qMax(minAppend, baseShift - window);
@@ -73,17 +169,22 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
 
     auto acceptLegacyFallback = [&](const QString &reason, MatchRejectReason rejectReason) -> MatchDecision
     {
-        MatchDecision strictDecision;
-        strictDecision.reason = reason;
-        strictDecision.rejectReason = rejectReason;
+        MatchDecision constrainedDecision;
+        constrainedDecision.reason = reason;
+        constrainedDecision.rejectReason = rejectReason;
 
         if (rejectReason == MatchRejectReason::DuplicateReject)
         {
-            return strictDecision;
+            return constrainedDecision;
         }
 
-        const MatchDecision legacyDecision = tryLegacyFallback(previous, current, expectedShiftPx, preferredShiftPx);
-        return legacyDecision.accepted ? legacyDecision : strictDecision;
+        const MatchDecision legacyDecision = tryLegacyFallback(previous, current, constraint, motion);
+        if (legacyDecision.accepted)
+        {
+            return legacyDecision;
+        }
+
+        return constrainedDecision;
     };
 
     auto evaluateCandidate = [&](int appendedHeight) -> OverlapCandidate
@@ -97,7 +198,21 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
             return candidate;
         }
 
+        if (anchorAvailable && constraint.mode == ShiftConstraintMode::Strict && isOutsideConstraintRange(appendedHeight, constraint))
+        {
+            return candidate;
+        }
+
         const int seamBandTop = qMax(0, overlapHeight - 28);
+        candidate.leftScore = scoreForAppend(previous,
+                                             current,
+                                             appendedHeight,
+                                             0.04,
+                                             0.30,
+                                             0,
+                                             overlapHeight,
+                                             3,
+                                             2);
         candidate.centerScore = scoreForAppend(previous,
                                                current,
                                                appendedHeight,
@@ -126,10 +241,16 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
                                              3,
                                              1);
         candidate.duplicateScore = duplicateScoreForAppend(previous, current, appendedHeight);
-        candidate.totalScore = candidate.centerScore * 0.56
-                               + candidate.rightScore * 0.16
-                               + candidate.seamScore * 0.20
-                               + candidate.duplicateScore * 0.08;
+
+        const double anchorPenalty = preferredShiftPenalty(appendedHeight, constraint);
+        const double outOfRangePenalty = rangePenalty(appendedHeight, constraint);
+        candidate.totalScore = candidate.leftScore * 0.24
+                               + candidate.centerScore * 0.34
+                               + candidate.rightScore * 0.10
+                               + candidate.seamScore * 0.22
+                               + candidate.duplicateScore * 0.10
+                               + anchorPenalty
+                               + outOfRangePenalty;
         return candidate;
     };
 
@@ -171,6 +292,9 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
     if (bestCandidate.appendedHeight <= 0)
     {
         decision.rejectReason = MatchRejectReason::OutOfRangeReject;
+        qCInfo(lcMatchLog).noquote() << QStringLiteral("mode=%1 source=%2 reject=no_candidate")
+                                            .arg(constraintModeName(constraint.mode))
+                                            .arg(anchorKindName(constraint.source));
         return acceptLegacyFallback(decision.reason, decision.rejectReason);
     }
 
@@ -189,13 +313,31 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
         return acceptLegacyFallback(QStringLiteral("检测到重复条带"), MatchRejectReason::DuplicateReject);
     }
 
-    if (bestCandidate.centerScore > 8.8 || bestCandidate.rightScore > 9.8)
+    if (bestCandidate.centerScore > 8.8 || bestCandidate.leftScore > 9.2 || bestCandidate.rightScore > 9.8)
     {
         return acceptLegacyFallback(QStringLiteral("主体区域匹配偏弱"), MatchRejectReason::WeakWinnerReject);
     }
 
-    if (expectedShiftPx > 0 && qAbs(bestCandidate.appendedHeight - expectedShiftPx) > qMax(28, expectedShiftPx / 2)
-        && bestCandidate.totalScore > 8.2)
+    if (anchorAvailable)
+    {
+        if (isOutsideConstraintRange(bestCandidate.appendedHeight, constraint))
+        {
+            return acceptLegacyFallback(QStringLiteral("超出锚点位移范围"), MatchRejectReason::OutOfRangeReject);
+        }
+
+        const int hardDeviation = (constraint.mode == ShiftConstraintMode::Strict)
+                                      ? qMax(16, constraint.preferredShiftPx / 5)
+                                      : qMax(28, constraint.preferredShiftPx / 3);
+        if (constraint.preferredShiftPx > 0
+            && qAbs(bestCandidate.appendedHeight - constraint.preferredShiftPx) > hardDeviation
+            && (gap < 0.90 || confidence < 0.84))
+        {
+            return acceptLegacyFallback(QStringLiteral("位移锚点偏离过大"), MatchRejectReason::OutOfRangeReject);
+        }
+    }
+    else if (motion.estimatedShiftPx > 0
+             && qAbs(bestCandidate.appendedHeight - motion.estimatedShiftPx) > qMax(28, motion.estimatedShiftPx / 2)
+             && bestCandidate.totalScore > 8.2)
     {
         return acceptLegacyFallback(QStringLiteral("位移范围异常"), MatchRejectReason::OutOfRangeReject);
     }
@@ -213,8 +355,21 @@ MatchDecision OverlapMatcher::match(const QImage &previousFrame,
     decision.accepted = true;
     decision.appendedHeight = bestCandidate.appendedHeight;
     decision.confidence = confidence;
-    decision.reason = QStringLiteral("accepted");
+    decision.reason = anchorAvailable ? QStringLiteral("accepted_anchor") : QStringLiteral("accepted");
     decision.rejectReason = MatchRejectReason::None;
+
+    qCInfo(lcMatchLog).noquote() << QStringLiteral("mode=%1 source=%2 accepted=%3 score=%4 conf=%5 gap=%6 left=%7 center=%8 right=%9 seam=%10 dup=%11")
+                                        .arg(constraintModeName(constraint.mode))
+                                        .arg(anchorKindName(constraint.source))
+                                        .arg(bestCandidate.appendedHeight)
+                                        .arg(bestCandidate.totalScore, 0, 'f', 3)
+                                        .arg(confidence, 0, 'f', 3)
+                                        .arg(gap, 0, 'f', 3)
+                                        .arg(bestCandidate.leftScore, 0, 'f', 3)
+                                        .arg(bestCandidate.centerScore, 0, 'f', 3)
+                                        .arg(bestCandidate.rightScore, 0, 'f', 3)
+                                        .arg(bestCandidate.seamScore, 0, 'f', 3)
+                                        .arg(bestCandidate.duplicateScore, 0, 'f', 3);
     return decision;
 }
 
@@ -243,7 +398,6 @@ double OverlapMatcher::scoreForAppend(const QImage &previousFrame,
 
     double diffSum = 0.0;
     int samples = 0;
-
     for (int y = yStart; y < yEnd; y += stepY)
     {
         const QRgb *previousLine = reinterpret_cast<const QRgb *>(previousFrame.constScanLine(y + appendedHeight));
@@ -304,8 +458,8 @@ double OverlapMatcher::duplicateScoreForAppend(const QImage &previousFrame,
 
 MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
                                                 const QImage &currentFrame,
-                                                int expectedShiftPx,
-                                                int preferredShiftPx) const
+                                                const ShiftConstraint &constraint,
+                                                const MotionAnalysis &motion) const
 {
     MatchDecision decision;
     decision.reason = QStringLiteral("legacy fallback 未命中");
@@ -327,7 +481,10 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
 
     const int topMargin = height / 5;
     const int bottomMargin = height / 12;
-    const int baseShift = preferredShiftPx > 0 ? preferredShiftPx : expectedShiftPx;
+    const bool anchorAvailable = hasAnchorConstraint(constraint);
+    const int baseShift = (anchorAvailable && constraint.preferredShiftPx > 0)
+                              ? constraint.preferredShiftPx
+                              : (motion.estimatedShiftPx > 0 ? motion.estimatedShiftPx : motion.secondaryShiftPx);
 
     int bestShift = 0;
     double bestScore = std::numeric_limits<double>::max();
@@ -336,6 +493,11 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
     {
         for (int shift = rangeMin; shift <= rangeMax; shift += step)
         {
+            if (anchorAvailable && constraint.mode == ShiftConstraintMode::Strict && isOutsideConstraintRange(shift, constraint))
+            {
+                continue;
+            }
+
             const int yStart = topMargin;
             const int yEnd = height - shift - bottomMargin;
             if (yEnd <= yStart + 20)
@@ -362,7 +524,19 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
                 continue;
             }
 
-            const double score = diffSum / static_cast<double>(samples);
+            const double leftScore = scoreForAppend(previousFrame,
+                                                    currentFrame,
+                                                    shift,
+                                                    0.04,
+                                                    0.30,
+                                                    yStart,
+                                                    yEnd,
+                                                    4,
+                                                    3);
+            const double score = (diffSum / static_cast<double>(samples)) * 0.70
+                                 + leftScore * 0.30
+                                 + preferredShiftPenalty(shift, constraint)
+                                 + rangePenalty(shift, constraint);
             if (score < bestScore)
             {
                 bestScore = score;
@@ -371,9 +545,13 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
         }
     };
 
-    if (baseShift > 0)
+    if (anchorAvailable && constraint.mode == ShiftConstraintMode::Strict)
     {
-        const int window = qMax(28, baseShift / 3);
+        evaluateRange(qMax(minShift, constraint.minShiftPx), qMin(maxShift, constraint.maxShiftPx), 1);
+    }
+    else if (baseShift > 0)
+    {
+        const int window = anchorAvailable ? qMax(18, baseShift / 3) : qMax(28, baseShift / 3);
         evaluateRange(qMax(minShift, baseShift - window), qMin(maxShift, baseShift + window), 2);
     }
 
@@ -389,7 +567,27 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
         return decision;
     }
 
-    if (expectedShiftPx > 0 && qAbs(bestShift - expectedShiftPx) > qMax(42, expectedShiftPx * 2 / 3) && bestScore > 16.5)
+    if (anchorAvailable)
+    {
+        if (isOutsideConstraintRange(bestShift, constraint))
+        {
+            decision.reason = QStringLiteral("legacy fallback 超出锚点范围");
+            decision.rejectReason = MatchRejectReason::OutOfRangeReject;
+            return decision;
+        }
+
+        if (constraint.preferredShiftPx > 0
+            && qAbs(bestShift - constraint.preferredShiftPx) > qMax(26, constraint.preferredShiftPx / 3)
+            && bestScore > 16.0)
+        {
+            decision.reason = QStringLiteral("legacy fallback 偏离锚点");
+            decision.rejectReason = MatchRejectReason::OutOfRangeReject;
+            return decision;
+        }
+    }
+    else if (motion.estimatedShiftPx > 0
+             && qAbs(bestShift - motion.estimatedShiftPx) > qMax(42, motion.estimatedShiftPx * 2 / 3)
+             && bestScore > 16.5)
     {
         decision.reason = QStringLiteral("legacy fallback 位移异常");
         decision.rejectReason = MatchRejectReason::OutOfRangeReject;
@@ -407,9 +605,7 @@ MatchDecision OverlapMatcher::tryLegacyFallback(const QImage &previousFrame,
     decision.accepted = true;
     decision.appendedHeight = bestShift;
     decision.confidence = qBound(0.45, 1.0 - bestScore / 24.0, 0.82);
-    decision.reason = QStringLiteral("accepted_legacy");
+    decision.reason = anchorAvailable ? QStringLiteral("accepted_legacy_anchor") : QStringLiteral("accepted_legacy");
     decision.rejectReason = MatchRejectReason::None;
     return decision;
 }
-
-

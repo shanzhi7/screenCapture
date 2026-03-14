@@ -25,16 +25,19 @@ public:
 
     bool hasResult() const;
     int visualHeight() const;
+    int lastAppendHeight() const;
     QPixmap resultPixmap() const;
     const QImage &lastAcceptedFrame() const;
 
 private:
+    int duplicatePrefixHeight(const QImage &appendStrip) const;
     bool isDuplicateAppendStrip(const QImage &appendStrip) const;
 
 private:
     QImage m_lastAcceptedFrame;
     QImage m_result;
     int m_visualHeight = 0;
+    int m_lastAppendHeight = 0;
 };
 
 #endif // STITCHCOMPOSER_H

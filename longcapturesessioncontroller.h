@@ -26,6 +26,7 @@ class LongCaptureBackend;
 class MotionDetector;
 class OverlapMatcher;
 class QPixmap;
+class ScrollAnchorResolver;
 class ScrollDispatcher;
 class SelectionOverlay;
 class StableFrameCollector;
@@ -80,6 +81,12 @@ private:
         int stableAttempts = 0;
         bool motionLocked = false;
         MotionAnalysis motion;
+        ScrollTargetContext targetContext;
+        ScrollAnchorSnapshot beforeAnchor;
+        ScrollAnchorSnapshot afterAnchor;
+        ShiftConstraint shiftConstraint;
+        QString lastCommitReason;
+        MatchRejectReason lastCommitRejectReason = MatchRejectReason::Unknown;
     };
 
 private:
@@ -93,7 +100,16 @@ private:
                                   MatchRejectReason rejectReason = MatchRejectReason::Unknown);
     bool tryCommitFrame(const QImage &frame, const QString &successTextSuffix = QString());
     CaptureFrame captureObservationFrame();
-    QPixmap buildTransientPreview(const QImage &frame, int appendedHeight) const;
+    ScrollAnchorSnapshot captureAnchorSnapshot(const ScrollTargetContext &context,
+                                               const QImage &frameHint,
+                                               ScrollAnchorKind preferredKind = ScrollAnchorKind::None) const;
+    ShiftConstraint buildShiftConstraint(const ScrollAnchorSnapshot &before,
+                                         const ScrollAnchorSnapshot &after,
+                                         const MotionAnalysis &motion,
+                                         int fallbackShift) const;
+    QPixmap buildTransientPreview(const QImage &frame,
+                                  int appendedHeight,
+                                  const ShiftConstraint *constraint = nullptr) const;
     QImage captureFrame();
     QImage captureFrame(const QRect &captureRect);
     void setOverlayCaptureSuppressed(bool suppressed);
@@ -101,6 +117,9 @@ private:
     void updateOverlayState();
     void resetObservationState(bool keepActiveRequest = false);
     void processPendingRequests();
+    void clearEndOfContentState();
+    void markEndOfContentReached();
+    bool isNoAppendReason(const QString &reason) const;
     void setCaptureQuality(CaptureQuality quality);
     QString failureStatusText(const QString &reason, MatchRejectReason rejectReason) const;
 
@@ -108,6 +127,7 @@ private:
     LongCaptureSession m_session;
     std::unique_ptr<LongCaptureBackend> m_backend;
     std::unique_ptr<ScrollDispatcher> m_scrollDispatcher;
+    std::unique_ptr<ScrollAnchorResolver> m_scrollAnchorResolver;
     std::unique_ptr<MotionDetector> m_motionDetector;
     std::unique_ptr<StableFrameCollector> m_stableCollector;
     std::unique_ptr<OverlapMatcher> m_overlapMatcher;
@@ -119,13 +139,12 @@ private:
     QQueue<PendingRequest> m_pendingRequests;
     int m_requestSerial = 0;
     int m_wheelAccumulator = 0;
+    int m_consecutiveNoAppendFailures = 0;
     bool m_forceTargetRefresh = true;
+    bool m_endOfContentReached = false;
     ActiveRequest m_activeRequest;
     bool m_overlayCaptureSuppressed = false;
     CaptureQuality m_captureQuality = CaptureQuality::Idle;
 };
 
 #endif // LONGCAPTURESESSIONCONTROLLER_H
-
-
-

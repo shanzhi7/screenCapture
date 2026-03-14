@@ -26,6 +26,7 @@ public:
     ScrollDispatchResult dispatchWheel(int delta, const QPoint &screenPos);
     bool hasTarget() const;
     bool advanceFallbackTarget();
+    ScrollTargetContext currentTargetContext(const QPoint &screenPos) const;
 
 private:
 #ifdef Q_OS_WIN

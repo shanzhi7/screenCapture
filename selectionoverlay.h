@@ -275,6 +275,7 @@ private:
     int m_longCaptureAnchorBottomLocal = -1;
     bool m_captureDecorationsHidden = false;
     bool m_toolbarVisibleBeforeCapture = false;
+    bool m_styleToolbarVisibleBeforeCapture = false;
     bool m_statusLabelVisibleBeforeCapture = false;
     bool m_previewPanelVisibleBeforeCapture = false;
     CaptureQuality m_captureQuality = CaptureQuality::Idle;

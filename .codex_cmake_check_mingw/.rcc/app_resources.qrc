@@ -1,0 +1,27 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="styles/hyperos.qss">E:/qt_project/screenCapture/styles/hyperos.qss</file>
+    <file alias="icons/camera.svg">E:/qt_project/screenCapture/icons/camera.svg</file>
+    <file alias="icons/folder.svg">E:/qt_project/screenCapture/icons/folder.svg</file>
+    <file alias="icons/settings.svg">E:/qt_project/screenCapture/icons/settings.svg</file>
+    <file alias="icons/chevron_left.svg">E:/qt_project/screenCapture/icons/chevron_left.svg</file>
+    <file alias="icons/chevron_right.svg">E:/qt_project/screenCapture/icons/chevron_right.svg</file>
+    <file alias="icons/crop.svg">E:/qt_project/screenCapture/icons/crop.svg</file>
+    <file alias="icons/history.svg">E:/qt_project/screenCapture/icons/history.svg</file>
+    <file alias="icons/plus_white.svg">E:/qt_project/screenCapture/icons/plus_white.svg</file>
+    <file alias="icons/info.svg">E:/qt_project/screenCapture/icons/info.svg</file>
+    <file alias="icons/overlay_pen.svg">E:/qt_project/screenCapture/icons/overlay_pen.svg</file>
+    <file alias="icons/overlay_rect.svg">E:/qt_project/screenCapture/icons/overlay_rect.svg</file>
+    <file alias="icons/overlay_ellipse.svg">E:/qt_project/screenCapture/icons/overlay_ellipse.svg</file>
+    <file alias="icons/overlay_mosaic.svg">E:/qt_project/screenCapture/icons/overlay_mosaic.svg</file>
+    <file alias="icons/overlay_text.svg">E:/qt_project/screenCapture/icons/overlay_text.svg</file>
+    <file alias="icons/overlay_undo.svg">E:/qt_project/screenCapture/icons/overlay_undo.svg</file>
+    <file alias="icons/overlay_redo.svg">E:/qt_project/screenCapture/icons/overlay_redo.svg</file>
+    <file alias="icons/overlay_scroll.svg">E:/qt_project/screenCapture/icons/overlay_scroll.svg</file>
+    <file alias="icons/overlay_save.svg">E:/qt_project/screenCapture/icons/overlay_save.svg</file>
+    <file alias="icons/overlay_close.svg">E:/qt_project/screenCapture/icons/overlay_close.svg</file>
+    <file alias="icons/overlay_check.svg">E:/qt_project/screenCapture/icons/overlay_check.svg</file>
+    <file alias="icon.ico">E:/qt_project/screenCapture/icon.ico</file>
+  </qresource>
+</RCC>
+
