@@ -18,7 +18,6 @@
 #include <QEventLoop>
 #include <QLoggingCategory>
 #include <QPainter>
-#include <QThread>
 #include <QWidget>
 
 #ifdef Q_OS_WIN
@@ -30,6 +29,8 @@ namespace
 Q_LOGGING_CATEGORY(lcAnchorControllerLog, "lc.anchor")
 
 constexpr int kLongCaptureExpansionWheelSign = -1;
+constexpr int kLongCaptureDispatchCooldownMs = 90;
+constexpr int kLongCaptureOverlayRestoreDelayMs = 140;
 
 bool isDownwardRequest(int delta)
 {
@@ -352,7 +353,19 @@ LongCaptureSessionController::LongCaptureSessionController(QObject *parent)
     , m_stitchComposer(std::make_unique<StitchComposer>())
 {
     m_observeTimer.setSingleShot(true);
+    m_dispatchDelayTimer.setSingleShot(true);
+    m_overlayRestoreTimer.setSingleShot(true);
     connect(&m_observeTimer, &QTimer::timeout, this, &LongCaptureSessionController::onObserveTimeout);
+    connect(&m_dispatchDelayTimer, &QTimer::timeout, this, [this]() { processPendingRequests(); });
+    connect(&m_overlayRestoreTimer, &QTimer::timeout, this, [this]() {
+        if (m_overlayCaptureSuppressed || m_overlay == nullptr || !m_overlay->isVisible())
+        {
+            return;
+        }
+
+        m_overlay->setCaptureDecorationsHidden(false);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 6);
+    });
 }
 
 LongCaptureSessionController::~LongCaptureSessionController()
@@ -373,6 +386,9 @@ bool LongCaptureSessionController::start(const QRect &selectedRect, WId overlayW
     m_forceTargetRefresh = true;
     m_requestSerial = 0;
     m_pendingRequests.clear();
+    m_dispatchDelayTimer.stop();
+    m_overlayRestoreTimer.stop();
+    m_nextDispatchAllowedAtMs = 0;
     resetObservationState();
     clearEndOfContentState();
 
@@ -430,7 +446,7 @@ void LongCaptureSessionController::requestManualScroll(int delta)
     {
         m_wheelAccumulator = 0;
         setCaptureQuality(CaptureQuality::Idle);
-        emit statusTextChanged(QStringLiteral("已到页面底部"));
+        emit statusTextChanged(QStringLiteral("已到页面底部，可继续编辑或完成截图"));
         return;
     }
 
@@ -441,7 +457,7 @@ void LongCaptureSessionController::requestManualScroll(int delta)
         m_wheelAccumulator -= stepDelta;
 
         // Long capture stays more stable when only one future scroll step is queued.
-        if (!m_pendingRequests.isEmpty())
+        if (!m_pendingRequests.isEmpty() || m_dispatchDelayTimer.isActive())
         {
             continue;
         }
@@ -471,6 +487,9 @@ void LongCaptureSessionController::confirmCopy()
 
     m_session.setState(LongCaptureSession::State::Completed);
     m_observeTimer.stop();
+    m_dispatchDelayTimer.stop();
+    m_overlayRestoreTimer.stop();
+    m_nextDispatchAllowedAtMs = 0;
     releaseCaptureSuppression();
     emit copyReady(m_stitchComposer->resultPixmap());
 }
@@ -485,6 +504,9 @@ void LongCaptureSessionController::saveAs()
 
     m_session.setState(LongCaptureSession::State::Completed);
     m_observeTimer.stop();
+    m_dispatchDelayTimer.stop();
+    m_overlayRestoreTimer.stop();
+    m_nextDispatchAllowedAtMs = 0;
     releaseCaptureSuppression();
     emit saveReady(m_stitchComposer->resultPixmap());
 }
@@ -492,6 +514,9 @@ void LongCaptureSessionController::saveAs()
 void LongCaptureSessionController::cancel()
 {
     m_observeTimer.stop();
+    m_dispatchDelayTimer.stop();
+    m_overlayRestoreTimer.stop();
+    m_nextDispatchAllowedAtMs = 0;
     resetObservationState();
     m_wheelAccumulator = 0;
     m_forceTargetRefresh = true;
@@ -690,20 +715,11 @@ bool LongCaptureSessionController::ensureTargetResolved(bool forceRefresh)
         return true;
     }
 
-    const bool shouldTemporarilyHideOverlay = (m_overlay != nullptr && m_overlay->isVisible());
-    if (shouldTemporarilyHideOverlay)
-    {
-        m_overlay->hide();
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 16);
-        QThread::msleep(12);
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 16);
-    }
-
+    ScopedOverlayInputPassthrough overlayPassthrough(m_overlay);
     const bool resolved = m_scrollDispatcher->resolveTarget(scrollInjectionPoint());
 
-    if (shouldTemporarilyHideOverlay)
+    if (m_overlay != nullptr && m_overlay->isVisible())
     {
-        m_overlay->show();
         m_overlay->raise();
         m_overlay->activateWindow();
         m_overlay->setFocus();
@@ -791,6 +807,7 @@ void LongCaptureSessionController::beginObservation()
 
 void LongCaptureSessionController::finishObservation()
 {
+    armDispatchCooldown();
     resetObservationState();
     m_session.setState(LongCaptureSession::State::Armed);
     processPendingRequests();
@@ -849,6 +866,7 @@ void LongCaptureSessionController::handleObservationFailure(const QString &reaso
     setCaptureQuality(CaptureQuality::WeakMatch);
     emit statusTextChanged(failureStatusText(reason, rejectReason));
 
+    armDispatchCooldown();
     resetObservationState();
     m_session.setState(LongCaptureSession::State::Armed);
     processPendingRequests();
@@ -1276,11 +1294,28 @@ void LongCaptureSessionController::setOverlayCaptureSuppressed(bool suppressed)
     }
 
     m_overlayCaptureSuppressed = suppressed;
-    if (m_overlay != nullptr && m_overlay->isVisible())
+    if (m_overlay == nullptr || !m_overlay->isVisible())
     {
-        m_overlay->setCaptureDecorationsHidden(suppressed);
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 6);
+        return;
     }
+
+    if (suppressed)
+    {
+        m_overlayRestoreTimer.stop();
+        m_overlay->setCaptureDecorationsHidden(true);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 6);
+        return;
+    }
+
+    if (!isActive())
+    {
+        m_overlayRestoreTimer.stop();
+        m_overlay->setCaptureDecorationsHidden(false);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents, 6);
+        return;
+    }
+
+    m_overlayRestoreTimer.start(kLongCaptureOverlayRestoreDelayMs);
 }
 
 void LongCaptureSessionController::releaseCaptureSuppression()
@@ -1324,7 +1359,24 @@ void LongCaptureSessionController::processPendingRequests()
         return;
     }
 
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (m_nextDispatchAllowedAtMs > now)
+    {
+        const int delayMs = qMax(1, static_cast<int>(m_nextDispatchAllowedAtMs - now));
+        if (!m_dispatchDelayTimer.isActive() || m_dispatchDelayTimer.remainingTime() > delayMs)
+        {
+            m_dispatchDelayTimer.start(delayMs);
+        }
+        return;
+    }
+
+    m_dispatchDelayTimer.stop();
     dispatchNextRequest();
+}
+
+void LongCaptureSessionController::armDispatchCooldown()
+{
+    m_nextDispatchAllowedAtMs = QDateTime::currentMSecsSinceEpoch() + kLongCaptureDispatchCooldownMs;
 }
 
 void LongCaptureSessionController::clearEndOfContentState()
@@ -1339,12 +1391,14 @@ void LongCaptureSessionController::markEndOfContentReached()
     m_wheelAccumulator = 0;
     m_forceTargetRefresh = true;
     m_pendingRequests.clear();
+    m_dispatchDelayTimer.stop();
+    m_nextDispatchAllowedAtMs = 0;
     m_session.alignPredictedToCommitted();
     m_session.resetFailedRequests();
     emit previewUpdated(m_session.previewPixmap());
     emit predictedVisualHeightChanged(m_session.predictedVisualHeight());
     setCaptureQuality(CaptureQuality::Idle);
-    emit statusTextChanged(QStringLiteral("已到页面底部"));
+    emit statusTextChanged(QStringLiteral("已到页面底部，可继续编辑或完成截图"));
 }
 
 bool LongCaptureSessionController::isNoAppendReason(const QString &reason) const

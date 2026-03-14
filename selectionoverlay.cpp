@@ -530,36 +530,27 @@ void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
     }
 
     m_captureDecorationsHidden = hidden;
-    const QRect captureRect = currentRect().adjusted(-2, -2, 2, 2);
     if (hidden)
     {
-        m_toolbarVisibleBeforeCapture = (m_toolbar != nullptr
-                                         && m_toolbar->isVisible()
-                                         && m_toolbar->geometry().intersects(captureRect));
+        m_toolbarVisibleBeforeCapture = (m_toolbar != nullptr && m_toolbar->isVisible());
         if (m_toolbarVisibleBeforeCapture)
         {
             m_toolbar->hide();
         }
 
-        m_styleToolbarVisibleBeforeCapture = (m_styleToolbar != nullptr
-                                              && m_styleToolbar->isVisible()
-                                              && m_styleToolbar->geometry().intersects(captureRect));
+        m_styleToolbarVisibleBeforeCapture = (m_styleToolbar != nullptr && m_styleToolbar->isVisible());
         if (m_styleToolbarVisibleBeforeCapture)
         {
             m_styleToolbar->hide();
         }
 
-        m_statusLabelVisibleBeforeCapture = (m_statusLabel != nullptr
-                                             && m_statusLabel->isVisible()
-                                             && m_statusLabel->geometry().intersects(captureRect));
+        m_statusLabelVisibleBeforeCapture = (m_statusLabel != nullptr && m_statusLabel->isVisible());
         if (m_statusLabelVisibleBeforeCapture)
         {
             m_statusLabel->hide();
         }
 
-        m_previewPanelVisibleBeforeCapture = (m_previewPanel != nullptr
-                                              && m_previewPanel->isVisible()
-                                              && m_previewPanel->geometry().intersects(captureRect));
+        m_previewPanelVisibleBeforeCapture = (m_previewPanel != nullptr && m_previewPanel->isVisible());
         if (m_previewPanelVisibleBeforeCapture)
         {
             m_previewPanel->hide();
@@ -603,7 +594,6 @@ void SelectionOverlay::setCaptureDecorationsHidden(bool hidden)
     update();
 }
 #endif
-
 void SelectionOverlay::mousePressEvent(QMouseEvent *event)
 {
     if (event == nullptr)
@@ -2177,6 +2167,8 @@ void SelectionOverlay::updateToolbarPosition()
         return;
     }
 
+    rebuildStyleToolbar();
+
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     const QRect selection = predictedDisplayRect();
 #else
@@ -2185,38 +2177,32 @@ void SelectionOverlay::updateToolbarPosition()
     const QRect screenRect = screenLocalRectForSelection(selection);
     const int toolbarWidth = m_toolbar->sizeHint().width();
     const int toolbarHeight = m_toolbar->sizeHint().height();
+    const bool showStyleToolbar = (m_styleToolbar != nullptr && toolSupportsStyleToolbar(m_activeTool));
+    const int styleToolbarHeight = showStyleToolbar ? m_styleToolbar->height() : 0;
+    const int toolbarGap = showStyleToolbar ? 8 : 0;
+    const int toolbarGroupHeight = toolbarHeight + styleToolbarHeight + toolbarGap;
 
     const int margin = 8;
     const int minX = screenRect.left() + margin;
-    const int maxX = screenRect.right() - toolbarWidth - margin;
+    const int maxX = qMax(minX, screenRect.right() - toolbarWidth - margin);
 
     int toolbarX = selection.center().x() - toolbarWidth / 2;
-    toolbarX = qMax(minX, qMin(maxX, toolbarX));
+    toolbarX = qBound(minX, toolbarX, maxX);
 
     const int minY = screenRect.top() + margin;
-    const int maxY = screenRect.bottom() - toolbarHeight - margin;
+    const int maxGroupY = qMax(minY, screenRect.bottom() - toolbarGroupHeight - margin);
 
-    int toolbarY = selection.top() - toolbarHeight - 12;
+    int toolbarY = selection.top() - toolbarGroupHeight - 12;
     if (toolbarY < minY)
     {
         toolbarY = selection.bottom() + 12;
     }
-
-    if (toolbarY > maxY)
-    {
-        toolbarY = maxY;
-    }
-
-    if (toolbarY < minY)
-    {
-        toolbarY = minY;
-    }
+    toolbarY = qBound(minY, toolbarY, maxGroupY);
 
     m_toolbar->move(toolbarX, toolbarY);
     m_toolbar->show();
     m_toolbar->raise();
 
-    rebuildStyleToolbar();
     updateStyleToolbarPosition();
     updateStatusPosition();
 
@@ -2224,7 +2210,6 @@ void SelectionOverlay::updateToolbarPosition()
     updatePreviewPanelPosition();
 #endif
 }
-
 void SelectionOverlay::updateStyleToolbarPosition()
 {
     if (m_styleToolbar == nullptr)
@@ -2232,7 +2217,7 @@ void SelectionOverlay::updateStyleToolbarPosition()
         return;
     }
 
-    if (!m_hasSelection || !toolSupportsStyleToolbar(m_activeTool))
+    if (!m_hasSelection || !toolSupportsStyleToolbar(m_activeTool) || m_toolbar == nullptr || !m_toolbar->isVisible())
     {
         m_styleToolbar->hide();
         return;
@@ -2248,25 +2233,20 @@ void SelectionOverlay::updateStyleToolbarPosition()
     const int toolbarHeight = m_styleToolbar->height();
     const int margin = 8;
     const int minX = screenRect.left() + margin;
-    const int maxX = screenRect.right() - toolbarWidth - margin;
+    const int maxX = qMax(minX, screenRect.right() - toolbarWidth - margin);
 
     int toolbarX = m_toolbar->geometry().center().x() - toolbarWidth / 2;
-    toolbarX = qMax(minX, qMin(maxX, toolbarX));
+    toolbarX = qBound(minX, toolbarX, maxX);
 
-    int toolbarY = m_toolbar->geometry().bottom() + 8;
     const int minY = screenRect.top() + margin;
-    const int maxY = screenRect.bottom() - toolbarHeight - margin;
-    if (toolbarY > maxY)
-    {
-        toolbarY = m_toolbar->y() - toolbarHeight - 8;
-    }
-    toolbarY = qMax(minY, qMin(maxY, toolbarY));
+    const int maxY = qMax(minY, screenRect.bottom() - toolbarHeight - margin);
+    int toolbarY = m_toolbar->geometry().bottom() + 8;
+    toolbarY = qBound(minY, toolbarY, maxY);
 
     m_styleToolbar->move(toolbarX, toolbarY);
     m_styleToolbar->show();
     m_styleToolbar->raise();
 }
-
 void SelectionOverlay::updateStatusPosition()
 {
     if (m_statusLabel == nullptr || !m_hasSelection)
