@@ -19,6 +19,7 @@
 #include <QQueue>
 #include <QRect>
 #include <QTimer>
+#include <QtGlobal>
 
 #include <memory>
 
@@ -117,6 +118,7 @@ private:
     void updateOverlayState();
     void resetObservationState(bool keepActiveRequest = false);
     void processPendingRequests();
+    void armDispatchCooldown();
     void clearEndOfContentState();
     void markEndOfContentReached();
     bool isNoAppendReason(const QString &reason) const;
@@ -135,8 +137,11 @@ private:
 
     QPointer<SelectionOverlay> m_overlay;
     QTimer m_observeTimer;
+    QTimer m_dispatchDelayTimer;
+    QTimer m_overlayRestoreTimer;
 
     QQueue<PendingRequest> m_pendingRequests;
+    qint64 m_nextDispatchAllowedAtMs = 0;
     int m_requestSerial = 0;
     int m_wheelAccumulator = 0;
     int m_consecutiveNoAppendFailures = 0;
