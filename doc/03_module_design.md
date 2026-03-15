@@ -1,6 +1,6 @@
-﻿# 模块设计（同步版）
+# 模块设计（同步版）
 
-> 更新时间：2026-03-09
+> 更新时间：2026-03-14
 
 ## 1. MainWindow
 
@@ -23,7 +23,9 @@
 - `onOverlayLongCaptureSaveRequested(const QRect &)`
 - `onOverlayLongCaptureConfirmRequested(const QRect &)`
 - `onLongCapturePreviewUpdated(const QPixmap &)`
-- `onLongCaptureVisualHeightChanged(int)`
+- `onLongCapturePredictedVisualHeightChanged(int)`
+- `onLongCaptureCommittedVisualHeightChanged(int)`
+- `onLongCaptureCaptureQualityChanged(CaptureQuality)`
 - `onLongCaptureStatusTextChanged(const QString &)`
 - `onLongCaptureCopyReady(const QPixmap &)`
 - `onLongCaptureSaveReady(const QPixmap &)`
@@ -41,14 +43,18 @@
 - 全屏遮罩、拖拽选区
 - 尺寸提示
 - ESC / 右键取消，Enter 确认
-- 浮动工具条（编辑入口占位、保存、取消、确认）
+- 浮动工具条（画笔 / 矩形 / 圆形 / 马赛克 / 文字 / 撤销 / 重做 / 长截图 / 保存 / 取消 / 确认）
+- 标注绘制结果合成与样式子工具条
 
-### 实验长截图能力（默认关闭）
+### 实验长截图能力（按编译开关接入，当前默认构建开启）
 
 - `setLongCaptureModeEnabled(bool)`
-- `setLongCaptureVisualHeight(int)`
+- `setPredictedLongCaptureHeight(int)`
+- `setCommittedLongCaptureHeight(int)`
 - `setLongCapturePreview(const QPixmap &)`
 - `setStatusText(const QString &)`
+- `setCaptureQuality(CaptureQuality)`
+- `setCaptureDecorationsHidden(bool)`
 - `longCaptureToggled(bool, const QRect &)`
 - `longCaptureWheel(const QRect &, int)`
 - `longCaptureSaveRequested(const QRect &)`
@@ -137,7 +143,7 @@
 
 - `LongCaptureBackend::capture(const QRect &globalRect)`：抓取全局区域图像
 - `DesktopGdiCaptureBackend`：当前 Windows GDI 实现
-- 后续 T403 将基于该接口接入 WGC/DXGI
+- 后续 T403 将基于该接口接入 WGC / DXGI
 
 ### 8.4 ScrollDispatcher
 
@@ -179,6 +185,5 @@
 ## 9. 当前状态结论
 
 - 标准全屏截图与普通区域截图仍是稳定主线。
-- T401 已把长截图以实验特性形式重新接回，但默认关闭，不视为对外可用功能。
+- T401 已把长截图以实验特性形式重新接回；当前仓库默认构建会包含该链路，但仍不视为已验收功能。
 - 后续若要开放入口，前提是先完成 Windows 场景下的实测验收，再立项 T403 升级抓帧后端。
-

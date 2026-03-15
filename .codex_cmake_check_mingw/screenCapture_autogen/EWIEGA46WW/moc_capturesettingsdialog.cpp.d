@@ -1,5 +1,6 @@
 E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_capturesettingsdialog.cpp: E:/qt_project/screenCapture/capturesettingsdialog.h \
   E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/moc_predefs.h \
+  E:/Qt/6.5.3/mingw_64/include/QtCore/QString \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20memory.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20type_traits.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qalgorithms.h \

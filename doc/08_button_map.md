@@ -10,6 +10,11 @@
 | `modeRegionButton` | 区域 | 切换到区域截图模式 | 已实现 |
 | `modeScrollButton` | 滚动 | 独立滚动模式入口，当前界面隐藏 | 已隐藏 |
 | `startCaptureButton` | 开始截图 | 按当前模式启动截图 | 已实现 |
+| `sideCaptureButton` | 侧栏拍摄 | 按当前模式启动截图，行为等价 `startCaptureButton` | 已实现 |
+| `sideGalleryButton` | 侧栏图库 | 打开当前生效的自动保存目录 | 已实现 |
+| `btnPrev` | 上一张 | 在历史浏览上下文切到更早一张截图 | 已实现 |
+| `btnShotIcon` | 中间截图图标 | 回到最新截图并刷新主预览区 | 已实现 |
+| `btnNext` | 下一张 | 在历史浏览上下文切到更新一张截图 | 已实现 |
 | `btnTopSettings` | 顶部设置 | 打开截图设置弹窗 | 已实现 |
 | `sideConfigButton` | 侧栏设置 | 打开截图设置弹窗 | 已实现 |
 | `btnHotkeySetting` | 热键设置 | 打开截图设置弹窗 | 已实现 |
@@ -17,20 +22,15 @@
 | `btnAutoSave` | 自动保存 | 切换自动保存开关并持久化 | 已实现 |
 | `btnFormatSetting` | 格式 PNG/JPG | 切换输出格式 | 已实现 |
 | `btnMoreFormat` | 更多格式 | 当前直接切换输出格式 | 已实现（简化行为） |
-| `btnHistory` | 历史 | 刷新最近截图列表并提示数量 | 已实现（简化行为） |
-| `btnMoreRecent` | 更多最近截图 | 当前直接刷新最近截图列表 | 已实现（简化行为） |
-| `sideCaptureButton` | 侧栏拍摄 | 仅提示“功能预留” | 未实现 |
-| `sideGalleryButton` | 侧栏图库 | 仅提示“功能预留” | 未实现 |
-| `btnPrev` | 上一张 | 仅提示“功能预留” | 未实现 |
-| `btnShotIcon` | 中间截图图标 | 仅提示“功能预留” | 未实现 |
-| `btnNext` | 下一张 | 仅提示“功能预留” | 未实现 |
-| `btnNewTask` | 新建 | 仅提示“功能预留” | 未实现 |
+| `btnMoreRecent` | 更多最近截图 / 返回最近 | 最近页进入图库页；图库页返回最近页 | 已实现 |
 
-## 2. 最近截图区域
+## 2. 历史浏览区域
 
 | objectName | 按钮文案/入口 | 实际行为 | 状态 |
 | --- | --- | --- | --- |
-| `recentThumbButton` | 历史缩略图 | 加载该历史图片到主预览区 | 已实现 |
+| `recentThumbButton` | 历史缩略图 | 加载该历史图片到主预览区，并同步当前历史索引 | 已实现 |
+| `historyStackedWidget` | 最近页 / 图库页容器 | 在 `recentPage` 与 `galleryPage` 间切换 | 已实现 |
+| `galleryPage` | 图库页 | 展示完整历史网格，复用主预览区 | 已实现 |
 
 ## 3. SelectionOverlay 主工具条
 
@@ -44,6 +44,7 @@
 | 撤销 | 回退最近一次标注 | 已实现 |
 | 重做 | 恢复最近一次撤销的标注 | 已实现 |
 | 长截图 | 进入/退出长截图状态 | 已实现（实验功能） |
+| 贴图 | 创建置顶悬浮贴图窗，同时复制到剪贴板并写入历史 | 已实现 |
 | 保存 | 普通区域截图保存 / 长截图保存 | 已实现 |
 | 取消（✕） | 取消当前截图 | 已实现 |
 | 确认（✓） | 普通截图复制 / 长截图复制 | 已实现 |
@@ -69,6 +70,7 @@
 | `CaptureSettingsDialog.resetHotkeyButton` | 恢复默认 | 恢复默认截图热键 | 已实现 |
 | `CaptureSettingsDialog.browseDirButton` | 浏览 | 选择自动保存目录 | 已实现 |
 | `CaptureSettingsDialog.clearDirButton` | 清空 | 清空自动保存目录，回退默认目录 | 已实现 |
+| `CaptureSettingsDialog.launchAtStartupCheckBox` | 开机自启动 | 切换当前用户登录后的应用自启动状态，默认关闭 | 已实现 |
 | `CaptureSettingsDialog.saveButton` | 保存设置 | 提交设置并关闭弹窗 | 已实现 |
 | `CaptureSettingsDialog.cancelButton` | 取消 | 放弃修改并关闭弹窗 | 已实现 |
 | `AboutDialog.copyInfoButton` | 复制信息 | 复制应用信息到剪贴板 | 已实现 |
@@ -79,7 +81,9 @@
 
 ## 6. 备注
 
+- `sideGalleryButton` 当前用于打开自动保存目录；图库入口仅保留左侧历史区内的 `btnMoreRecent`。
+- 主界面左侧历史区当前分为 `recentPage` 与 `galleryPage` 两页；右侧 `formatPreviewLabel` 继续作为统一预览区。
+- 图库页第一版仅做完整历史浏览，不含删除、筛选、分页、搜索。
 - 长截图主路径：区域模式选区后通过 Overlay 工具条进入。
-- 长截图当前仍按实验特性管理，需开启 `SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE` 才参与构建与运行。
-- `btnHistory` / `btnMoreRecent` / `btnMoreFormat` 当前都已接线，但行为是简化版，不等于完整页面跳转。
+- 长截图当前仍按实验特性管理；当前仓库默认构建开启，如关闭 `SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE` 则不参与构建与运行。
 - 文档状态以当前代码实现为准。

@@ -15,9 +15,11 @@
 #define SCREENCAPTURE_ENABLE_LONG_CAPTURE 0
 #endif
 
+#include "capturehistorymanager.h"
 #include "longcapturetypes.h"
 
 #include <QKeySequence>
+#include <QList>
 #include <QMainWindow>
 #include <QPixmap>
 #include <QPointer>
@@ -34,10 +36,10 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class QAction;
-class CaptureHistoryManager;
 class CaptureResultHandler;
 class CaptureUiStateCoordinator;
 class GlobalHotkeyManager;
+class PinnedImageWindow;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 class LongCaptureSessionController;
 #endif
@@ -47,6 +49,7 @@ class QMenu;
 class QResizeEvent;
 class QShortcut;
 class QTimer;
+class QWidget;
 class SelectionOverlay;
 class TipPresenter;
 
@@ -73,6 +76,7 @@ private slots:
     void onSelectionCanceled();
     void onOverlayColorValueCopied(const QString &colorText);
     void onOverlaySaveRequested(const QRect &rect);
+    void onOverlayPinRequested(const QRect &rect);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void onOverlayLongCaptureToggled(bool enabled, const QRect &rect);
@@ -92,6 +96,11 @@ private slots:
     void onModeFullClicked();
     void onModeRegionClicked();
     void onPlaceholderAction();
+    void onOpenAutoSaveDirectoryRequested();
+    void onMoreRecentRequested();
+    void onHistoryPreviousRequested();
+    void onHistoryLatestRequested();
+    void onHistoryNextRequested();
     void onOpenSettingsRequested();
     void onOpenAboutRequested();
     void onTrayShowRequested();
@@ -111,16 +120,34 @@ private:
         JPG
     };
 
+    enum class HistoryPage
+    {
+        Recent,
+        Gallery
+    };
+
     void setupRecentItems();
     void reloadRecentItems();
-    void clearRecentItems();
-    void addRecentItem(const QString &title,
-                       const QString &timeText,
-                       const QPixmap &thumbnail,
-                       const QString &filePath,
-                       int row,
-                       int col);
+    void refreshHistoryEntries(bool preserveSelection);
+    void renderHistoryPages();
+    void clearHistoryLayout(QGridLayout *layout);
+    void renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems);
+    void addHistoryItem(QGridLayout *layout,
+                        QWidget *parentWidget,
+                        const CaptureHistoryManager::Entry &entry,
+                        int historyIndex,
+                        int row,
+                        int col);
+    bool selectHistoryIndex(int index, bool showFeedback = true);
+    void selectLatestHistoryItem(bool showFeedback = false);
+    void showHistoryPage(HistoryPage page, bool refreshData);
+    void updateHistoryNavigationButtons();
+    void updateHistoryPageUi();
     void appendCaptureToHistory(const QPixmap &pixmap, const QString &title);
+    QPixmap buildSelectionResultPixmap(const QRect &rect) const;
+    void applyRegionResult(const QPixmap &pixmap, const QString &title, bool copyToClipboard);
+    void showPinnedImage(const QPixmap &pixmap);
+    void prunePinnedImageWindows();
     void loadOutputFormat();
     void saveOutputFormat() const;
     void updateFormatButtonText();
@@ -168,11 +195,15 @@ private:
     QPixmap m_currentPixmap;
     CaptureMode m_captureMode = CaptureMode::Region;
     OutputFormat m_outputFormat = OutputFormat::PNG;
+    HistoryPage m_historyPage = HistoryPage::Recent;
+    QList<CaptureHistoryManager::Entry> m_historyEntries;
+    int m_currentHistoryIndex = -1;
     bool m_autoSaveEnabled = true;
     QString m_autoSaveDirectory;
     QKeySequence m_captureHotkey = QKeySequence(QStringLiteral("Ctrl+Shift+A"));
     QShortcut *m_appHotkeyShortcut = nullptr;
     std::unique_ptr<CaptureHistoryManager> m_captureHistoryManager;
+    QList<QPointer<PinnedImageWindow>> m_pinnedWindows;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     std::unique_ptr<LongCaptureSessionController> m_longCaptureController;
 #endif

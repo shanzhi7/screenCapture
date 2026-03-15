@@ -59,6 +59,28 @@ QString CaptureSettingsDialog::selectedAutoSaveDirectory() const
     return QDir::fromNativeSeparators(ui->autoSaveDirEdit->text().trimmed());
 }
 
+void CaptureSettingsDialog::setLaunchAtStartupEnabled(bool enabled)
+{
+    ui->launchAtStartupCheckBox->setChecked(enabled);
+}
+
+void CaptureSettingsDialog::setLaunchAtStartupSupported(bool supported)
+{
+    ui->launchAtStartupCheckBox->setEnabled(supported);
+    ui->startupTipLabel->setText(supported
+                                ? QStringLiteral("仅影响当前用户，不修改系统级启动项。")
+                                : QStringLiteral("当前平台暂不支持开机自启动。"));
+    if (!supported)
+    {
+        ui->launchAtStartupCheckBox->setChecked(false);
+    }
+}
+
+bool CaptureSettingsDialog::selectedLaunchAtStartupEnabled() const
+{
+    return ui->launchAtStartupCheckBox->isChecked();
+}
+
 void CaptureSettingsDialog::onBrowseDirectoryClicked()
 {
     const QString current = selectedAutoSaveDirectory();

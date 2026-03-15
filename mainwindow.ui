@@ -182,20 +182,7 @@
           </layout>
          </widget>
         </item>
-        <item>
-         <widget class="QPushButton" name="btnNewTask">
-          <property name="text">
-           <string>＋ 新建</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="btnHistory">
-          <property name="text">
-           <string>🗂</string>
-          </property>
-         </widget>
-        </item>
+
         <item>
          <widget class="QPushButton" name="btnTopSettings">
           <property name="text">
@@ -364,18 +351,12 @@
             </layout>
            </item>
            <item>
-            <widget class="QScrollArea" name="recentScrollArea">
-             <property name="widgetResizable">
-              <bool>true</bool>
+            <widget class="QStackedWidget" name="historyStackedWidget">
+             <property name="currentIndex">
+              <number>0</number>
              </property>
-             <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
-             </property>
-             <widget class="QWidget" name="recentContentWidget">
-              <layout class="QGridLayout" name="recentGridLayout">
-               <property name="spacing">
-                <number>12</number>
-               </property>
+             <widget class="QWidget" name="recentPage">
+              <layout class="QVBoxLayout" name="recentPageLayout">
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -388,6 +369,80 @@
                <property name="bottomMargin">
                 <number>0</number>
                </property>
+               <item>
+                <widget class="QScrollArea" name="recentScrollArea">
+                 <property name="widgetResizable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <widget class="QWidget" name="recentContentWidget">
+                  <layout class="QGridLayout" name="recentGridLayout">
+                   <property name="spacing">
+                    <number>12</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                  </layout>
+                 </widget>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="galleryPage">
+              <layout class="QVBoxLayout" name="galleryPageLayout">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QScrollArea" name="galleryScrollArea">
+                 <property name="widgetResizable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <widget class="QWidget" name="galleryContentWidget">
+                  <layout class="QGridLayout" name="galleryGridLayout">
+                   <property name="spacing">
+                    <number>12</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                  </layout>
+                 </widget>
+                </widget>
+               </item>
               </layout>
              </widget>
             </widget>

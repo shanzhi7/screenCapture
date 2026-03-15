@@ -1,6 +1,7 @@
 ﻿#include "mainwindow.h"
 
 #include "aboutdialog.h"
+#include "autostartmanager.h"
 #include "capturehistorymanager.h"
 #include "capturesettingsdialog.h"
 #include "captureresulthandler.h"
@@ -9,6 +10,7 @@
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 #include "longcapturesessioncontroller.h"
 #endif
+#include "pinnedimagewindow.h"
 #include "selectionoverlay.h"
 #include "settingsservice.h"
 #include "tippresenter.h"
@@ -21,6 +23,7 @@
 #include <QClipboard>
 #include <QCloseEvent>
 #include <QCursor>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDateTime>
 #include <QEventLoop>
@@ -50,8 +53,15 @@
 #include <QThread>
 #include <QTimer>
 #include <QToolButton>
+#include <QUrl>
 #include <QVBoxLayout>
 
+namespace
+{
+constexpr int kRecentHistoryPreviewCount = 8;
+constexpr int kHistoryGridColumnCount = 4;
+const QSize kHistoryThumbnailSize(220, 120);
+}
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -105,14 +115,13 @@ MainWindow::MainWindow(QWidget *parent)
     };
 
     applyIcon(ui->sideCaptureButton, QStringLiteral(":/icons/camera.svg"), QSize(24, 24), QStringLiteral("拍"));
-    applyIcon(ui->sideGalleryButton, QStringLiteral(":/icons/folder.svg"), QSize(24, 24), QStringLiteral("库"));
+    applyIcon(ui->sideGalleryButton, QStringLiteral(":/icons/folder.svg"), QSize(24, 24), QStringLiteral("存"));
+    ui->sideGalleryButton->setToolTip(QStringLiteral("打开自动保存目录"));
     applyIcon(ui->sideConfigButton, QStringLiteral(":/icons/settings.svg"), QSize(24, 24), QStringLiteral("设"));
     applyIcon(ui->sideBottomButton, QStringLiteral(":/icons/info.svg"), QSize(24, 24), QStringLiteral("关"));
     applyIcon(ui->btnPrev, QStringLiteral(":/icons/chevron_left.svg"), QSize(20, 20), QStringLiteral("<"));
     applyIcon(ui->btnShotIcon, QStringLiteral(":/icons/crop.svg"), QSize(20, 20), QStringLiteral("裁"));
     applyIcon(ui->btnNext, QStringLiteral(":/icons/chevron_right.svg"), QSize(20, 20), QStringLiteral(">"));
-    applyIcon(ui->btnHistory, QStringLiteral(":/icons/history.svg"), QSize(20, 20), QStringLiteral("历"));
-    applyIcon(ui->btnNewTask, QStringLiteral(":/icons/plus_white.svg"), QSize(16, 16), QStringLiteral("+"));
     applyIcon(ui->btnTopSettings, QStringLiteral(":/icons/settings.svg"), QSize(18, 18), QStringLiteral("设"));
 
     ui->modeFullButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -167,16 +176,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->sideConfigButton, &QAbstractButton::clicked, this, &MainWindow::onOpenSettingsRequested);
     connect(ui->btnHotkeySetting, &QAbstractButton::clicked, this, &MainWindow::onOpenSettingsRequested);
     connect(ui->sideBottomButton, &QAbstractButton::clicked, this, &MainWindow::onOpenAboutRequested);
+    connect(ui->sideCaptureButton, &QAbstractButton::clicked, this, &MainWindow::startCapture);
+    connect(ui->sideGalleryButton, &QAbstractButton::clicked, this, &MainWindow::onOpenAutoSaveDirectoryRequested);
+    connect(ui->btnMoreRecent, &QAbstractButton::clicked, this, &MainWindow::onMoreRecentRequested);
+    connect(ui->btnPrev, &QAbstractButton::clicked, this, &MainWindow::onHistoryPreviousRequested);
+    connect(ui->btnShotIcon, &QAbstractButton::clicked, this, &MainWindow::onHistoryLatestRequested);
+    connect(ui->btnNext, &QAbstractButton::clicked, this, &MainWindow::onHistoryNextRequested);
 
     const QList<QAbstractButton *> placeholderButtons = {
-        ui->sideCaptureButton,
-        ui->sideGalleryButton,
-        ui->btnPrev,
-        ui->btnShotIcon,
-        ui->btnNext,
-        ui->btnNewTask,
-        ui->btnHistory,
-        ui->btnMoreRecent,
         ui->btnMoreFormat,
         ui->btnFormatSetting,
         ui->btnAutoSave
@@ -186,7 +193,6 @@ MainWindow::MainWindow(QWidget *parent)
     {
         connect(button, &QAbstractButton::clicked, this, &MainWindow::onPlaceholderAction);
     }
-
     ensureTrayIcon();
     setupRecentItems();
     updateModeSegmentVisuals();
@@ -427,6 +433,7 @@ void MainWindow::startCapture()
     connect(m_overlay, &SelectionOverlay::selectionCanceled, this, &MainWindow::onSelectionCanceled);
     connect(m_overlay, &SelectionOverlay::colorValueCopied, this, &MainWindow::onOverlayColorValueCopied);
     connect(m_overlay, &SelectionOverlay::saveRequested, this, &MainWindow::onOverlaySaveRequested);
+    connect(m_overlay, &SelectionOverlay::pinRequested, this, &MainWindow::onOverlayPinRequested);
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     connect(m_overlay, &SelectionOverlay::longCaptureToggled, this, &MainWindow::onOverlayLongCaptureToggled);
     connect(m_overlay, &SelectionOverlay::longCaptureWheel, this, &MainWindow::onOverlayLongCaptureWheel);
@@ -505,11 +512,7 @@ void MainWindow::onSelectionFinished(const QRect &rect)
 {
     QTimer::singleShot(90, this, [this, rect]()
     {
-        QPixmap pixmap = captureRegion(rect);
-        if (!pixmap.isNull() && m_overlay != nullptr)
-        {
-            pixmap = m_overlay->applyEditsToPixmap(pixmap, rect);
-        }
+        const QPixmap pixmap = buildSelectionResultPixmap(rect);
 
         const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
                                                     ? true
@@ -527,14 +530,14 @@ void MainWindow::onSelectionFinished(const QRect &rect)
 
         if (pixmap.isNull())
         {
+            dismissOverlay();
             showTip(QStringLiteral("区域截图失败"));
             endCaptureSession();
             return;
         }
 
-        updatePreview(pixmap);
-        copyPixmapToClipboard(pixmap);
-        appendCaptureToHistory(pixmap, QStringLiteral("区域截图"));
+        applyRegionResult(pixmap, QStringLiteral("区域截图"), true);
+        dismissOverlay();
         showTip(QStringLiteral("截图已复制到剪贴板"));
         endCaptureSession();
     });
@@ -590,11 +593,7 @@ void MainWindow::onOverlaySaveRequested(const QRect &rect)
 {
     QTimer::singleShot(90, this, [this, rect]()
     {
-        QPixmap pixmap = captureRegion(rect);
-        if (!pixmap.isNull() && m_overlay != nullptr)
-        {
-            pixmap = m_overlay->applyEditsToPixmap(pixmap, rect);
-        }
+        const QPixmap pixmap = buildSelectionResultPixmap(rect);
 
         const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
                                                     ? true
@@ -612,13 +611,13 @@ void MainWindow::onOverlaySaveRequested(const QRect &rect)
 
         if (pixmap.isNull())
         {
+            dismissOverlay();
             showTip(QStringLiteral("保存截图失败"));
             endCaptureSession();
             return;
         }
 
-        updatePreview(pixmap);
-        appendCaptureToHistory(pixmap, QStringLiteral("区域截图"));
+        applyRegionResult(pixmap, QStringLiteral("区域截图"), false);
 
         if (!decision.useManualSaveDialog)
         {
@@ -645,6 +644,43 @@ void MainWindow::onOverlaySaveRequested(const QRect &rect)
             // 提示已在保存逻辑内处理。
         }
 
+        dismissOverlay();
+        endCaptureSession();
+    });
+}
+
+void MainWindow::onOverlayPinRequested(const QRect &rect)
+{
+    QTimer::singleShot(90, this, [this, rect]()
+    {
+        const QPixmap pixmap = buildSelectionResultPixmap(rect);
+
+        const bool shouldRestoreWindowByState = (m_uiStateCoordinator == nullptr)
+                                                    ? true
+                                                    : m_uiStateCoordinator->shouldRestoreMainWindowAfterCapture();
+        const CaptureResultDecision decision = (m_captureResultHandler == nullptr)
+                                                   ? CaptureResultDecision{shouldRestoreWindowByState, false}
+                                                   : m_captureResultHandler->decide(CaptureResultAction::RegionConfirmed,
+                                                                                    shouldRestoreWindowByState,
+                                                                                    m_autoSaveEnabled);
+
+        if (decision.shouldRestoreWindow)
+        {
+            restoreWindowIfNeeded();
+        }
+
+        if (pixmap.isNull())
+        {
+            dismissOverlay();
+            showTip(QStringLiteral("贴图失败"));
+            endCaptureSession();
+            return;
+        }
+
+        applyRegionResult(pixmap, QStringLiteral("区域截图"), true);
+        showPinnedImage(pixmap);
+        dismissOverlay();
+        showTip(QStringLiteral("截图已贴到桌面顶层"));
         endCaptureSession();
     });
 }
@@ -906,26 +942,72 @@ void MainWindow::onPlaceholderAction()
     if (button == ui->btnFormatSetting || button == ui->btnMoreFormat)
     {
         toggleOutputFormat();
-        return;
     }
-
-    if (button == ui->btnHistory || button == ui->btnMoreRecent)
-    {
-        reloadRecentItems();
-        const int count = (m_captureHistoryManager != nullptr) ? m_captureHistoryManager->entries().size() : 0;
-        showTip(QStringLiteral("历史记录：%1").arg(count));
-        return;
-    }
-
-    const QString label = button->text().isEmpty() ? button->objectName() : button->text();
-    showTip(QStringLiteral("功能预留：%1").arg(label));
 }
 
+void MainWindow::onOpenAutoSaveDirectoryRequested()
+{
+    const QString targetDirectory = QDir(effectiveAutoSaveDirectory()).absolutePath();
+    QDir directory(targetDirectory);
+    if (!directory.exists() && !directory.mkpath(QStringLiteral(".")))
+    {
+        showTip(QStringLiteral("自动保存目录创建失败"));
+        return;
+    }
+
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(targetDirectory)))
+    {
+        showTip(QStringLiteral("无法打开自动保存目录"));
+        return;
+    }
+
+    showTip(QStringLiteral("已打开自动保存目录"));
+}
+
+void MainWindow::onMoreRecentRequested()
+{
+    if (m_historyPage == HistoryPage::Gallery)
+    {
+        showHistoryPage(HistoryPage::Recent, false);
+        return;
+    }
+
+    showHistoryPage(HistoryPage::Gallery, true);
+}
+
+void MainWindow::onHistoryPreviousRequested()
+{
+    if (m_currentHistoryIndex < 0)
+    {
+        return;
+    }
+
+    selectHistoryIndex(m_currentHistoryIndex + 1);
+}
+
+void MainWindow::onHistoryLatestRequested()
+{
+    selectLatestHistoryItem(true);
+}
+
+void MainWindow::onHistoryNextRequested()
+{
+    if (m_currentHistoryIndex <= 0)
+    {
+        return;
+    }
+
+    selectHistoryIndex(m_currentHistoryIndex - 1);
+}
 void MainWindow::onOpenSettingsRequested()
 {
+    const bool currentLaunchAtStartup = AutoStartManager::isEnabled();
+
     CaptureSettingsDialog dialog(this);
     dialog.setCurrentHotkey(m_captureHotkey);
     dialog.setAutoSaveDirectory(m_autoSaveDirectory);
+    dialog.setLaunchAtStartupEnabled(currentLaunchAtStartup);
+    dialog.setLaunchAtStartupSupported(AutoStartManager::isSupported());
 
     if (dialog.exec() != QDialog::Accepted)
     {
@@ -953,6 +1035,29 @@ void MainWindow::onOpenSettingsRequested()
             showTip(QStringLiteral("自动保存目录已更新"));
         }
     }
+
+    const bool requestedLaunchAtStartup = dialog.selectedLaunchAtStartupEnabled();
+    if (requestedLaunchAtStartup != currentLaunchAtStartup)
+    {
+        QString errorMessage;
+        if (AutoStartManager::setEnabled(requestedLaunchAtStartup, &errorMessage))
+        {
+            SettingsService::writeBool(QStringLiteral("app/launch_at_startup"), requestedLaunchAtStartup);
+            showTip(requestedLaunchAtStartup
+                        ? QStringLiteral("已启用开机自启动")
+                        : QStringLiteral("已关闭开机自启动"));
+        }
+        else
+        {
+            SettingsService::writeBool(QStringLiteral("app/launch_at_startup"), AutoStartManager::isEnabled());
+            showTip(errorMessage.isEmpty()
+                        ? QStringLiteral("开机自启动设置失败")
+                        : errorMessage);
+        }
+        return;
+    }
+
+    SettingsService::writeBool(QStringLiteral("app/launch_at_startup"), currentLaunchAtStartup);
 }
 
 void MainWindow::onOpenAboutRequested()
@@ -1009,46 +1114,87 @@ void MainWindow::setupRecentItems()
     }
 
     reloadRecentItems();
+    showHistoryPage(HistoryPage::Recent, false);
 }
+
 void MainWindow::reloadRecentItems()
 {
-    clearRecentItems();
+    refreshHistoryEntries(true);
+    renderHistoryPages();
+}
+
+void MainWindow::refreshHistoryEntries(bool preserveSelection)
+{
+    const int previousIndex = m_currentHistoryIndex;
+    QString selectedFilePath;
+    if (preserveSelection && previousIndex >= 0 && previousIndex < m_historyEntries.size())
+    {
+        selectedFilePath = m_historyEntries.at(previousIndex).filePath;
+    }
 
     if (m_captureHistoryManager == nullptr)
     {
+        m_historyEntries.clear();
+        m_currentHistoryIndex = -1;
         return;
     }
 
-    const QList<CaptureHistoryManager::Entry> list = m_captureHistoryManager->entries();
-    if (list.isEmpty())
+    m_captureHistoryManager->initialize();
+    m_historyEntries = m_captureHistoryManager->entries();
+
+    if (m_historyEntries.isEmpty())
     {
-        QLabel *emptyLabel = new QLabel(QStringLiteral("暂无截图历史"), ui->recentContentWidget);
-        emptyLabel->setObjectName(QStringLiteral("recentEmptyLabel"));
-        emptyLabel->setAlignment(Qt::AlignCenter);
-        emptyLabel->setMinimumHeight(280);
-        ui->recentGridLayout->addWidget(emptyLabel, 0, 0, 1, 4);
+        m_currentHistoryIndex = -1;
         return;
     }
 
-    const int displayCount = qMin(list.size(), 8);
-    for (int i = 0; i < displayCount; ++i)
+    if (!preserveSelection)
     {
-        const CaptureHistoryManager::Entry &entry = list.at(i);
-        const QPixmap thumbnail(entry.filePath);
-        const QString title = entry.title.isEmpty() ? QStringLiteral("截图") : entry.title;
-        const QString timeText = entry.createdAt.toString(QStringLiteral("yyyy.MM.dd HH:mm"));
-        const int row = i / 4;
-        const int col = i % 4;
-
-        addRecentItem(title, timeText, thumbnail, entry.filePath, row, col);
+        return;
     }
+
+    if (!selectedFilePath.isEmpty())
+    {
+        for (int i = 0; i < m_historyEntries.size(); ++i)
+        {
+            if (m_historyEntries.at(i).filePath == selectedFilePath)
+            {
+                m_currentHistoryIndex = i;
+                return;
+            }
+        }
+    }
+
+    if (previousIndex >= 0)
+    {
+        m_currentHistoryIndex = qMin(previousIndex, m_historyEntries.size() - 1);
+        return;
+    }
+
+    m_currentHistoryIndex = -1;
 }
 
-void MainWindow::clearRecentItems()
+void MainWindow::renderHistoryPages()
 {
-    while (ui->recentGridLayout->count() > 0)
+    clearHistoryLayout(ui->recentGridLayout);
+    clearHistoryLayout(ui->galleryGridLayout);
+
+    renderHistoryGrid(ui->recentGridLayout, ui->recentContentWidget, kRecentHistoryPreviewCount);
+    renderHistoryGrid(ui->galleryGridLayout, ui->galleryContentWidget, -1);
+    updateHistoryPageUi();
+    updateHistoryNavigationButtons();
+}
+
+void MainWindow::clearHistoryLayout(QGridLayout *layout)
+{
+    if (layout == nullptr)
     {
-        QLayoutItem *item = ui->recentGridLayout->takeAt(0);
+        return;
+    }
+
+    while (layout->count() > 0)
+    {
+        QLayoutItem *item = layout->takeAt(0);
         if (item == nullptr)
         {
             continue;
@@ -1063,15 +1209,55 @@ void MainWindow::clearRecentItems()
     }
 }
 
-void MainWindow::addRecentItem(const QString &title,
-                               const QString &timeText,
-                               const QPixmap &thumbnail,
-                               const QString &filePath,
-                               int row,
-                               int col)
+void MainWindow::renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems)
 {
-    QFrame *card = new QFrame(ui->recentContentWidget);
+    if (layout == nullptr || parentWidget == nullptr)
+    {
+        return;
+    }
+
+    if (m_historyEntries.isEmpty())
+    {
+        QLabel *emptyLabel = new QLabel(QStringLiteral("暂无截图历史"), parentWidget);
+        emptyLabel->setObjectName(QStringLiteral("recentEmptyLabel"));
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        emptyLabel->setMinimumHeight(280);
+        layout->addWidget(emptyLabel, 0, 0, 1, kHistoryGridColumnCount);
+        return;
+    }
+
+    const int itemCount = (maxItems < 0)
+                              ? m_historyEntries.size()
+                              : qMin(maxItems, m_historyEntries.size());
+    for (int visibleIndex = 0; visibleIndex < itemCount; ++visibleIndex)
+    {
+        const CaptureHistoryManager::Entry &entry = m_historyEntries.at(visibleIndex);
+        const int row = visibleIndex / kHistoryGridColumnCount;
+        const int col = visibleIndex % kHistoryGridColumnCount;
+        addHistoryItem(layout, parentWidget, entry, visibleIndex, row, col);
+    }
+}
+
+void MainWindow::addHistoryItem(QGridLayout *layout,
+                                QWidget *parentWidget,
+                                const CaptureHistoryManager::Entry &entry,
+                                int historyIndex,
+                                int row,
+                                int col)
+{
+    if (layout == nullptr || parentWidget == nullptr)
+    {
+        return;
+    }
+
+    const bool selected = (historyIndex == m_currentHistoryIndex);
+    const QPixmap thumbnail(entry.filePath);
+    const QString title = entry.title.isEmpty() ? QStringLiteral("截图") : entry.title;
+    const QString timeText = entry.createdAt.toString(QStringLiteral("yyyy.MM.dd HH:mm"));
+
+    QFrame *card = new QFrame(parentWidget);
     card->setObjectName(QStringLiteral("recentItemCard"));
+    card->setProperty("selected", selected);
 
     QVBoxLayout *cardLayout = new QVBoxLayout(card);
     cardLayout->setContentsMargins(0, 0, 0, 0);
@@ -1080,37 +1266,29 @@ void MainWindow::addRecentItem(const QString &title,
     QToolButton *thumbButton = new QToolButton(card);
     thumbButton->setObjectName(QStringLiteral("recentThumbButton"));
     thumbButton->setCursor(Qt::PointingHandCursor);
-    thumbButton->setMinimumSize(220, 120);
-    thumbButton->setMaximumSize(220, 120);
+    thumbButton->setMinimumSize(kHistoryThumbnailSize);
+    thumbButton->setMaximumSize(kHistoryThumbnailSize);
     thumbButton->setAutoRaise(true);
+    thumbButton->setCheckable(true);
+    thumbButton->setChecked(selected);
     thumbButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
     if (!thumbnail.isNull())
     {
-        const QPixmap scaled = thumbnail.scaled(220,
-                                                120,
+        const QPixmap scaled = thumbnail.scaled(kHistoryThumbnailSize,
                                                 Qt::KeepAspectRatioByExpanding,
                                                 Qt::SmoothTransformation);
         thumbButton->setIcon(QIcon(scaled));
-        thumbButton->setIconSize(QSize(220, 120));
+        thumbButton->setIconSize(kHistoryThumbnailSize);
     }
     else
     {
         thumbButton->setText(QStringLiteral("无预览"));
     }
 
-    connect(thumbButton, &QToolButton::clicked, this, [this, filePath, title]()
+    connect(thumbButton, &QToolButton::clicked, this, [this, historyIndex]()
     {
-        QPixmap preview(filePath);
-        if (preview.isNull())
-        {
-            showTip(QStringLiteral("历史图片不存在"));
-            reloadRecentItems();
-            return;
-        }
-
-        updatePreview(preview);
-        showTip(QStringLiteral("已加载历史截图：%1").arg(title));
+        selectHistoryIndex(historyIndex);
     });
 
     QLabel *titleLabel = new QLabel(title, card);
@@ -1123,9 +1301,150 @@ void MainWindow::addRecentItem(const QString &title,
     cardLayout->addWidget(titleLabel);
     cardLayout->addWidget(timeLabel);
 
-    ui->recentGridLayout->addWidget(card, row, col);
+    layout->addWidget(card, row, col);
 }
 
+bool MainWindow::selectHistoryIndex(int index, bool showFeedback)
+{
+    if (index < 0 || index >= m_historyEntries.size())
+    {
+        return false;
+    }
+
+    const CaptureHistoryManager::Entry entry = m_historyEntries.at(index);
+    const QString title = entry.title.isEmpty() ? QStringLiteral("截图") : entry.title;
+    const QPixmap preview(entry.filePath);
+    if (preview.isNull())
+    {
+        showTip(QStringLiteral("历史图片不存在"));
+        reloadRecentItems();
+        return false;
+    }
+
+    m_currentHistoryIndex = index;
+    updatePreview(preview);
+    renderHistoryPages();
+
+    if (showFeedback)
+    {
+        showTip(QStringLiteral("已加载历史截图：%1").arg(title));
+    }
+
+    return true;
+}
+
+void MainWindow::selectLatestHistoryItem(bool showFeedback)
+{
+    if (m_historyEntries.isEmpty())
+    {
+        if (showFeedback)
+        {
+            showTip(QStringLiteral("暂无截图历史"));
+        }
+        return;
+    }
+
+    selectHistoryIndex(0, showFeedback);
+}
+
+void MainWindow::showHistoryPage(HistoryPage page, bool refreshData)
+{
+    m_historyPage = page;
+
+    if (refreshData)
+    {
+        reloadRecentItems();
+        return;
+    }
+
+    updateHistoryPageUi();
+    updateHistoryNavigationButtons();
+}
+
+void MainWindow::updateHistoryNavigationButtons()
+{
+    const bool hasHistory = !m_historyEntries.isEmpty();
+    const bool hasCurrent = m_currentHistoryIndex >= 0 && m_currentHistoryIndex < m_historyEntries.size();
+
+    ui->btnPrev->setEnabled(hasCurrent && (m_currentHistoryIndex + 1 < m_historyEntries.size()));
+    ui->btnNext->setEnabled(hasCurrent && (m_currentHistoryIndex > 0));
+    ui->btnShotIcon->setEnabled(hasHistory && (m_currentHistoryIndex != 0));
+}
+
+void MainWindow::updateHistoryPageUi()
+{
+    if (ui == nullptr)
+    {
+        return;
+    }
+
+    ui->historyStackedWidget->setCurrentWidget((m_historyPage == HistoryPage::Recent)
+                                                   ? ui->recentPage
+                                                   : ui->galleryPage);
+    ui->recentTitleLabel->setText((m_historyPage == HistoryPage::Recent)
+                                      ? QStringLiteral("最近截图")
+                                      : QStringLiteral("截图图库"));
+    ui->btnMoreRecent->setText((m_historyPage == HistoryPage::Recent)
+                                   ? QStringLiteral("更多 >")
+                                   : QStringLiteral("返回最近"));
+}
+
+QPixmap MainWindow::buildSelectionResultPixmap(const QRect &rect) const
+{
+    QPixmap pixmap = captureRegion(rect);
+    if (!pixmap.isNull() && m_overlay != nullptr)
+    {
+        pixmap = m_overlay->applyEditsToPixmap(pixmap, rect);
+    }
+
+    return pixmap;
+}
+
+void MainWindow::applyRegionResult(const QPixmap &pixmap, const QString &title, bool copyToClipboard)
+{
+    if (pixmap.isNull())
+    {
+        return;
+    }
+
+    updatePreview(pixmap);
+    if (copyToClipboard)
+    {
+        copyPixmapToClipboard(pixmap);
+    }
+    appendCaptureToHistory(pixmap, title);
+}
+
+void MainWindow::showPinnedImage(const QPixmap &pixmap)
+{
+    if (pixmap.isNull())
+    {
+        return;
+    }
+
+    prunePinnedImageWindows();
+
+    auto *window = new PinnedImageWindow(pixmap);
+    m_pinnedWindows.append(window);
+    connect(window, &QObject::destroyed, this, [this]()
+    {
+        prunePinnedImageWindows();
+    });
+
+    window->show();
+    window->raise();
+}
+
+void MainWindow::prunePinnedImageWindows()
+{
+    for (int index = m_pinnedWindows.size() - 1; index >= 0; --index)
+    {
+        if (m_pinnedWindows.at(index).isNull())
+        {
+            m_pinnedWindows.removeAt(index);
+        }
+    }
+}
 void MainWindow::appendCaptureToHistory(const QPixmap &pixmap, const QString &title)
 {
     if (m_captureHistoryManager == nullptr)
@@ -1139,7 +1458,12 @@ void MainWindow::appendCaptureToHistory(const QPixmap &pixmap, const QString &ti
         return;
     }
 
-    reloadRecentItems();
+    refreshHistoryEntries(false);
+    if (!m_historyEntries.isEmpty())
+    {
+        m_currentHistoryIndex = 0;
+    }
+    renderHistoryPages();
 }
 void MainWindow::resetLongCaptureState()
 {

@@ -16,6 +16,8 @@ qt_add_executable(screenCapture
     mainwindow.ui
     selectionoverlay.cpp
     selectionoverlay.h
+    pinnedimagewindow.cpp
+    pinnedimagewindow.h
     showtip.cpp
     showtip.h
     showtip.ui
@@ -28,6 +30,8 @@ qt_add_executable(screenCapture
     aboutdialog.cpp
     aboutdialog.h
     aboutdialog.ui
+    autostartmanager.cpp
+    autostartmanager.h
     globalhotkeymanager.cpp
     globalhotkeymanager.h
     capturehistorymanager.cpp
@@ -107,6 +111,7 @@ qt_add_resources(screenCapture app_resources
         icons/overlay_redo.svg
         icons/overlay_scroll.svg
         icons/overlay_save.svg
+        icons/overlay_pin.svg
         icons/overlay_close.svg
         icons/overlay_check.svg
         icon.ico

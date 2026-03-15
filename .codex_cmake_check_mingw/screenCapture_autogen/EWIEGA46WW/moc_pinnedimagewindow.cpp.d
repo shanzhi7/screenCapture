@@ -1,14 +1,7 @@
-E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_mainwindow.cpp: E:/qt_project/screenCapture/mainwindow.h \
+E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_pinnedimagewindow.cpp: E:/qt_project/screenCapture/pinnedimagewindow.h \
   E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/moc_predefs.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QDateTime \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QList \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QMetaType \
   E:/Qt/6.5.3/mingw_64/include/QtCore/QPoint \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QPointer \
   E:/Qt/6.5.3/mingw_64/include/QtCore/QRect \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QString \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QVector \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QtGlobal \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20memory.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20type_traits.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qalgorithms.h \
@@ -25,7 +18,6 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtCore/qbytearrayalgorithms.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qbytearraylist.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qbytearrayview.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/qcalendar.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qchar.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qcompare.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qcompare_impl.h \
@@ -38,7 +30,6 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtCore/qcontiguouscache.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qdarwinhelpers.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qdatastream.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/qdatetime.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qdebug.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qexceptionhandling.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qflags.h \
@@ -55,7 +46,6 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtCore/qiterator.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qline.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qlist.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/qlocale.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qlogging.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qmalloc.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qmap.h \
@@ -73,7 +63,6 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtCore/qoverload.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qpair.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qpoint.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/qpointer.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qprocessordetection.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qrect.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qrefcount.h \
@@ -119,11 +108,8 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtCore/qutf8stringview.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qvariant.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qvarlengtharray.h \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/qvector.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qversiontagging.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qxptype_traits.h \
-  E:/Qt/6.5.3/mingw_64/include/QtGui/QImage \
-  E:/Qt/6.5.3/mingw_64/include/QtGui/QKeySequence \
   E:/Qt/6.5.3/mingw_64/include/QtGui/QPixmap \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qaction.h \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qbitmap.h \
@@ -150,12 +136,8 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtGui/qtransform.h \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qwindowdefs.h \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qwindowdefs_win.h \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/QMainWindow \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/QSystemTrayIcon \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/qmainwindow.h \
+  E:/Qt/6.5.3/mingw_64/include/QtWidgets/QWidget \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qsizepolicy.h \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/qsystemtrayicon.h \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtabwidget.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgets-config.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgetsexports.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
@@ -363,6 +345,4 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/sys/types.h \
   E:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h \
   E:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h \
-  E:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h \
-  E:/qt_project/screenCapture/capturehistorymanager.h \
-  E:/qt_project/screenCapture/longcapturetypes.h
+  E:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
