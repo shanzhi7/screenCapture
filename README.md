@@ -1,4 +1,4 @@
-# LightShadowCapture / 轻影截图
+﻿# LightShadowCapture / 轻影截图
 
 > A lightweight Windows screenshot tool built with Qt Widgets.
 > 基于 Qt Widgets 的轻量级 Windows 截图工具。
@@ -199,5 +199,5 @@ Recommended files / 推荐先阅读：
 
 ## License / 许可证
 
-This project is licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
-本项目采用 MIT License，详见 [`LICENSE`](LICENSE) 文件。
+This project is licensed under PolyForm Noncommercial 1.0.0. Commercial use is not permitted. See the [`LICENSE`](LICENSE) file for details.
+本项目采用 PolyForm Noncommercial 1.0.0，禁止商业使用，详见 [`LICENSE`](LICENSE) 文件。
