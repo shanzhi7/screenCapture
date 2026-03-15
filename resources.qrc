@@ -1,6 +1,6 @@
-﻿<RCC>
+<RCC>
     <qresource prefix="/styles">
-        <file alias="hyperos.qss">styles/hyperos.qss</file>
+        <file alias="lightshadow_theme.qss">styles/lightshadow_theme.qss</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="camera.svg">icons/camera.svg</file>

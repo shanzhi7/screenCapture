@@ -1,4 +1,4 @@
-﻿#include "mainwindow.h"
+#include "mainwindow.h"
 
 #include "aboutdialog.h"
 #include "autostartmanager.h"
@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QFile styleFile(QStringLiteral(":/styles/hyperos.qss"));
+    QFile styleFile(QStringLiteral(":/styles/lightshadow_theme.qss"));
     if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         setStyleSheet(QString::fromUtf8(styleFile.readAll()));
@@ -1316,7 +1316,6 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
 
             const QString pinnedTitle = QStringLiteral("%1 · %2").arg(historyTitle, historyTimeText);
             showPinnedImage(pinnedPixmap, pinnedTitle, globalPos);
-            showTip(QStringLiteral("已从最近截图创建贴图"));
         });
     }
 

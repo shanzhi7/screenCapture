@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.19)
 project(screenCapture LANGUAGES CXX)
 
 option(SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE "Enable experimental Windows long capture pipeline" ON)
@@ -94,7 +94,7 @@ endif()
 qt_add_resources(screenCapture app_resources
     PREFIX "/"
     FILES
-        styles/hyperos.qss
+        styles/lightshadow_theme.qss
         icons/camera.svg
         icons/folder.svg
         icons/settings.svg

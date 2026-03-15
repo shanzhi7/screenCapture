@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="/">
-    <file alias="styles/hyperos.qss">E:/qt_project/screenCapture/styles/hyperos.qss</file>
+    <file alias="styles/lightshadow_theme.qss">E:/qt_project/screenCapture/styles/lightshadow_theme.qss</file>
     <file alias="icons/camera.svg">E:/qt_project/screenCapture/icons/camera.svg</file>
     <file alias="icons/folder.svg">E:/qt_project/screenCapture/icons/folder.svg</file>
     <file alias="icons/settings.svg">E:/qt_project/screenCapture/icons/settings.svg</file>

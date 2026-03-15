@@ -8,7 +8,7 @@
 
 - 提供稳定的全屏截图与区域截图能力
 - 在区域截图中提供可用的长截图流程
-- 采用简约高级的 HyperOS 风格 UI，保持高可读性与低学习成本
+- 采用简约高级的 统一卡片化 UI，保持高可读性与低学习成本
 - 为后续历史、设置、编辑能力预留清晰扩展点
 
 ## 2. 当前技术栈
@@ -33,7 +33,7 @@ screenCapture/
 ├─ showtip.h/.cpp/.ui
 ├─ closedialog.h/.cpp/.ui
 ├─ capturesettingsdialog.h/.cpp/.ui
-├─ styles/hyperos.qss
+├─ styles/lightshadow_theme.qss
 ├─ icons/*.svg
 ├─ icon.ico
 ├─ appicon.rc
