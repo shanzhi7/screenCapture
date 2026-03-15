@@ -5,12 +5,9 @@
 
 ## Download / 下载
 
-- GitHub Releases: `https://github.com/<your-org-or-name>/<your-repo>/releases`
-- ZIP package: `https://github.com/<your-org-or-name>/<your-repo>/releases/download/<tag>/LightShadowCapture-portable.zip`
-- EXE installer: `https://github.com/<your-org-or-name>/<your-repo>/releases/download/<tag>/LightShadowCapture-setup.exe`
-
-Replace the placeholder links above after publishing the repository and release packages.
-Please replace `<tag>` with your actual release tag, such as `v0.2.
+- GitHub Releases: `https://github.com/shanzhi7/screenCapture/releases`
+- ZIP package: `https://github.com/shanzhi7/screenCapture/releases/download/v0.2/screenCapture-f.zip`
+- EXE installer: `https://github.com/shanzhi7/screenCapture/releases/download/v0.2/qingyin-setup.exe`
 
 ## Overview / 项目简介
 
