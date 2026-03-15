@@ -3,11 +3,12 @@
 > A lightweight Windows screenshot tool built with Qt Widgets.
 > 基于 Qt Widgets 的轻量级 Windows 截图工具。
 
-## Download / 下载
+## ⬇️ Download / 下载
 
-- GitHub Releases: `https://github.com/shanzhi7/screenCapture/releases`
-- ZIP package: `https://github.com/shanzhi7/screenCapture/releases/download/v0.2/screenCapture-f.zip`
-- EXE installer: `https://github.com/shanzhi7/screenCapture/releases/download/v0.2/qingyin-setup.exe`
+欢迎下载最新版本：
+- 🌐 **[访问 GitHub Releases 页面](https://github.com/shanzhi7/screenCapture/releases)** (查看所有版本记录)
+- 📦 **[下载 EXE installer](https://github.com/shanzhi7/screenCapture/releases/download/v0.2/qingyin-setup.exe)** (推荐：一键安装)
+- 🗂️ **[下载 ZIP package](https://github.com/shanzhi7/screenCapture/releases/download/v0.2/screenCapture-f.zip)** (便携版：解压即用)
 
 ## Overview / 项目简介
 
