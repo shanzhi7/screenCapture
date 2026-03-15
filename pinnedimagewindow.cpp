@@ -1,4 +1,4 @@
-﻿#include "pinnedimagewindow.h"
+#include "pinnedimagewindow.h"
 
 #include <QApplication>
 #include <QCursor>
@@ -7,10 +7,10 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QResizeEvent>
 #include <QScreen>
 #include <QShowEvent>
-#include <QStyle>
 #include <QToolButton>
 #include <QWheelEvent>
 
@@ -21,11 +21,74 @@ constexpr qreal kMaxScaleFactor = 3.0;
 constexpr qreal kInitialScreenUsage = 0.42;
 constexpr int kWindowMargin = 0;
 constexpr int kSurfacePadding = 0;
-constexpr int kControlButtonSize = 18;
-constexpr int kControlButtonInset = 3;
+constexpr int kControlButtonSize = 20;
+constexpr int kControlButtonInset = 4;
 constexpr int kControlButtonSpacing = 4;
 constexpr int kSpawnOffset = 24;
 constexpr int kMaximizedPadding = 18;
+
+enum class WindowControlIconType
+{
+    Minimize,
+    Maximize,
+    Restore,
+    Close
+};
+
+QIcon createWindowControlIcon(WindowControlIconType type, const QColor &color, const QSize &iconSize)
+{
+    const qreal devicePixelRatio = (qApp == nullptr) ? 1.0 : qApp->devicePixelRatio();
+    const QSize pixelSize(qMax(1, qRound(iconSize.width() * devicePixelRatio)),
+                          qMax(1, qRound(iconSize.height() * devicePixelRatio)));
+
+    QPixmap pixmap(pixelSize);
+    pixmap.fill(Qt::transparent);
+    pixmap.setDevicePixelRatio(devicePixelRatio);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    QPen pen(color);
+    pen.setWidthF(1.7);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    const QRectF bounds(QPointF(0.0, 0.0), QSizeF(iconSize.width(), iconSize.height()));
+    const qreal left = bounds.left() + 2.2;
+    const qreal right = bounds.right() - 2.2;
+    const qreal top = bounds.top() + 2.2;
+    const qreal bottom = bounds.bottom() - 2.2;
+    const qreal width = right - left;
+    const qreal height = bottom - top;
+
+    switch (type)
+    {
+        case WindowControlIconType::Minimize:
+            painter.drawLine(QPointF(left, bottom - 0.8), QPointF(right, bottom - 0.8));
+            break;
+        case WindowControlIconType::Maximize:
+            painter.drawRect(QRectF(left + 0.5, top + 0.5, width - 1.0, height - 1.3));
+            break;
+        case WindowControlIconType::Restore:
+            painter.drawRect(QRectF(left + width * 0.26,
+                                    top + 0.4,
+                                    width - width * 0.26 - 0.7,
+                                    height - height * 0.26 - 0.9));
+            painter.drawRect(QRectF(left,
+                                    top + height * 0.28,
+                                    width - width * 0.26 - 0.7,
+                                    height - height * 0.28 - 0.7));
+            break;
+        case WindowControlIconType::Close:
+            painter.drawLine(QPointF(left + 0.6, top + 0.6), QPointF(right - 0.6, bottom - 0.6));
+            painter.drawLine(QPointF(right - 0.6, top + 0.6), QPointF(left + 0.6, bottom - 0.6));
+            break;
+    }
+
+    return QIcon(pixmap);
+}
 }
 
 PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
@@ -74,20 +137,34 @@ PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
         "padding: 0px;"
         "}");
 
-    const QString controlStyle = QStringLiteral(
+    const QString neutralControlStyle = QStringLiteral(
         "QToolButton {"
-        "color: #F7FAFF;"
-        "background: rgba(17, 24, 39, 180);"
-        "border: 1px solid rgba(255, 255, 255, 64);"
-        "border-radius: 9px;"
+        "background: rgba(5, 10, 19, 226);"
+        "border: 1px solid rgba(248, 251, 255, 120);"
+        "border-radius: 10px;"
         "padding: 0px;"
         "}"
         "QToolButton:hover {"
-        "background: rgba(52, 76, 118, 214);"
-        "border-color: rgba(255, 255, 255, 108);"
+        "background: rgba(38, 60, 96, 238);"
+        "border-color: rgba(255, 255, 255, 170);"
         "}"
         "QToolButton:pressed {"
-        "background: rgba(33, 52, 86, 224);"
+        "background: rgba(20, 33, 57, 244);"
+        "}");
+
+    const QString closeControlStyle = QStringLiteral(
+        "QToolButton {"
+        "background: rgba(104, 24, 39, 230);"
+        "border: 1px solid rgba(255, 219, 225, 136);"
+        "border-radius: 10px;"
+        "padding: 0px;"
+        "}"
+        "QToolButton:hover {"
+        "background: rgba(171, 42, 64, 242);"
+        "border-color: rgba(255, 233, 237, 186);"
+        "}"
+        "QToolButton:pressed {"
+        "background: rgba(129, 31, 49, 246);"
         "}");
 
     const QList<QToolButton *> controls = {m_minimizeButton, m_toggleMaximizeButton, m_closeButton};
@@ -95,17 +172,21 @@ PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
     {
         button->setCursor(Qt::PointingHandCursor);
         button->setFixedSize(kControlButtonSize, kControlButtonSize);
-        button->setStyleSheet(controlStyle);
         button->setAutoRaise(false);
         button->setIconSize(QSize(12, 12));
+        button->setToolButtonStyle(Qt::ToolButtonIconOnly);
     }
 
     m_minimizeButton->setObjectName(QStringLiteral("pinnedImageMinimizeButton"));
     m_minimizeButton->setToolTip(QStringLiteral("最小化"));
-    m_minimizeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
+    m_minimizeButton->setStyleSheet(neutralControlStyle);
+    m_minimizeButton->setIcon(createWindowControlIcon(WindowControlIconType::Minimize,
+                                                      QColor(QStringLiteral("#F8FBFF")),
+                                                      m_minimizeButton->iconSize()));
     connect(m_minimizeButton, &QToolButton::clicked, this, &QWidget::showMinimized);
 
     m_toggleMaximizeButton->setObjectName(QStringLiteral("pinnedImageMaximizeButton"));
+    m_toggleMaximizeButton->setStyleSheet(neutralControlStyle);
     connect(m_toggleMaximizeButton, &QToolButton::clicked, this, [this]()
     {
         toggleMaximizeRestore();
@@ -113,7 +194,10 @@ PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
 
     m_closeButton->setObjectName(QStringLiteral("pinnedImageCloseButton"));
     m_closeButton->setToolTip(QStringLiteral("关闭贴图"));
-    m_closeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
+    m_closeButton->setStyleSheet(closeControlStyle);
+    m_closeButton->setIcon(createWindowControlIcon(WindowControlIconType::Close,
+                                                   QColor(QStringLiteral("#FFF7F8")),
+                                                   m_closeButton->iconSize()));
     connect(m_closeButton, &QToolButton::clicked, this, &QWidget::close);
 
     m_scaleFactor = initialScaleFactor();
@@ -295,12 +379,16 @@ void PinnedImageWindow::updateMaximizeButtonState()
     if (m_isCustomMaximized)
     {
         m_toggleMaximizeButton->setToolTip(QStringLiteral("还原"));
-        m_toggleMaximizeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarNormalButton));
+        m_toggleMaximizeButton->setIcon(createWindowControlIcon(WindowControlIconType::Restore,
+                                                                QColor(QStringLiteral("#F8FBFF")),
+                                                                m_toggleMaximizeButton->iconSize()));
         return;
     }
 
     m_toggleMaximizeButton->setToolTip(QStringLiteral("最大化"));
-    m_toggleMaximizeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarMaxButton));
+    m_toggleMaximizeButton->setIcon(createWindowControlIcon(WindowControlIconType::Maximize,
+                                                            QColor(QStringLiteral("#F8FBFF")),
+                                                            m_toggleMaximizeButton->iconSize()));
 }
 
 void PinnedImageWindow::toggleMaximizeRestore()
