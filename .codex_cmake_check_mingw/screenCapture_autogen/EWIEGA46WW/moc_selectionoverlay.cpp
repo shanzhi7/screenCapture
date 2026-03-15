@@ -44,6 +44,7 @@ static constexpr auto qt_meta_stringdata_CLASSSelectionOverlayENDCLASS = QtMocHe
     "rect",
     "selectionCanceled",
     "saveRequested",
+    "pinRequested",
     "colorValueCopied",
     "colorText",
     "longCaptureToggled",
@@ -55,21 +56,22 @@ static constexpr auto qt_meta_stringdata_CLASSSelectionOverlayENDCLASS = QtMocHe
 );
 #else  // !QT_MOC_HAS_STRING_DATA
 struct qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t {
-    uint offsetsAndSizes[28];
+    uint offsetsAndSizes[30];
     char stringdata0[17];
     char stringdata1[18];
     char stringdata2[1];
     char stringdata3[5];
     char stringdata4[18];
     char stringdata5[14];
-    char stringdata6[17];
-    char stringdata7[10];
-    char stringdata8[19];
-    char stringdata9[8];
-    char stringdata10[17];
-    char stringdata11[6];
-    char stringdata12[25];
-    char stringdata13[28];
+    char stringdata6[13];
+    char stringdata7[17];
+    char stringdata8[10];
+    char stringdata9[19];
+    char stringdata10[8];
+    char stringdata11[17];
+    char stringdata12[6];
+    char stringdata13[25];
+    char stringdata14[28];
 };
 #define QT_MOC_LITERAL(ofs, len) \
     uint(sizeof(qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t::offsetsAndSizes) + ofs), len 
@@ -81,14 +83,15 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t qt_m
         QT_MOC_LITERAL(36, 4),  // "rect"
         QT_MOC_LITERAL(41, 17),  // "selectionCanceled"
         QT_MOC_LITERAL(59, 13),  // "saveRequested"
-        QT_MOC_LITERAL(73, 16),  // "colorValueCopied"
-        QT_MOC_LITERAL(90, 9),  // "colorText"
-        QT_MOC_LITERAL(100, 18),  // "longCaptureToggled"
-        QT_MOC_LITERAL(119, 7),  // "enabled"
-        QT_MOC_LITERAL(127, 16),  // "longCaptureWheel"
-        QT_MOC_LITERAL(144, 5),  // "delta"
-        QT_MOC_LITERAL(150, 24),  // "longCaptureSaveRequested"
-        QT_MOC_LITERAL(175, 27)   // "longCaptureConfirmRequested"
+        QT_MOC_LITERAL(73, 12),  // "pinRequested"
+        QT_MOC_LITERAL(86, 16),  // "colorValueCopied"
+        QT_MOC_LITERAL(103, 9),  // "colorText"
+        QT_MOC_LITERAL(113, 18),  // "longCaptureToggled"
+        QT_MOC_LITERAL(132, 7),  // "enabled"
+        QT_MOC_LITERAL(140, 16),  // "longCaptureWheel"
+        QT_MOC_LITERAL(157, 5),  // "delta"
+        QT_MOC_LITERAL(163, 24),  // "longCaptureSaveRequested"
+        QT_MOC_LITERAL(188, 27)   // "longCaptureConfirmRequested"
     },
     "SelectionOverlay",
     "selectionFinished",
@@ -96,6 +99,7 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t qt_m
     "rect",
     "selectionCanceled",
     "saveRequested",
+    "pinRequested",
     "colorValueCopied",
     "colorText",
     "longCaptureToggled",
@@ -115,30 +119,32 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSSelectionOverlayENDCLASS[] = {
       11,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       8,       // signalCount
+       9,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,   62,    2, 0x06,    1 /* Public */,
-       4,    0,   65,    2, 0x06,    3 /* Public */,
-       5,    1,   66,    2, 0x06,    4 /* Public */,
-       6,    1,   69,    2, 0x06,    6 /* Public */,
-       8,    2,   72,    2, 0x06,    8 /* Public */,
-      10,    2,   77,    2, 0x06,   11 /* Public */,
-      12,    1,   82,    2, 0x06,   14 /* Public */,
-      13,    1,   85,    2, 0x06,   16 /* Public */,
+       1,    1,   68,    2, 0x06,    1 /* Public */,
+       4,    0,   71,    2, 0x06,    3 /* Public */,
+       5,    1,   72,    2, 0x06,    4 /* Public */,
+       6,    1,   75,    2, 0x06,    6 /* Public */,
+       7,    1,   78,    2, 0x06,    8 /* Public */,
+       9,    2,   81,    2, 0x06,   10 /* Public */,
+      11,    2,   86,    2, 0x06,   13 /* Public */,
+      13,    1,   91,    2, 0x06,   16 /* Public */,
+      14,    1,   94,    2, 0x06,   18 /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QRect,    3,
     QMetaType::Void,
     QMetaType::Void, QMetaType::QRect,    3,
-    QMetaType::Void, QMetaType::QString,    7,
-    QMetaType::Void, QMetaType::Bool, QMetaType::QRect,    9,    3,
-    QMetaType::Void, QMetaType::QRect, QMetaType::Int,    3,   11,
+    QMetaType::Void, QMetaType::QRect,    3,
+    QMetaType::Void, QMetaType::QString,    8,
+    QMetaType::Void, QMetaType::Bool, QMetaType::QRect,   10,    3,
+    QMetaType::Void, QMetaType::QRect, QMetaType::Int,    3,   12,
     QMetaType::Void, QMetaType::QRect,    3,
     QMetaType::Void, QMetaType::QRect,    3,
 
@@ -160,6 +166,9 @@ Q_CONSTINIT const QMetaObject SelectionOverlay::staticMetaObject = { {
         // method 'selectionCanceled'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'saveRequested'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QRect &, std::false_type>,
+        // method 'pinRequested'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QRect &, std::false_type>,
         // method 'colorValueCopied'
@@ -192,11 +201,12 @@ void SelectionOverlay::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         case 0: _t->selectionFinished((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
         case 1: _t->selectionCanceled(); break;
         case 2: _t->saveRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
-        case 3: _t->colorValueCopied((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 4: _t->longCaptureToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QRect>>(_a[2]))); break;
-        case 5: _t->longCaptureWheel((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
-        case 6: _t->longCaptureSaveRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
-        case 7: _t->longCaptureConfirmRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
+        case 3: _t->pinRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
+        case 4: _t->colorValueCopied((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 5: _t->longCaptureToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QRect>>(_a[2]))); break;
+        case 6: _t->longCaptureWheel((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
+        case 7: _t->longCaptureSaveRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
+        case 8: _t->longCaptureConfirmRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -223,37 +233,44 @@ void SelectionOverlay::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
             }
         }
         {
+            using _t = void (SelectionOverlay::*)(const QRect & );
+            if (_t _q_method = &SelectionOverlay::pinRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 3;
+                return;
+            }
+        }
+        {
             using _t = void (SelectionOverlay::*)(const QString & );
             if (_t _q_method = &SelectionOverlay::colorValueCopied; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
-                *result = 3;
+                *result = 4;
                 return;
             }
         }
         {
             using _t = void (SelectionOverlay::*)(bool , const QRect & );
             if (_t _q_method = &SelectionOverlay::longCaptureToggled; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
-                *result = 4;
+                *result = 5;
                 return;
             }
         }
         {
             using _t = void (SelectionOverlay::*)(const QRect & , int );
             if (_t _q_method = &SelectionOverlay::longCaptureWheel; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
-                *result = 5;
-                return;
-            }
-        }
-        {
-            using _t = void (SelectionOverlay::*)(const QRect & );
-            if (_t _q_method = &SelectionOverlay::longCaptureSaveRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 6;
                 return;
             }
         }
         {
             using _t = void (SelectionOverlay::*)(const QRect & );
-            if (_t _q_method = &SelectionOverlay::longCaptureConfirmRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            if (_t _q_method = &SelectionOverlay::longCaptureSaveRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 7;
+                return;
+            }
+        }
+        {
+            using _t = void (SelectionOverlay::*)(const QRect & );
+            if (_t _q_method = &SelectionOverlay::longCaptureConfirmRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 8;
                 return;
             }
         }
@@ -279,13 +296,13 @@ int SelectionOverlay::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 9;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 8)
+        if (_id < 9)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 8;
+        _id -= 9;
     }
     return _id;
 }
@@ -311,37 +328,44 @@ void SelectionOverlay::saveRequested(const QRect & _t1)
 }
 
 // SIGNAL 3
-void SelectionOverlay::colorValueCopied(const QString & _t1)
+void SelectionOverlay::pinRequested(const QRect & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 3, _a);
 }
 
 // SIGNAL 4
-void SelectionOverlay::longCaptureToggled(bool _t1, const QRect & _t2)
+void SelectionOverlay::colorValueCopied(const QString & _t1)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 4, _a);
 }
 
 // SIGNAL 5
-void SelectionOverlay::longCaptureWheel(const QRect & _t1, int _t2)
+void SelectionOverlay::longCaptureToggled(bool _t1, const QRect & _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 5, _a);
 }
 
 // SIGNAL 6
-void SelectionOverlay::longCaptureSaveRequested(const QRect & _t1)
+void SelectionOverlay::longCaptureWheel(const QRect & _t1, int _t2)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 6, _a);
 }
 
 // SIGNAL 7
-void SelectionOverlay::longCaptureConfirmRequested(const QRect & _t1)
+void SelectionOverlay::longCaptureSaveRequested(const QRect & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 7, _a);
+}
+
+// SIGNAL 8
+void SelectionOverlay::longCaptureConfirmRequested(const QRect & _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 8, _a);
 }
 QT_WARNING_POP

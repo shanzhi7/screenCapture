@@ -13,6 +13,7 @@
 
 #include <QDialog>
 #include <QKeySequence>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -40,6 +41,15 @@ public:
 
     // 获取用户在对话框中选择的自动保存目录。
     QString selectedAutoSaveDirectory() const;
+
+    // 设置是否启用开机自启动。
+    void setLaunchAtStartupEnabled(bool enabled);
+
+    // 设置当前平台是否支持开机自启动。
+    void setLaunchAtStartupSupported(bool supported);
+
+    // 获取用户是否勾选开机自启动。
+    bool selectedLaunchAtStartupEnabled() const;
 
 private slots:
     // 选择自动保存目录。

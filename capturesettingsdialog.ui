@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>720</width>
-    <height>458</height>
+    <height>570</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,6 +286,64 @@
           <widget class="QLabel" name="directoryTipLabel">
            <property name="text">
             <string>如果想恢复默认保存位置，直接清空即可。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="startupSection">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <layout class="QVBoxLayout" name="startupSectionLayout">
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="startupSectionTitle">
+           <property name="text">
+            <string>开机自启动</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="startupSectionDesc">
+           <property name="text">
+            <string>默认关闭。开启后，会在当前用户登录 Windows 时自动启动轻影截图。</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="launchAtStartupCheckBox">
+           <property name="text">
+            <string>登录系统后自动启动轻影截图</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="startupTipLabel">
+           <property name="text">
+            <string>仅影响当前用户，不修改系统级启动项。</string>
            </property>
            <property name="wordWrap">
             <bool>true</bool>

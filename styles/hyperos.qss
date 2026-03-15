@@ -64,8 +64,7 @@ QFrame#topActionGroup {
 
 QToolButton#btnPrev,
 QToolButton#btnShotIcon,
-QToolButton#btnNext,
-QToolButton#btnHistory {
+QToolButton#btnNext {
     min-width: 44px;
     min-height: 40px;
     border: none;
@@ -75,25 +74,15 @@ QToolButton#btnHistory {
 
 QToolButton#btnPrev:hover,
 QToolButton#btnShotIcon:hover,
-QToolButton#btnNext:hover,
-QToolButton#btnHistory:hover {
+QToolButton#btnNext:hover {
     background: rgba(109, 160, 244, 0.2);
 }
 
-QPushButton#btnNewTask {
-    min-height: 48px;
-    min-width: 124px;
-    border: none;
-    border-radius: 15px;
-    color: #FFFFFF;
-    font-size: 17px;
-    font-weight: 700;
-    padding: 0 18px;
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #FF9150, stop:1 #FF6840);
-}
-
-QPushButton#btnNewTask:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #FFA163, stop:1 #FF7950);
+QToolButton#btnPrev:disabled,
+QToolButton#btnShotIcon:disabled,
+QToolButton#btnNext:disabled {
+    color: rgba(108, 124, 146, 0.55);
+    background: transparent;
 }
 
 QPushButton#btnTopSettings {
@@ -197,17 +186,25 @@ QToolButton#btnMoreFormat:hover {
     color: #3D74D8;
 }
 
-QScrollArea#recentScrollArea {
+QScrollArea#recentScrollArea,
+QScrollArea#galleryScrollArea {
     background: transparent;
 }
 
-QWidget#recentContentWidget {
+QWidget#recentContentWidget,
+QWidget#galleryContentWidget {
     background: transparent;
 }
 
 QFrame#recentItemCard {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: 18px;
+}
+
+QFrame#recentItemCard[selected="true"] {
+    background: rgba(232, 241, 252, 0.92);
+    border: 1px solid rgba(112, 156, 226, 0.92);
 }
 
 QLabel#recentItemTitle {
@@ -359,6 +356,11 @@ QToolButton#recentThumbButton:pressed {
     background: rgba(206, 223, 243, 0.98);
 }
 
+QToolButton#recentThumbButton:checked {
+    border: 1px solid rgba(88, 143, 228, 0.96);
+    background: rgba(214, 229, 248, 0.98);
+}
+
 QLabel#recentEmptyLabel {
     font-size: 16px;
     font-weight: 600;
@@ -414,6 +416,7 @@ QDialog#AboutDialog QLabel#subTitleLabel {
 
 QDialog#CaptureSettingsDialog QFrame#hotkeySection,
 QDialog#CaptureSettingsDialog QFrame#directorySection,
+QDialog#CaptureSettingsDialog QFrame#startupSection,
 QDialog#CaptureSettingsDialog QFrame#hintCard,
 QDialog#AboutDialog QFrame#infoSection,
 QDialog#AboutDialog QFrame#feedbackSection {
@@ -424,6 +427,7 @@ QDialog#AboutDialog QFrame#feedbackSection {
 
 QDialog#CaptureSettingsDialog QLabel#hotkeySectionTitle,
 QDialog#CaptureSettingsDialog QLabel#directorySectionTitle,
+QDialog#CaptureSettingsDialog QLabel#startupSectionTitle,
 QDialog#AboutDialog QLabel#infoSectionTitle,
 QDialog#AboutDialog QLabel#feedbackTitleLabel {
     font-size: 16px;
@@ -433,7 +437,9 @@ QDialog#AboutDialog QLabel#feedbackTitleLabel {
 
 QDialog#CaptureSettingsDialog QLabel#hotkeySectionDesc,
 QDialog#CaptureSettingsDialog QLabel#directorySectionDesc,
+QDialog#CaptureSettingsDialog QLabel#startupSectionDesc,
 QDialog#CaptureSettingsDialog QLabel#directoryTipLabel,
+QDialog#CaptureSettingsDialog QLabel#startupTipLabel,
 QDialog#CaptureSettingsDialog QLabel#hintLabel,
 QDialog#AboutDialog QLabel#contentLabel,
 QDialog#AboutDialog QLabel#feedbackBodyLabel {
@@ -507,4 +513,16 @@ QDialog#AboutDialog QPushButton#copyInfoButton {
 QDialog#CaptureSettingsDialog QPushButton#saveButton:hover,
 QDialog#AboutDialog QPushButton#copyInfoButton:hover {
     background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4C86F5, stop:1 #69A4FF);
+}
+
+
+QDialog#CaptureSettingsDialog QCheckBox#launchAtStartupCheckBox {
+    spacing: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #314159;
+}
+
+QDialog#CaptureSettingsDialog QCheckBox#launchAtStartupCheckBox:disabled {
+    color: #93A2B6;
 }

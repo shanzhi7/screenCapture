@@ -1,6 +1,6 @@
-﻿# 项目总览（同步版）
+# 项目总览（同步版）
 
-> 更新时间：2026-03-07
+> 更新时间：2026-03-14
 
 ## 1. 项目目标
 
@@ -25,11 +25,14 @@ screenCapture/
 ├─ main.cpp
 ├─ mainwindow.h/.cpp/.ui
 ├─ selectionoverlay.h/.cpp
-├─ longcapturestitcher.h/.cpp
+├─ longcapturesessioncontroller.h/.cpp
 ├─ capturehistorymanager.h/.cpp
 ├─ settingsservice.h/.cpp
+├─ globalhotkeymanager.h/.cpp
+├─ tippresenter.h/.cpp
 ├─ showtip.h/.cpp/.ui
 ├─ closedialog.h/.cpp/.ui
+├─ capturesettingsdialog.h/.cpp/.ui
 ├─ styles/hyperos.qss
 ├─ icons/*.svg
 ├─ icon.ico
@@ -45,14 +48,17 @@ screenCapture/
 - 主界面重构（非透明主窗口、卡片式布局、QSS 统一主题）
 - 全屏截图（多屏环境下可选择目标显示器）
 - 全屏截图结果复制到剪贴板
-- 区域截图（拖拽选区、确认复制、保存文件）
-- 区域模式内长截图（滚轮采帧 + 增量拼接 + 复制/保存）
+- 区域截图（拖拽选区、确认复制、保存文件、右键取消）
+- 区域模式内长截图实验链路（手动滚轮采帧 + 增量拼接 + 预览/复制/保存）
+- Overlay 标注工具（画笔 / 矩形 / 圆形 / 马赛克 / 文字）
+- 标注撤销 / 重做（工具条按钮 + `Ctrl+Z` / `Ctrl+Y`）
 - 跨屏区域抓图合成
 - 历史记录第一阶段（本地持久化 + 最近截图真实缩略图展示）
 - 输出格式配置（PNG/JPG 切换 + 本地持久化）
 - 自动保存真实逻辑（目录/命名/冲突重命名/开关持久化）
+- 截图设置弹窗（热键与自动保存目录）
+- 热键持久化、校验与注册失败回滚（Windows：`Ctrl+Shift+A` 默认）
 - 配置命名升级与迁移（`QingYing/LightShadowCapture`，兼容 `shanzhi/screenCapture`）
-- 全局热键截图（Windows：`Ctrl+Shift+A`）
 - 系统托盘（显示主界面 / 退出应用）
 - 关闭主窗口时弹出 `CloseDialog`（隐藏到托盘 / 退出 / 取消）
 - 统一提示系统 `ShowTip`
@@ -60,10 +66,11 @@ screenCapture/
 
 ### 部分实现
 
-- Overlay 编辑工具按钮已具备 UI 入口（画笔/矩形/圆形/马赛克/文字），绘制引擎未接入
+- 长截图当前仍按实验特性管理，复杂动态内容与更多 Windows 场景尚未完成验收
 - 历史高级能力（分页、删除、筛选）未实现
 
 ### 待实现
 
-- 热键配置持久化与冲突检测
-- 编辑引擎、撤销重做、标注能力
+- 历史高级能力（分页、删除、筛选）
+- 长截图复杂场景鲁棒性增强与 WGC / DXGI 后端升级
+- 设置页细化与国际化准备

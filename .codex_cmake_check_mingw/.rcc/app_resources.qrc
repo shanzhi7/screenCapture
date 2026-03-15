@@ -19,6 +19,7 @@
     <file alias="icons/overlay_redo.svg">E:/qt_project/screenCapture/icons/overlay_redo.svg</file>
     <file alias="icons/overlay_scroll.svg">E:/qt_project/screenCapture/icons/overlay_scroll.svg</file>
     <file alias="icons/overlay_save.svg">E:/qt_project/screenCapture/icons/overlay_save.svg</file>
+    <file alias="icons/overlay_pin.svg">E:/qt_project/screenCapture/icons/overlay_pin.svg</file>
     <file alias="icons/overlay_close.svg">E:/qt_project/screenCapture/icons/overlay_close.svg</file>
     <file alias="icons/overlay_check.svg">E:/qt_project/screenCapture/icons/overlay_check.svg</file>
     <file alias="icon.ico">E:/qt_project/screenCapture/icon.ico</file>

@@ -19,6 +19,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -46,8 +47,6 @@ public:
     QToolButton *btnPrev;
     QToolButton *btnShotIcon;
     QToolButton *btnNext;
-    QPushButton *btnNewTask;
-    QToolButton *btnHistory;
     QPushButton *btnTopSettings;
     QFrame *quickCard;
     QVBoxLayout *quickCardLayout;
@@ -65,9 +64,17 @@ public:
     QLabel *recentTitleLabel;
     QSpacerItem *recentHeaderSpacer;
     QToolButton *btnMoreRecent;
+    QStackedWidget *historyStackedWidget;
+    QWidget *recentPage;
+    QVBoxLayout *recentPageLayout;
     QScrollArea *recentScrollArea;
     QWidget *recentContentWidget;
     QGridLayout *recentGridLayout;
+    QWidget *galleryPage;
+    QVBoxLayout *galleryPageLayout;
+    QScrollArea *galleryScrollArea;
+    QWidget *galleryContentWidget;
+    QGridLayout *galleryGridLayout;
     QVBoxLayout *rightPanelLayout;
     QFrame *formatCard;
     QVBoxLayout *formatLayout;
@@ -173,16 +180,6 @@ public:
 
         topBarLayout->addWidget(topActionGroup);
 
-        btnNewTask = new QPushButton(centralwidget);
-        btnNewTask->setObjectName("btnNewTask");
-
-        topBarLayout->addWidget(btnNewTask);
-
-        btnHistory = new QToolButton(centralwidget);
-        btnHistory->setObjectName("btnHistory");
-
-        topBarLayout->addWidget(btnHistory);
-
         btnTopSettings = new QPushButton(centralwidget);
         btnTopSettings->setObjectName("btnTopSettings");
 
@@ -271,7 +268,14 @@ public:
 
         recentLayout->addLayout(recentHeaderLayout);
 
-        recentScrollArea = new QScrollArea(recentCard);
+        historyStackedWidget = new QStackedWidget(recentCard);
+        historyStackedWidget->setObjectName("historyStackedWidget");
+        recentPage = new QWidget();
+        recentPage->setObjectName("recentPage");
+        recentPageLayout = new QVBoxLayout(recentPage);
+        recentPageLayout->setObjectName("recentPageLayout");
+        recentPageLayout->setContentsMargins(0, 0, 0, 0);
+        recentScrollArea = new QScrollArea(recentPage);
         recentScrollArea->setObjectName("recentScrollArea");
         recentScrollArea->setWidgetResizable(true);
         recentScrollArea->setFrameShape(QFrame::NoFrame);
@@ -283,7 +287,31 @@ public:
         recentGridLayout->setContentsMargins(0, 0, 0, 0);
         recentScrollArea->setWidget(recentContentWidget);
 
-        recentLayout->addWidget(recentScrollArea);
+        recentPageLayout->addWidget(recentScrollArea);
+
+        historyStackedWidget->addWidget(recentPage);
+        galleryPage = new QWidget();
+        galleryPage->setObjectName("galleryPage");
+        galleryPageLayout = new QVBoxLayout(galleryPage);
+        galleryPageLayout->setObjectName("galleryPageLayout");
+        galleryPageLayout->setContentsMargins(0, 0, 0, 0);
+        galleryScrollArea = new QScrollArea(galleryPage);
+        galleryScrollArea->setObjectName("galleryScrollArea");
+        galleryScrollArea->setWidgetResizable(true);
+        galleryScrollArea->setFrameShape(QFrame::NoFrame);
+        galleryContentWidget = new QWidget();
+        galleryContentWidget->setObjectName("galleryContentWidget");
+        galleryGridLayout = new QGridLayout(galleryContentWidget);
+        galleryGridLayout->setSpacing(12);
+        galleryGridLayout->setObjectName("galleryGridLayout");
+        galleryGridLayout->setContentsMargins(0, 0, 0, 0);
+        galleryScrollArea->setWidget(galleryContentWidget);
+
+        galleryPageLayout->addWidget(galleryScrollArea);
+
+        historyStackedWidget->addWidget(galleryPage);
+
+        recentLayout->addWidget(historyStackedWidget);
 
 
         bodyLayout->addWidget(recentCard);
@@ -386,6 +414,9 @@ public:
 
         retranslateUi(MainWindow);
 
+        historyStackedWidget->setCurrentIndex(0);
+
+
         QMetaObject::connectSlotsByName(MainWindow);
     } // setupUi
 
@@ -400,8 +431,6 @@ public:
         btnPrev->setText(QCoreApplication::translate("MainWindow", "<", nullptr));
         btnShotIcon->setText(QCoreApplication::translate("MainWindow", "\346\210\252\345\233\276", nullptr));
         btnNext->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
-        btnNewTask->setText(QCoreApplication::translate("MainWindow", "\357\274\213 \346\226\260\345\273\272", nullptr));
-        btnHistory->setText(QCoreApplication::translate("MainWindow", "\360\237\227\202", nullptr));
         btnTopSettings->setText(QCoreApplication::translate("MainWindow", "\350\256\276\347\275\256", nullptr));
         quickTitleLabel->setText(QCoreApplication::translate("MainWindow", "\345\277\253\351\200\237\346\210\252\345\233\276", nullptr));
         modeFullButton->setText(QCoreApplication::translate("MainWindow", "\345\205\250\345\261\217", nullptr));

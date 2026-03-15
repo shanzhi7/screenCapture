@@ -67,6 +67,7 @@ signals:
     void selectionFinished(const QRect &rect);
     void selectionCanceled();
     void saveRequested(const QRect &rect);
+    void pinRequested(const QRect &rect);
     void colorValueCopied(const QString &colorText);
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -206,6 +207,7 @@ private:
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     void updatePreviewPanelPosition();
 #endif
+    bool finalizeSelectionOutput();
     void resetSelection();
     void confirmSelection();
 
@@ -267,6 +269,7 @@ private:
     QToolButton *m_btnConfirm = nullptr;
     QToolButton *m_btnCancel = nullptr;
     QToolButton *m_btnSave = nullptr;
+    QToolButton *m_btnPin = nullptr;
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     bool m_longCaptureEnabled = false;

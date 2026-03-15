@@ -5,5 +5,6 @@
 #include "EWIEGA46WW/moc_globalhotkeymanager.cpp"
 #include "EWIEGA46WW/moc_longcapturesessioncontroller.cpp"
 #include "EWIEGA46WW/moc_mainwindow.cpp"
+#include "EWIEGA46WW/moc_pinnedimagewindow.cpp"
 #include "EWIEGA46WW/moc_selectionoverlay.cpp"
 #include "EWIEGA46WW/moc_showtip.cpp"

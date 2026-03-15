@@ -11,6 +11,7 @@
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
@@ -52,6 +53,12 @@ public:
     QPushButton *browseDirButton;
     QPushButton *clearDirButton;
     QLabel *directoryTipLabel;
+    QFrame *startupSection;
+    QVBoxLayout *startupSectionLayout;
+    QLabel *startupSectionTitle;
+    QLabel *startupSectionDesc;
+    QCheckBox *launchAtStartupCheckBox;
+    QLabel *startupTipLabel;
     QFrame *hintCard;
     QHBoxLayout *hintLayout;
     QLabel *hintLabel;
@@ -64,7 +71,7 @@ public:
     {
         if (CaptureSettingsDialog->objectName().isEmpty())
             CaptureSettingsDialog->setObjectName("CaptureSettingsDialog");
-        CaptureSettingsDialog->resize(720, 458);
+        CaptureSettingsDialog->resize(720, 570);
         rootLayout = new QVBoxLayout(CaptureSettingsDialog);
         rootLayout->setSpacing(0);
         rootLayout->setObjectName("rootLayout");
@@ -205,6 +212,38 @@ public:
 
         cardLayout->addWidget(directorySection);
 
+        startupSection = new QFrame(dialogCard);
+        startupSection->setObjectName("startupSection");
+        startupSection->setFrameShape(QFrame::NoFrame);
+        startupSectionLayout = new QVBoxLayout(startupSection);
+        startupSectionLayout->setSpacing(12);
+        startupSectionLayout->setObjectName("startupSectionLayout");
+        startupSectionLayout->setContentsMargins(18, 18, 18, 18);
+        startupSectionTitle = new QLabel(startupSection);
+        startupSectionTitle->setObjectName("startupSectionTitle");
+
+        startupSectionLayout->addWidget(startupSectionTitle);
+
+        startupSectionDesc = new QLabel(startupSection);
+        startupSectionDesc->setObjectName("startupSectionDesc");
+        startupSectionDesc->setWordWrap(true);
+
+        startupSectionLayout->addWidget(startupSectionDesc);
+
+        launchAtStartupCheckBox = new QCheckBox(startupSection);
+        launchAtStartupCheckBox->setObjectName("launchAtStartupCheckBox");
+
+        startupSectionLayout->addWidget(launchAtStartupCheckBox);
+
+        startupTipLabel = new QLabel(startupSection);
+        startupTipLabel->setObjectName("startupTipLabel");
+        startupTipLabel->setWordWrap(true);
+
+        startupSectionLayout->addWidget(startupTipLabel);
+
+
+        cardLayout->addWidget(startupSection);
+
         hintCard = new QFrame(dialogCard);
         hintCard->setObjectName("hintCard");
         hintCard->setFrameShape(QFrame::NoFrame);
@@ -269,6 +308,10 @@ public:
         browseDirButton->setText(QCoreApplication::translate("CaptureSettingsDialog", "\346\265\217\350\247\210", nullptr));
         clearDirButton->setText(QCoreApplication::translate("CaptureSettingsDialog", "\346\270\205\347\251\272", nullptr));
         directoryTipLabel->setText(QCoreApplication::translate("CaptureSettingsDialog", "\345\246\202\346\236\234\346\203\263\346\201\242\345\244\215\351\273\230\350\256\244\344\277\235\345\255\230\344\275\215\347\275\256\357\274\214\347\233\264\346\216\245\346\270\205\347\251\272\345\215\263\345\217\257\343\200\202", nullptr));
+        startupSectionTitle->setText(QCoreApplication::translate("CaptureSettingsDialog", "\345\274\200\346\234\272\350\207\252\345\220\257\345\212\250", nullptr));
+        startupSectionDesc->setText(QCoreApplication::translate("CaptureSettingsDialog", "\351\273\230\350\256\244\345\205\263\351\227\255\343\200\202\345\274\200\345\220\257\345\220\216\357\274\214\344\274\232\345\234\250\345\275\223\345\211\215\347\224\250\346\210\267\347\231\273\345\275\225 Windows \346\227\266\350\207\252\345\212\250\345\220\257\345\212\250\350\275\273\345\275\261\346\210\252\345\233\276\343\200\202", nullptr));
+        launchAtStartupCheckBox->setText(QCoreApplication::translate("CaptureSettingsDialog", "\347\231\273\345\275\225\347\263\273\347\273\237\345\220\216\350\207\252\345\212\250\345\220\257\345\212\250\350\275\273\345\275\261\346\210\252\345\233\276", nullptr));
+        startupTipLabel->setText(QCoreApplication::translate("CaptureSettingsDialog", "\344\273\205\345\275\261\345\223\215\345\275\223\345\211\215\347\224\250\346\210\267\357\274\214\344\270\215\344\277\256\346\224\271\347\263\273\347\273\237\347\272\247\345\220\257\345\212\250\351\241\271\343\200\202", nullptr));
         hintLabel->setText(QCoreApplication::translate("CaptureSettingsDialog", "\345\273\272\350\256\256\345\277\253\346\215\267\351\224\256\345\214\205\345\220\253 Ctrl / Alt / Shift / Win \344\270\255\347\232\204\350\207\263\345\260\221\344\270\200\344\270\252\346\214\211\351\224\256\343\200\202", nullptr));
         cancelButton->setText(QCoreApplication::translate("CaptureSettingsDialog", "\345\217\226\346\266\210", nullptr));
         saveButton->setText(QCoreApplication::translate("CaptureSettingsDialog", "\344\277\235\345\255\230\350\256\276\347\275\256", nullptr));

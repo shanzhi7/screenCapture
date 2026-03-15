@@ -2448,6 +2448,10 @@ void SelectionOverlay::ensureToolbar()
         }
 
         m_longCaptureEnabled = m_btnLongCapture->isChecked();
+        if (m_btnPin != nullptr)
+        {
+            m_btnPin->setEnabled(!m_longCaptureEnabled);
+        }
         const QRect current = currentRect();
 
         if (m_longCaptureEnabled)
@@ -2489,6 +2493,7 @@ void SelectionOverlay::ensureToolbar()
     });
 #endif
 
+    m_btnPin = createTool(QStringLiteral("贴图"), QStringLiteral(":/icons/overlay_pin.svg"), QSize(18, 18));
     m_btnSave = createTool(QStringLiteral("保存"), QStringLiteral(":/icons/overlay_save.svg"), QSize(18, 18));
     m_btnCancel = createTool(QStringLiteral("取消"), QStringLiteral(":/icons/overlay_close.svg"), QSize(18, 18));
     m_btnConfirm = createTool(QStringLiteral("完成"), QStringLiteral(":/icons/overlay_check.svg"), QSize(18, 18));
@@ -2501,32 +2506,22 @@ void SelectionOverlay::ensureToolbar()
 
     connect(m_btnConfirm, &QToolButton::clicked, this, &SelectionOverlay::confirmSelection);
 
-    connect(m_btnSave, &QToolButton::clicked, this, [this]()
+    connect(m_btnPin, &QToolButton::clicked, this, [this]()
     {
-        if (!m_hasSelection)
+        if (!finalizeSelectionOutput())
         {
             return;
         }
 
-        if (m_drawingPenStroke)
+        prepareForOutputCapture();
+        emit pinRequested(m_selectedRect);
+    });
+
+    connect(m_btnSave, &QToolButton::clicked, this, [this]()
+    {
+        if (!finalizeSelectionOutput())
         {
-            finishCurrentPenStroke();
-        }
-        if (m_drawingRectangle)
-        {
-            finishCurrentRectangle();
-        }
-        if (m_drawingEllipse)
-        {
-            finishCurrentEllipse();
-        }
-        if (m_drawingMosaic)
-        {
-            finishCurrentMosaic();
-        }
-        if (m_textEditor != nullptr)
-        {
-            finishCurrentTextAnnotation(true);
+            return;
         }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -2888,11 +2883,11 @@ void SelectionOverlay::resetSelection()
     update();
 }
 
-void SelectionOverlay::confirmSelection()
+bool SelectionOverlay::finalizeSelectionOutput()
 {
     if (!m_hasSelection)
     {
-        return;
+        return false;
     }
 
     if (m_drawingPenStroke)
@@ -2914,6 +2909,16 @@ void SelectionOverlay::confirmSelection()
     if (m_textEditor != nullptr)
     {
         finishCurrentTextAnnotation(true);
+    }
+
+    return true;
+}
+
+void SelectionOverlay::confirmSelection()
+{
+    if (!finalizeSelectionOutput())
+    {
+        return;
     }
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
