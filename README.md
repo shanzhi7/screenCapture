@@ -1,4 +1,4 @@
-﻿# LightShadowCapture / 轻影截图
+# LightShadowCapture / 轻影截图
 
 > A lightweight Windows screenshot tool built with Qt Widgets.
 > 基于 Qt Widgets 的轻量级 Windows 截图工具。
@@ -6,10 +6,11 @@
 ## Download / 下载
 
 - GitHub Releases: `https://github.com/<your-org-or-name>/<your-repo>/releases`
-- Direct package download: `https://github.com/<your-org-or-name>/<your-repo>/releases/latest`
+- ZIP package: `https://github.com/<your-org-or-name>/<your-repo>/releases/download/<tag>/LightShadowCapture-portable.zip`
+- EXE installer: `https://github.com/<your-org-or-name>/<your-repo>/releases/download/<tag>/LightShadowCapture-setup.exe`
 
 Replace the placeholder links above after publishing the repository and release packages.
-提交到 GitHub 并发布安装包后，请将上面的占位链接替换为真实下载地址。
+Please replace `<tag>` with your actual release tag, such as `v0.2.
 
 ## Overview / 项目简介
 
@@ -191,28 +192,12 @@ For development notes and module documentation, see the [`doc/`](doc/) directory
 Recommended files / 推荐先阅读：
 
 - [`doc/00_project_overview.md`](doc/00_project_overview.md)
+
 - [`doc/03_module_design.md`](doc/03_module_design.md)
+
 - [`doc/08_button_map.md`](doc/08_button_map.md)
 
-## Packaging / 打包发布
-
-**English**
-
-When publishing to GitHub, it is recommended to provide:
-
-- A release ZIP package
-- Or an installer package
-- A changelog for each release
-- Screenshots or GIF previews on the release page
-
-**中文**
-
-提交到 GitHub 并正式发布时，建议同时提供：
-
-- ZIP 便携包
-- 或安装包
-- 每个版本对应的更新说明
-- 发布页截图或 GIF 演示
+  
 
 ## License / 许可证
 
