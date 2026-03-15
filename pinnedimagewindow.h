@@ -14,6 +14,7 @@
 #include <QPixmap>
 #include <QPoint>
 #include <QRect>
+#include <QString>
 #include <QWidget>
 
 class QFrame;
@@ -29,7 +30,10 @@ class PinnedImageWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit PinnedImageWindow(const QPixmap &pixmap, QWidget *parent = nullptr);
+    explicit PinnedImageWindow(const QPixmap &pixmap,
+                               const QString &title = QString(),
+                               const QPoint &spawnGlobalPos = QPoint(),
+                               QWidget *parent = nullptr);
 
     void setPixmap(const QPixmap &pixmap);
 
@@ -44,20 +48,31 @@ protected:
 
 private:
     void updateDisplayedPixmap();
-    void updateCloseButtonPosition();
+    void updateWindowControlsPosition();
+    void updateMaximizeButtonState();
+    void toggleMaximizeRestore();
+    void maximizeToCurrentScreen();
+    void restoreFromMaximized();
     void repositionWithinCurrentScreen(const QPoint &preferredTopLeft);
     QRect availableGeometry() const;
     qreal initialScaleFactor() const;
+    qreal maximumScaleFactorForAvailableGeometry(const QRect &available) const;
 
 private:
     QFrame *m_surface = nullptr;
     QLabel *m_imageLabel = nullptr;
+    QToolButton *m_minimizeButton = nullptr;
+    QToolButton *m_toggleMaximizeButton = nullptr;
     QToolButton *m_closeButton = nullptr;
     QPixmap m_originalPixmap;
     QPoint m_dragOffset;
+    QPoint m_spawnGlobalPos;
+    QRect m_restoreGeometry;
     qreal m_scaleFactor = 1.0;
+    qreal m_restoreScaleFactor = 1.0;
     bool m_dragging = false;
     bool m_initialPlacementPending = true;
+    bool m_isCustomMaximized = false;
 };
 
 #endif // PINNEDIMAGEWINDOW_H

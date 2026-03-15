@@ -16,6 +16,8 @@ qt_add_executable(screenCapture
     mainwindow.ui
     selectionoverlay.cpp
     selectionoverlay.h
+    draggablehistorythumbbutton.cpp
+    draggablehistorythumbbutton.h
     pinnedimagewindow.cpp
     pinnedimagewindow.h
     showtip.cpp

@@ -28,7 +28,7 @@
 
 | objectName | 按钮文案/入口 | 实际行为 | 状态 |
 | --- | --- | --- | --- |
-| `recentThumbButton` | 历史缩略图 | 加载该历史图片到主预览区，并同步当前历史索引 | 已实现 |
+| `recentThumbButton` | 历史缩略图 | `recentPage` 单击加载主预览；拖出主窗口创建贴图。`galleryPage` 保持单击加载主预览 | 已实现 |
 | `historyStackedWidget` | 最近页 / 图库页容器 | 在 `recentPage` 与 `galleryPage` 间切换 | 已实现 |
 | `galleryPage` | 图库页 | 展示完整历史网格，复用主预览区 | 已实现 |
 
@@ -79,10 +79,21 @@
 | `CloseDialog.exitAppButton` | 退出应用 | 返回退出应用选择 | 已实现 |
 | `CloseDialog.cancelButton` | 取消 | 取消关闭 | 已实现 |
 
-## 6. 备注
+
+## 6. PinnedImageWindow 贴图窗
+
+| 按钮 / 交互 | 实际行为 | 状态 |
+| --- | --- | --- |
+| 最小化 | 进入系统任务栏分组预览，可从主程序任务栏预览恢复任意贴图 | 已实现 |
+| 最大化 / 还原 | 放大到当前屏幕工作区内最大可视尺寸，再次点击恢复原尺寸与位置 | 已实现 |
+| 关闭 | 关闭当前贴图窗 | 已实现 |
+| 拖动窗口 | 非最大化状态下可拖动位置 | 已实现 |
+| 滚轮缩放 | 非最大化状态下按比例缩放贴图 | 已实现 |
+## 7. 备注
 
 - `sideGalleryButton` 当前用于打开自动保存目录；图库入口仅保留左侧历史区内的 `btnMoreRecent`。
 - 主界面左侧历史区当前分为 `recentPage` 与 `galleryPage` 两页；右侧 `formatPreviewLabel` 继续作为统一预览区。
+- `recentPage` 的历史缩略图支持拖出主窗口创建贴图；`galleryPage` 当前不支持拖拽贴图。
 - 图库页第一版仅做完整历史浏览，不含删除、筛选、分页、搜索。
 - 长截图主路径：区域模式选区后通过 Overlay 工具条进入。
 - 长截图当前仍按实验特性管理；当前仓库默认构建开启，如关闭 `SCREENCAPTURE_ENABLE_EXPERIMENTAL_LONG_CAPTURE` 则不参与构建与运行。

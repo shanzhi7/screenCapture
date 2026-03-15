@@ -22,6 +22,7 @@
 #include <QList>
 #include <QMainWindow>
 #include <QPixmap>
+#include <QPoint>
 #include <QPointer>
 #include <QRect>
 #include <QSystemTrayIcon>
@@ -131,13 +132,14 @@ private:
     void refreshHistoryEntries(bool preserveSelection);
     void renderHistoryPages();
     void clearHistoryLayout(QGridLayout *layout);
-    void renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems);
+    void renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems, bool enableDragPin);
     void addHistoryItem(QGridLayout *layout,
                         QWidget *parentWidget,
                         const CaptureHistoryManager::Entry &entry,
                         int historyIndex,
                         int row,
-                        int col);
+                        int col,
+                        bool enableDragPin);
     bool selectHistoryIndex(int index, bool showFeedback = true);
     void selectLatestHistoryItem(bool showFeedback = false);
     void showHistoryPage(HistoryPage page, bool refreshData);
@@ -146,7 +148,9 @@ private:
     void appendCaptureToHistory(const QPixmap &pixmap, const QString &title);
     QPixmap buildSelectionResultPixmap(const QRect &rect) const;
     void applyRegionResult(const QPixmap &pixmap, const QString &title, bool copyToClipboard);
-    void showPinnedImage(const QPixmap &pixmap);
+    void showPinnedImage(const QPixmap &pixmap,
+                         const QString &title = QString(),
+                         const QPoint &spawnGlobalPos = QPoint());
     void prunePinnedImageWindows();
     void loadOutputFormat();
     void saveOutputFormat() const;
