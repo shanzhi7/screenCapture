@@ -2,6 +2,7 @@
 #include "EWIEGA46WW/moc_aboutdialog.cpp"
 #include "EWIEGA46WW/moc_capturesettingsdialog.cpp"
 #include "EWIEGA46WW/moc_closedialog.cpp"
+#include "EWIEGA46WW/moc_draggablehistorythumbbutton.cpp"
 #include "EWIEGA46WW/moc_globalhotkeymanager.cpp"
 #include "EWIEGA46WW/moc_longcapturesessioncontroller.cpp"
 #include "EWIEGA46WW/moc_mainwindow.cpp"

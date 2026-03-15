@@ -5,6 +5,7 @@
 #include "capturehistorymanager.h"
 #include "capturesettingsdialog.h"
 #include "captureresulthandler.h"
+#include "draggablehistorythumbbutton.h"
 #include "captureuistatecoordinator.h"
 #include "globalhotkeymanager.h"
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
@@ -678,7 +679,7 @@ void MainWindow::onOverlayPinRequested(const QRect &rect)
         }
 
         applyRegionResult(pixmap, QStringLiteral("区域截图"), true);
-        showPinnedImage(pixmap);
+        showPinnedImage(pixmap, QStringLiteral("区域截图贴图"));
         dismissOverlay();
         showTip(QStringLiteral("截图已贴到桌面顶层"));
         endCaptureSession();
@@ -1179,8 +1180,8 @@ void MainWindow::renderHistoryPages()
     clearHistoryLayout(ui->recentGridLayout);
     clearHistoryLayout(ui->galleryGridLayout);
 
-    renderHistoryGrid(ui->recentGridLayout, ui->recentContentWidget, kRecentHistoryPreviewCount);
-    renderHistoryGrid(ui->galleryGridLayout, ui->galleryContentWidget, -1);
+    renderHistoryGrid(ui->recentGridLayout, ui->recentContentWidget, kRecentHistoryPreviewCount, true);
+    renderHistoryGrid(ui->galleryGridLayout, ui->galleryContentWidget, -1, false);
     updateHistoryPageUi();
     updateHistoryNavigationButtons();
 }
@@ -1209,7 +1210,7 @@ void MainWindow::clearHistoryLayout(QGridLayout *layout)
     }
 }
 
-void MainWindow::renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems)
+void MainWindow::renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, int maxItems, bool enableDragPin)
 {
     if (layout == nullptr || parentWidget == nullptr)
     {
@@ -1234,7 +1235,7 @@ void MainWindow::renderHistoryGrid(QGridLayout *layout, QWidget *parentWidget, i
         const CaptureHistoryManager::Entry &entry = m_historyEntries.at(visibleIndex);
         const int row = visibleIndex / kHistoryGridColumnCount;
         const int col = visibleIndex % kHistoryGridColumnCount;
-        addHistoryItem(layout, parentWidget, entry, visibleIndex, row, col);
+        addHistoryItem(layout, parentWidget, entry, visibleIndex, row, col, enableDragPin);
     }
 }
 
@@ -1243,7 +1244,8 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
                                 const CaptureHistoryManager::Entry &entry,
                                 int historyIndex,
                                 int row,
-                                int col)
+                                int col,
+                                bool enableDragPin)
 {
     if (layout == nullptr || parentWidget == nullptr)
     {
@@ -1263,7 +1265,9 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
     cardLayout->setContentsMargins(0, 0, 0, 0);
     cardLayout->setSpacing(8);
 
-    QToolButton *thumbButton = new QToolButton(card);
+    QToolButton *thumbButton = enableDragPin
+                                   ? static_cast<QToolButton *>(new DraggableHistoryThumbButton(card))
+                                   : static_cast<QToolButton *>(new QToolButton(card));
     thumbButton->setObjectName(QStringLiteral("recentThumbButton"));
     thumbButton->setCursor(Qt::PointingHandCursor);
     thumbButton->setMinimumSize(kHistoryThumbnailSize);
@@ -1273,6 +1277,7 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
     thumbButton->setChecked(selected);
     thumbButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
+    QPixmap dragPreviewPixmap;
     if (!thumbnail.isNull())
     {
         const QPixmap scaled = thumbnail.scaled(kHistoryThumbnailSize,
@@ -1280,6 +1285,7 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
                                                 Qt::SmoothTransformation);
         thumbButton->setIcon(QIcon(scaled));
         thumbButton->setIconSize(kHistoryThumbnailSize);
+        dragPreviewPixmap = scaled;
     }
     else
     {
@@ -1290,6 +1296,29 @@ void MainWindow::addHistoryItem(QGridLayout *layout,
     {
         selectHistoryIndex(historyIndex);
     });
+
+    if (enableDragPin)
+    {
+        auto *draggableButton = static_cast<DraggableHistoryThumbButton *>(thumbButton);
+        draggableButton->setDragPreviewPixmap(dragPreviewPixmap);
+        const QString historyTitle = title;
+        const QString historyTimeText = timeText;
+        const QString filePath = entry.filePath;
+        connect(draggableButton, &DraggableHistoryThumbButton::dragPinRequested, this, [this, filePath, historyTitle, historyTimeText](const QPoint &globalPos)
+        {
+            const QPixmap pinnedPixmap(filePath);
+            if (pinnedPixmap.isNull())
+            {
+                showTip(QStringLiteral("历史图片不存在"));
+                reloadRecentItems();
+                return;
+            }
+
+            const QString pinnedTitle = QStringLiteral("%1 · %2").arg(historyTitle, historyTimeText);
+            showPinnedImage(pinnedPixmap, pinnedTitle, globalPos);
+            showTip(QStringLiteral("已从最近截图创建贴图"));
+        });
+    }
 
     QLabel *titleLabel = new QLabel(title, card);
     titleLabel->setObjectName(QStringLiteral("recentItemTitle"));
@@ -1415,7 +1444,7 @@ void MainWindow::applyRegionResult(const QPixmap &pixmap, const QString &title, 
     appendCaptureToHistory(pixmap, title);
 }
 
-void MainWindow::showPinnedImage(const QPixmap &pixmap)
+void MainWindow::showPinnedImage(const QPixmap &pixmap, const QString &title, const QPoint &spawnGlobalPos)
 {
     if (pixmap.isNull())
     {
@@ -1424,7 +1453,10 @@ void MainWindow::showPinnedImage(const QPixmap &pixmap)
 
     prunePinnedImageWindows();
 
-    auto *window = new PinnedImageWindow(pixmap);
+    const QString windowTitle = title.trimmed().isEmpty()
+                                    ? QStringLiteral("截图贴图")
+                                    : title.trimmed();
+    auto *window = new PinnedImageWindow(pixmap, windowTitle, spawnGlobalPos);
     m_pinnedWindows.append(window);
     connect(window, &QObject::destroyed, this, [this]()
     {
@@ -1433,6 +1465,7 @@ void MainWindow::showPinnedImage(const QPixmap &pixmap)
 
     window->show();
     window->raise();
+    window->activateWindow();
 }
 
 void MainWindow::prunePinnedImageWindows()

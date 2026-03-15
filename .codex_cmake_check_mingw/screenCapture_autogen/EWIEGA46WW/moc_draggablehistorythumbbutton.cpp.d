@@ -1,8 +1,6 @@
-E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_pinnedimagewindow.cpp: E:/qt_project/screenCapture/pinnedimagewindow.h \
+E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_draggablehistorythumbbutton.cpp: E:/qt_project/screenCapture/draggablehistorythumbbutton.h \
   E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/moc_predefs.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/QPoint \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QRect \
-  E:/Qt/6.5.3/mingw_64/include/QtCore/QString \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20memory.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/q20type_traits.h \
   E:/Qt/6.5.3/mingw_64/include/QtCore/qalgorithms.h \
@@ -137,8 +135,10 @@ E:/qt_project/screenCapture/.codex_cmake_check_mingw/screenCapture_autogen/EWIEG
   E:/Qt/6.5.3/mingw_64/include/QtGui/qtransform.h \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qwindowdefs.h \
   E:/Qt/6.5.3/mingw_64/include/QtGui/qwindowdefs_win.h \
-  E:/Qt/6.5.3/mingw_64/include/QtWidgets/QWidget \
+  E:/Qt/6.5.3/mingw_64/include/QtWidgets/QToolButton \
+  E:/Qt/6.5.3/mingw_64/include/QtWidgets/qabstractbutton.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qsizepolicy.h \
+  E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtoolbutton.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgets-config.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgetsexports.h \
   E:/Qt/6.5.3/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
