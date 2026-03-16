@@ -1,0 +1,129 @@
+# Details
+
+Date : 2026-03-15 20:40:07
+
+Directory e:\\qt_project\\screenCapture
+
+Total : 114 files,  17137 codes, 656 comments, 2984 blanks, all 20777 lines
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
+
+## Files
+| filename | language | code | comment | blank | total |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| [.codex\_cmake\_check\_mingw/.qt/QtDeploySupport.cmake](/.codex_cmake_check_mingw/.qt/QtDeploySupport.cmake) | CMake | 56 | 0 | 5 | 61 |
+| [.codex\_cmake\_check\_mingw/.qt/deploy\_screenCapture\_3f26f682e3.cmake](/.codex_cmake_check_mingw/.qt/deploy_screenCapture_3f26f682e3.cmake) | CMake | 7 | 0 | 2 | 9 |
+| [.codex\_cmake\_check\_mingw/.qt/screenCapture-plugins.cmake](/.codex_cmake_check_mingw/.qt/screenCapture-plugins.cmake) | CMake | 1 | 0 | 0 | 1 |
+| [.codex\_cmake\_check\_mingw/.rcc/qrc\_app\_resources.cpp](/.codex_cmake_check_mingw/.rcc/qrc_app_resources.cpp) | C++ | 1,219 | 81 | 23 | 1,323 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_aboutdialog.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_aboutdialog.cpp) | C++ | 117 | 12 | 19 | 148 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_capturesettingsdialog.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_capturesettingsdialog.cpp) | C++ | 133 | 14 | 19 | 166 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_closedialog.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_closedialog.cpp) | C++ | 133 | 14 | 19 | 166 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_draggablehistorythumbbutton.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_draggablehistorythumbbutton.cpp) | C++ | 135 | 13 | 20 | 168 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_globalhotkeymanager.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_globalhotkeymanager.cpp) | C++ | 130 | 13 | 20 | 163 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_longcapturesessioncontroller.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_longcapturesessioncontroller.cpp) | C++ | 317 | 30 | 29 | 376 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_mainwindow.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_mainwindow.cpp) | C++ | 442 | 43 | 19 | 504 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_pinnedimagewindow.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_pinnedimagewindow.cpp) | C++ | 90 | 9 | 17 | 116 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_selectionoverlay.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_selectionoverlay.cpp) | C++ | 315 | 29 | 28 | 372 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/EWIEGA46WW/moc\_showtip.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/EWIEGA46WW/moc_showtip.cpp) | C++ | 90 | 9 | 17 | 116 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/include/ui\_aboutdialog.h](/.codex_cmake_check_mingw/screenCapture_autogen/include/ui_aboutdialog.h) | C++ | 136 | 7 | 43 | 186 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/include/ui\_capturesettingsdialog.h](/.codex_cmake_check_mingw/screenCapture_autogen/include/ui_capturesettingsdialog.h) | C++ | 245 | 7 | 77 | 329 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/include/ui\_closedialog.h](/.codex_cmake_check_mingw/screenCapture_autogen/include/ui_closedialog.h) | C++ | 79 | 7 | 27 | 113 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/include/ui\_mainwindow.h](/.codex_cmake_check_mingw/screenCapture_autogen/include/ui_mainwindow.h) | C++ | 348 | 7 | 105 | 460 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/include/ui\_showtip.h](/.codex_cmake_check_mingw/screenCapture_autogen/include/ui_showtip.h) | C++ | 39 | 7 | 15 | 61 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/moc\_predefs.h](/.codex_cmake_check_mingw/screenCapture_autogen/moc_predefs.h) | C++ | 485 | 0 | 1 | 486 |
+| [.codex\_cmake\_check\_mingw/screenCapture\_autogen/mocs\_compilation.cpp](/.codex_cmake_check_mingw/screenCapture_autogen/mocs_compilation.cpp) | C++ | 10 | 1 | 1 | 12 |
+| [AGENTS.md](/AGENTS.md) | Markdown | 29 | 0 | 3 | 32 |
+| [CMakeLists.txt](/CMakeLists.txt) | CMake | 133 | 0 | 14 | 147 |
+| [README.md](/README.md) | Markdown | 131 | 0 | 72 | 203 |
+| [aboutdialog.cpp](/aboutdialog.cpp) | C++ | 37 | 1 | 9 | 47 |
+| [aboutdialog.h](/aboutdialog.h) | C++ | 21 | 10 | 9 | 40 |
+| [autostartmanager.cpp](/autostartmanager.cpp) | C++ | 93 | 0 | 13 | 106 |
+| [autostartmanager.h](/autostartmanager.h) | C++ | 11 | 9 | 4 | 24 |
+| [capturehistorymanager.cpp](/capturehistorymanager.cpp) | C++ | 136 | 1 | 31 | 168 |
+| [capturehistorymanager.h](/capturehistorymanager.h) | C++ | 32 | 31 | 11 | 74 |
+| [captureresulthandler.cpp](/captureresulthandler.cpp) | C++ | 17 | 1 | 4 | 22 |
+| [captureresulthandler.h](/captureresulthandler.h) | C++ | 25 | 12 | 7 | 44 |
+| [capturesettingsdialog.cpp](/capturesettingsdialog.cpp) | C++ | 87 | 1 | 20 | 108 |
+| [capturesettingsdialog.h](/capturesettingsdialog.h) | C++ | 32 | 19 | 18 | 69 |
+| [captureuistatecoordinator.cpp](/captureuistatecoordinator.cpp) | C++ | 27 | 0 | 7 | 34 |
+| [captureuistatecoordinator.h](/captureuistatecoordinator.h) | C++ | 17 | 14 | 10 | 41 |
+| [closedialog.cpp](/closedialog.cpp) | C++ | 42 | 2 | 12 | 56 |
+| [closedialog.h](/closedialog.h) | C++ | 32 | 13 | 13 | 58 |
+| [desktopgdicapturebackend.cpp](/desktopgdicapturebackend.cpp) | C++ | 78 | 0 | 13 | 91 |
+| [desktopgdicapturebackend.h](/desktopgdicapturebackend.h) | C++ | 12 | 9 | 6 | 27 |
+| [doc/00\_project\_overview.md](/doc/00_project_overview.md) | Markdown | 61 | 0 | 16 | 77 |
+| [doc/01\_requirements.md](/doc/01_requirements.md) | Markdown | 44 | 0 | 22 | 66 |
+| [doc/02\_architecture.md](/doc/02_architecture.md) | Markdown | 105 | 0 | 48 | 153 |
+| [doc/03\_module\_design.md](/doc/03_module_design.md) | Markdown | 133 | 0 | 57 | 190 |
+| [doc/04\_development\_plan.md](/doc/04_development_plan.md) | Markdown | 42 | 0 | 20 | 62 |
+| [doc/05\_codex\_tasks.md](/doc/05_codex_tasks.md) | Markdown | 123 | 0 | 62 | 185 |
+| [doc/06\_ui\_design.md](/doc/06_ui_design.md) | Markdown | 34 | 0 | 16 | 50 |
+| [doc/07\_feature\_design.md](/doc/07_feature_design.md) | Markdown | 74 | 0 | 31 | 105 |
+| [doc/08\_button\_map.md](/doc/08_button_map.md) | Markdown | 85 | 0 | 16 | 101 |
+| [doc/Rules.md](/doc/Rules.md) | Markdown | 14 | 0 | 3 | 17 |
+| [draggablehistorythumbbutton.cpp](/draggablehistorythumbbutton.cpp) | C++ | 116 | 0 | 24 | 140 |
+| [draggablehistorythumbbutton.h](/draggablehistorythumbbutton.h) | C++ | 28 | 9 | 11 | 48 |
+| [dxgiduplicationbackend.cpp](/dxgiduplicationbackend.cpp) | C++ | 322 | 0 | 50 | 372 |
+| [dxgiduplicationbackend.h](/dxgiduplicationbackend.h) | C++ | 45 | 9 | 9 | 63 |
+| [globalhotkeymanager.cpp](/globalhotkeymanager.cpp) | C++ | 325 | 3 | 75 | 403 |
+| [globalhotkeymanager.h](/globalhotkeymanager.h) | C++ | 43 | 19 | 21 | 83 |
+| [icons/camera.svg](/icons/camera.svg) | XML | 5 | 0 | 1 | 6 |
+| [icons/chevron\_left.svg](/icons/chevron_left.svg) | XML | 3 | 0 | 1 | 4 |
+| [icons/chevron\_right.svg](/icons/chevron_right.svg) | XML | 3 | 0 | 1 | 4 |
+| [icons/crop.svg](/icons/crop.svg) | XML | 4 | 0 | 1 | 5 |
+| [icons/folder.svg](/icons/folder.svg) | XML | 4 | 0 | 1 | 5 |
+| [icons/history.svg](/icons/history.svg) | XML | 4 | 0 | 1 | 5 |
+| [icons/info.svg](/icons/info.svg) | XML | 11 | 0 | 1 | 12 |
+| [icons/overlay\_check.svg](/icons/overlay_check.svg) | XML | 3 | 0 | 0 | 3 |
+| [icons/overlay\_close.svg](/icons/overlay_close.svg) | XML | 4 | 0 | 0 | 4 |
+| [icons/overlay\_ellipse.svg](/icons/overlay_ellipse.svg) | XML | 3 | 0 | 0 | 3 |
+| [icons/overlay\_mosaic.svg](/icons/overlay_mosaic.svg) | XML | 6 | 0 | 0 | 6 |
+| [icons/overlay\_pen.svg](/icons/overlay_pen.svg) | XML | 5 | 0 | 0 | 5 |
+| [icons/overlay\_pin.svg](/icons/overlay_pin.svg) | XML | 5 | 0 | 0 | 5 |
+| [icons/overlay\_rect.svg](/icons/overlay_rect.svg) | XML | 3 | 0 | 0 | 3 |
+| [icons/overlay\_redo.svg](/icons/overlay_redo.svg) | XML | 4 | 0 | 0 | 4 |
+| [icons/overlay\_save.svg](/icons/overlay_save.svg) | XML | 5 | 0 | 0 | 5 |
+| [icons/overlay\_scroll.svg](/icons/overlay_scroll.svg) | XML | 8 | 0 | 0 | 8 |
+| [icons/overlay\_text.svg](/icons/overlay_text.svg) | XML | 5 | 0 | 0 | 5 |
+| [icons/overlay\_undo.svg](/icons/overlay_undo.svg) | XML | 4 | 0 | 0 | 4 |
+| [icons/plus\_white.svg](/icons/plus_white.svg) | XML | 3 | 0 | 1 | 4 |
+| [icons/settings.svg](/icons/settings.svg) | XML | 4 | 0 | 1 | 5 |
+| [longcapturebackend.h](/longcapturebackend.h) | C++ | 86 | 9 | 21 | 116 |
+| [longcapturepreviewpanel.cpp](/longcapturepreviewpanel.cpp) | C++ | 143 | 0 | 26 | 169 |
+| [longcapturepreviewpanel.h](/longcapturepreviewpanel.h) | C++ | 29 | 9 | 10 | 48 |
+| [longcapturesession.cpp](/longcapturesession.cpp) | C++ | 150 | 0 | 32 | 182 |
+| [longcapturesession.h](/longcapturesession.h) | C++ | 57 | 9 | 17 | 83 |
+| [longcapturesessioncontroller.cpp](/longcapturesessioncontroller.cpp) | C++ | 1,267 | 1 | 195 | 1,463 |
+| [longcapturesessioncontroller.h](/longcapturesessioncontroller.h) | C++ | 128 | 9 | 19 | 156 |
+| [longcapturestitcher.cpp](/longcapturestitcher.cpp) | C++ | 168 | 2 | 40 | 210 |
+| [longcapturestitcher.h](/longcapturestitcher.h) | C++ | 23 | 1 | 9 | 33 |
+| [longcapturetypes.h](/longcapturetypes.h) | C++ | 122 | 9 | 17 | 148 |
+| [main.cpp](/main.cpp) | C++ | 44 | 4 | 12 | 60 |
+| [mainwindow.cpp](/mainwindow.cpp) | C++ | 1,715 | 1 | 321 | 2,037 |
+| [mainwindow.h](/mainwindow.h) | C++ | 195 | 9 | 24 | 228 |
+| [motiondetector.cpp](/motiondetector.cpp) | C++ | 182 | 0 | 35 | 217 |
+| [motiondetector.h](/motiondetector.h) | C++ | 22 | 9 | 8 | 39 |
+| [overlapmatcher.cpp](/overlapmatcher.cpp) | C++ | 537 | 0 | 74 | 611 |
+| [overlapmatcher.h](/overlapmatcher.h) | C++ | 31 | 9 | 7 | 47 |
+| [pinnedimagewindow.cpp](/pinnedimagewindow.cpp) | C++ | 433 | 0 | 66 | 499 |
+| [pinnedimagewindow.h](/pinnedimagewindow.h) | C++ | 59 | 9 | 10 | 78 |
+| [scrollanchorprovider.cpp](/scrollanchorprovider.cpp) | C++ | 755 | 0 | 101 | 856 |
+| [scrollanchorprovider.h](/scrollanchorprovider.h) | C++ | 29 | 9 | 10 | 48 |
+| [scrolldispatcher.cpp](/scrolldispatcher.cpp) | C++ | 233 | 0 | 47 | 280 |
+| [scrolldispatcher.h](/scrolldispatcher.h) | C++ | 28 | 9 | 8 | 45 |
+| [selectionoverlay.cpp](/selectionoverlay.cpp) | C++ | 2,542 | 0 | 393 | 2,935 |
+| [selectionoverlay.h](/selectionoverlay.h) | C++ | 257 | 9 | 26 | 292 |
+| [settingsservice.cpp](/settingsservice.cpp) | C++ | 52 | 1 | 13 | 66 |
+| [settingsservice.h](/settingsservice.h) | C++ | 15 | 14 | 10 | 39 |
+| [showtip.cpp](/showtip.cpp) | C++ | 101 | 2 | 23 | 126 |
+| [showtip.h](/showtip.h) | C++ | 33 | 14 | 14 | 61 |
+| [stableframecollector.cpp](/stableframecollector.cpp) | C++ | 104 | 0 | 22 | 126 |
+| [stableframecollector.h](/stableframecollector.h) | C++ | 22 | 9 | 9 | 40 |
+| [stitchcomposer.cpp](/stitchcomposer.cpp) | C++ | 211 | 0 | 39 | 250 |
+| [stitchcomposer.h](/stitchcomposer.h) | C++ | 26 | 9 | 9 | 44 |
+| [tippresenter.cpp](/tippresenter.cpp) | C++ | 67 | 1 | 20 | 88 |
+| [tippresenter.h](/tippresenter.h) | C++ | 29 | 14 | 13 | 56 |
+| [wgccapturebackend.cpp](/wgccapturebackend.cpp) | C++ | 20 | 0 | 6 | 26 |
+| [wgccapturebackend.h](/wgccapturebackend.h) | C++ | 13 | 9 | 6 | 28 |
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

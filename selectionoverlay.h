@@ -1,4 +1,4 @@
-﻿/***********************************************************************************
+/***********************************************************************************
 *
 * @file         selectionoverlay.h
 * @brief        区域截图覆盖层：负责选区交互、绘制与工具条触发。
@@ -75,6 +75,7 @@ signals:
     void longCaptureWheel(const QRect &rect, int delta);
     void longCaptureSaveRequested(const QRect &rect);
     void longCaptureConfirmRequested(const QRect &rect);
+    void longCapturePinRequested(const QRect &rect);
 #endif
 
 protected:

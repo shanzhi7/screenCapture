@@ -52,11 +52,12 @@ static constexpr auto qt_meta_stringdata_CLASSSelectionOverlayENDCLASS = QtMocHe
     "longCaptureWheel",
     "delta",
     "longCaptureSaveRequested",
-    "longCaptureConfirmRequested"
+    "longCaptureConfirmRequested",
+    "longCapturePinRequested"
 );
 #else  // !QT_MOC_HAS_STRING_DATA
 struct qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t {
-    uint offsetsAndSizes[30];
+    uint offsetsAndSizes[32];
     char stringdata0[17];
     char stringdata1[18];
     char stringdata2[1];
@@ -72,6 +73,7 @@ struct qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t {
     char stringdata12[6];
     char stringdata13[25];
     char stringdata14[28];
+    char stringdata15[24];
 };
 #define QT_MOC_LITERAL(ofs, len) \
     uint(sizeof(qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t::offsetsAndSizes) + ofs), len 
@@ -91,7 +93,8 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t qt_m
         QT_MOC_LITERAL(140, 16),  // "longCaptureWheel"
         QT_MOC_LITERAL(157, 5),  // "delta"
         QT_MOC_LITERAL(163, 24),  // "longCaptureSaveRequested"
-        QT_MOC_LITERAL(188, 27)   // "longCaptureConfirmRequested"
+        QT_MOC_LITERAL(188, 27),  // "longCaptureConfirmRequested"
+        QT_MOC_LITERAL(216, 23)   // "longCapturePinRequested"
     },
     "SelectionOverlay",
     "selectionFinished",
@@ -107,7 +110,8 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSSelectionOverlayENDCLASS_t qt_m
     "longCaptureWheel",
     "delta",
     "longCaptureSaveRequested",
-    "longCaptureConfirmRequested"
+    "longCaptureConfirmRequested",
+    "longCapturePinRequested"
 };
 #undef QT_MOC_LITERAL
 #endif // !QT_MOC_HAS_STRING_DATA
@@ -119,23 +123,24 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSSelectionOverlayENDCLASS[] = {
       11,       // revision
        0,       // classname
        0,    0, // classinfo
-       9,   14, // methods
+      10,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       9,       // signalCount
+      10,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,   68,    2, 0x06,    1 /* Public */,
-       4,    0,   71,    2, 0x06,    3 /* Public */,
-       5,    1,   72,    2, 0x06,    4 /* Public */,
-       6,    1,   75,    2, 0x06,    6 /* Public */,
-       7,    1,   78,    2, 0x06,    8 /* Public */,
-       9,    2,   81,    2, 0x06,   10 /* Public */,
-      11,    2,   86,    2, 0x06,   13 /* Public */,
-      13,    1,   91,    2, 0x06,   16 /* Public */,
-      14,    1,   94,    2, 0x06,   18 /* Public */,
+       1,    1,   74,    2, 0x06,    1 /* Public */,
+       4,    0,   77,    2, 0x06,    3 /* Public */,
+       5,    1,   78,    2, 0x06,    4 /* Public */,
+       6,    1,   81,    2, 0x06,    6 /* Public */,
+       7,    1,   84,    2, 0x06,    8 /* Public */,
+       9,    2,   87,    2, 0x06,   10 /* Public */,
+      11,    2,   92,    2, 0x06,   13 /* Public */,
+      13,    1,   97,    2, 0x06,   16 /* Public */,
+      14,    1,  100,    2, 0x06,   18 /* Public */,
+      15,    1,  103,    2, 0x06,   20 /* Public */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QRect,    3,
@@ -145,6 +150,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSSelectionOverlayENDCLASS[] = {
     QMetaType::Void, QMetaType::QString,    8,
     QMetaType::Void, QMetaType::Bool, QMetaType::QRect,   10,    3,
     QMetaType::Void, QMetaType::QRect, QMetaType::Int,    3,   12,
+    QMetaType::Void, QMetaType::QRect,    3,
     QMetaType::Void, QMetaType::QRect,    3,
     QMetaType::Void, QMetaType::QRect,    3,
 
@@ -187,6 +193,9 @@ Q_CONSTINIT const QMetaObject SelectionOverlay::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<const QRect &, std::false_type>,
         // method 'longCaptureConfirmRequested'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QRect &, std::false_type>,
+        // method 'longCapturePinRequested'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QRect &, std::false_type>
     >,
     nullptr
@@ -207,6 +216,7 @@ void SelectionOverlay::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         case 6: _t->longCaptureWheel((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
         case 7: _t->longCaptureSaveRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
         case 8: _t->longCaptureConfirmRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
+        case 9: _t->longCapturePinRequested((*reinterpret_cast< std::add_pointer_t<QRect>>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -274,6 +284,13 @@ void SelectionOverlay::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
                 return;
             }
         }
+        {
+            using _t = void (SelectionOverlay::*)(const QRect & );
+            if (_t _q_method = &SelectionOverlay::longCapturePinRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 9;
+                return;
+            }
+        }
     }
 }
 
@@ -296,13 +313,13 @@ int SelectionOverlay::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 10)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 10;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 9)
+        if (_id < 10)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 9;
+        _id -= 10;
     }
     return _id;
 }
@@ -367,5 +384,12 @@ void SelectionOverlay::longCaptureConfirmRequested(const QRect & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 8, _a);
+}
+
+// SIGNAL 9
+void SelectionOverlay::longCapturePinRequested(const QRect & _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 9, _a);
 }
 QT_WARNING_POP

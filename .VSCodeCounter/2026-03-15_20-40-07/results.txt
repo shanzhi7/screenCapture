@@ -1,0 +1,151 @@
+Date : 2026-03-15 20:40:07
+Directory : e:\qt_project\screenCapture
+Total : 114 files,  17137 codes, 656 comments, 2984 blanks, all 20777 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C++      |         77 |     15,969 |        656 |      2,588 |     19,213 |
+| Markdown |         12 |        875 |          0 |        366 |      1,241 |
+| CMake    |          4 |        197 |          0 |         21 |        218 |
+| XML      |         21 |         96 |          0 |          9 |        105 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                       | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                          |        114 |     17,137 |        656 |      2,984 |     20,777 |
+| . (Files)                                                                                                                  |         62 |     11,799 |        353 |      2,178 |     14,330 |
+| .codex_cmake_check_mingw                                                                                                   |         21 |      4,527 |        303 |        506 |      5,336 |
+| .codex_cmake_check_mingw\.qt                                                                                               |          3 |         64 |          0 |          7 |         71 |
+| .codex_cmake_check_mingw\.rcc                                                                                              |          1 |      1,219 |         81 |         23 |      1,323 |
+| .codex_cmake_check_mingw\screenCapture_autogen                                                                             |         17 |      3,244 |        222 |        476 |      3,942 |
+| .codex_cmake_check_mingw\screenCapture_autogen (Files)                                                                     |          2 |        495 |          1 |          2 |        498 |
+| .codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW                                                                  |         10 |      1,902 |        186 |        207 |      2,295 |
+| .codex_cmake_check_mingw\screenCapture_autogen\include                                                                     |          5 |        847 |         35 |        267 |      1,149 |
+| doc                                                                                                                        |         10 |        715 |          0 |        291 |      1,006 |
+| icons                                                                                                                      |         21 |         96 |          0 |          9 |        105 |
++----------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                                   | language | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\.qt\QtDeploySupport.cmake                                             | CMake    |         56 |          0 |          5 |         61 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\.qt\deploy_screenCapture_3f26f682e3.cmake                             | CMake    |          7 |          0 |          2 |          9 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\.qt\screenCapture-plugins.cmake                                       | CMake    |          1 |          0 |          0 |          1 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\.rcc\qrc_app_resources.cpp                                            | C++      |      1,219 |         81 |         23 |      1,323 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_aboutdialog.cpp                  | C++      |        117 |         12 |         19 |        148 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_capturesettingsdialog.cpp        | C++      |        133 |         14 |         19 |        166 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_closedialog.cpp                  | C++      |        133 |         14 |         19 |        166 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_draggablehistorythumbbutton.cpp  | C++      |        135 |         13 |         20 |        168 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_globalhotkeymanager.cpp          | C++      |        130 |         13 |         20 |        163 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_longcapturesessioncontroller.cpp | C++      |        317 |         30 |         29 |        376 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_mainwindow.cpp                   | C++      |        442 |         43 |         19 |        504 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_pinnedimagewindow.cpp            | C++      |         90 |          9 |         17 |        116 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_selectionoverlay.cpp             | C++      |        315 |         29 |         28 |        372 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\EWIEGA46WW\moc_showtip.cpp                      | C++      |         90 |          9 |         17 |        116 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\include\ui_aboutdialog.h                        | C++      |        136 |          7 |         43 |        186 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\include\ui_capturesettingsdialog.h              | C++      |        245 |          7 |         77 |        329 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\include\ui_closedialog.h                        | C++      |         79 |          7 |         27 |        113 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\include\ui_mainwindow.h                         | C++      |        348 |          7 |        105 |        460 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\include\ui_showtip.h                            | C++      |         39 |          7 |         15 |         61 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\moc_predefs.h                                   | C++      |        485 |          0 |          1 |        486 |
+| e:\qt_project\screenCapture\.codex_cmake_check_mingw\screenCapture_autogen\mocs_compilation.cpp                            | C++      |         10 |          1 |          1 |         12 |
+| e:\qt_project\screenCapture\AGENTS.md                                                                                      | Markdown |         29 |          0 |          3 |         32 |
+| e:\qt_project\screenCapture\CMakeLists.txt                                                                                 | CMake    |        133 |          0 |         14 |        147 |
+| e:\qt_project\screenCapture\README.md                                                                                      | Markdown |        131 |          0 |         72 |        203 |
+| e:\qt_project\screenCapture\aboutdialog.cpp                                                                                | C++      |         37 |          1 |          9 |         47 |
+| e:\qt_project\screenCapture\aboutdialog.h                                                                                  | C++      |         21 |         10 |          9 |         40 |
+| e:\qt_project\screenCapture\autostartmanager.cpp                                                                           | C++      |         93 |          0 |         13 |        106 |
+| e:\qt_project\screenCapture\autostartmanager.h                                                                             | C++      |         11 |          9 |          4 |         24 |
+| e:\qt_project\screenCapture\capturehistorymanager.cpp                                                                      | C++      |        136 |          1 |         31 |        168 |
+| e:\qt_project\screenCapture\capturehistorymanager.h                                                                        | C++      |         32 |         31 |         11 |         74 |
+| e:\qt_project\screenCapture\captureresulthandler.cpp                                                                       | C++      |         17 |          1 |          4 |         22 |
+| e:\qt_project\screenCapture\captureresulthandler.h                                                                         | C++      |         25 |         12 |          7 |         44 |
+| e:\qt_project\screenCapture\capturesettingsdialog.cpp                                                                      | C++      |         87 |          1 |         20 |        108 |
+| e:\qt_project\screenCapture\capturesettingsdialog.h                                                                        | C++      |         32 |         19 |         18 |         69 |
+| e:\qt_project\screenCapture\captureuistatecoordinator.cpp                                                                  | C++      |         27 |          0 |          7 |         34 |
+| e:\qt_project\screenCapture\captureuistatecoordinator.h                                                                    | C++      |         17 |         14 |         10 |         41 |
+| e:\qt_project\screenCapture\closedialog.cpp                                                                                | C++      |         42 |          2 |         12 |         56 |
+| e:\qt_project\screenCapture\closedialog.h                                                                                  | C++      |         32 |         13 |         13 |         58 |
+| e:\qt_project\screenCapture\desktopgdicapturebackend.cpp                                                                   | C++      |         78 |          0 |         13 |         91 |
+| e:\qt_project\screenCapture\desktopgdicapturebackend.h                                                                     | C++      |         12 |          9 |          6 |         27 |
+| e:\qt_project\screenCapture\doc\00_project_overview.md                                                                     | Markdown |         61 |          0 |         16 |         77 |
+| e:\qt_project\screenCapture\doc\01_requirements.md                                                                         | Markdown |         44 |          0 |         22 |         66 |
+| e:\qt_project\screenCapture\doc\02_architecture.md                                                                         | Markdown |        105 |          0 |         48 |        153 |
+| e:\qt_project\screenCapture\doc\03_module_design.md                                                                        | Markdown |        133 |          0 |         57 |        190 |
+| e:\qt_project\screenCapture\doc\04_development_plan.md                                                                     | Markdown |         42 |          0 |         20 |         62 |
+| e:\qt_project\screenCapture\doc\05_codex_tasks.md                                                                          | Markdown |        123 |          0 |         62 |        185 |
+| e:\qt_project\screenCapture\doc\06_ui_design.md                                                                            | Markdown |         34 |          0 |         16 |         50 |
+| e:\qt_project\screenCapture\doc\07_feature_design.md                                                                       | Markdown |         74 |          0 |         31 |        105 |
+| e:\qt_project\screenCapture\doc\08_button_map.md                                                                           | Markdown |         85 |          0 |         16 |        101 |
+| e:\qt_project\screenCapture\doc\Rules.md                                                                                   | Markdown |         14 |          0 |          3 |         17 |
+| e:\qt_project\screenCapture\draggablehistorythumbbutton.cpp                                                                | C++      |        116 |          0 |         24 |        140 |
+| e:\qt_project\screenCapture\draggablehistorythumbbutton.h                                                                  | C++      |         28 |          9 |         11 |         48 |
+| e:\qt_project\screenCapture\dxgiduplicationbackend.cpp                                                                     | C++      |        322 |          0 |         50 |        372 |
+| e:\qt_project\screenCapture\dxgiduplicationbackend.h                                                                       | C++      |         45 |          9 |          9 |         63 |
+| e:\qt_project\screenCapture\globalhotkeymanager.cpp                                                                        | C++      |        325 |          3 |         75 |        403 |
+| e:\qt_project\screenCapture\globalhotkeymanager.h                                                                          | C++      |         43 |         19 |         21 |         83 |
+| e:\qt_project\screenCapture\icons\camera.svg                                                                               | XML      |          5 |          0 |          1 |          6 |
+| e:\qt_project\screenCapture\icons\chevron_left.svg                                                                         | XML      |          3 |          0 |          1 |          4 |
+| e:\qt_project\screenCapture\icons\chevron_right.svg                                                                        | XML      |          3 |          0 |          1 |          4 |
+| e:\qt_project\screenCapture\icons\crop.svg                                                                                 | XML      |          4 |          0 |          1 |          5 |
+| e:\qt_project\screenCapture\icons\folder.svg                                                                               | XML      |          4 |          0 |          1 |          5 |
+| e:\qt_project\screenCapture\icons\history.svg                                                                              | XML      |          4 |          0 |          1 |          5 |
+| e:\qt_project\screenCapture\icons\info.svg                                                                                 | XML      |         11 |          0 |          1 |         12 |
+| e:\qt_project\screenCapture\icons\overlay_check.svg                                                                        | XML      |          3 |          0 |          0 |          3 |
+| e:\qt_project\screenCapture\icons\overlay_close.svg                                                                        | XML      |          4 |          0 |          0 |          4 |
+| e:\qt_project\screenCapture\icons\overlay_ellipse.svg                                                                      | XML      |          3 |          0 |          0 |          3 |
+| e:\qt_project\screenCapture\icons\overlay_mosaic.svg                                                                       | XML      |          6 |          0 |          0 |          6 |
+| e:\qt_project\screenCapture\icons\overlay_pen.svg                                                                          | XML      |          5 |          0 |          0 |          5 |
+| e:\qt_project\screenCapture\icons\overlay_pin.svg                                                                          | XML      |          5 |          0 |          0 |          5 |
+| e:\qt_project\screenCapture\icons\overlay_rect.svg                                                                         | XML      |          3 |          0 |          0 |          3 |
+| e:\qt_project\screenCapture\icons\overlay_redo.svg                                                                         | XML      |          4 |          0 |          0 |          4 |
+| e:\qt_project\screenCapture\icons\overlay_save.svg                                                                         | XML      |          5 |          0 |          0 |          5 |
+| e:\qt_project\screenCapture\icons\overlay_scroll.svg                                                                       | XML      |          8 |          0 |          0 |          8 |
+| e:\qt_project\screenCapture\icons\overlay_text.svg                                                                         | XML      |          5 |          0 |          0 |          5 |
+| e:\qt_project\screenCapture\icons\overlay_undo.svg                                                                         | XML      |          4 |          0 |          0 |          4 |
+| e:\qt_project\screenCapture\icons\plus_white.svg                                                                           | XML      |          3 |          0 |          1 |          4 |
+| e:\qt_project\screenCapture\icons\settings.svg                                                                             | XML      |          4 |          0 |          1 |          5 |
+| e:\qt_project\screenCapture\longcapturebackend.h                                                                           | C++      |         86 |          9 |         21 |        116 |
+| e:\qt_project\screenCapture\longcapturepreviewpanel.cpp                                                                    | C++      |        143 |          0 |         26 |        169 |
+| e:\qt_project\screenCapture\longcapturepreviewpanel.h                                                                      | C++      |         29 |          9 |         10 |         48 |
+| e:\qt_project\screenCapture\longcapturesession.cpp                                                                         | C++      |        150 |          0 |         32 |        182 |
+| e:\qt_project\screenCapture\longcapturesession.h                                                                           | C++      |         57 |          9 |         17 |         83 |
+| e:\qt_project\screenCapture\longcapturesessioncontroller.cpp                                                               | C++      |      1,267 |          1 |        195 |      1,463 |
+| e:\qt_project\screenCapture\longcapturesessioncontroller.h                                                                 | C++      |        128 |          9 |         19 |        156 |
+| e:\qt_project\screenCapture\longcapturestitcher.cpp                                                                        | C++      |        168 |          2 |         40 |        210 |
+| e:\qt_project\screenCapture\longcapturestitcher.h                                                                          | C++      |         23 |          1 |          9 |         33 |
+| e:\qt_project\screenCapture\longcapturetypes.h                                                                             | C++      |        122 |          9 |         17 |        148 |
+| e:\qt_project\screenCapture\main.cpp                                                                                       | C++      |         44 |          4 |         12 |         60 |
+| e:\qt_project\screenCapture\mainwindow.cpp                                                                                 | C++      |      1,715 |          1 |        321 |      2,037 |
+| e:\qt_project\screenCapture\mainwindow.h                                                                                   | C++      |        195 |          9 |         24 |        228 |
+| e:\qt_project\screenCapture\motiondetector.cpp                                                                             | C++      |        182 |          0 |         35 |        217 |
+| e:\qt_project\screenCapture\motiondetector.h                                                                               | C++      |         22 |          9 |          8 |         39 |
+| e:\qt_project\screenCapture\overlapmatcher.cpp                                                                             | C++      |        537 |          0 |         74 |        611 |
+| e:\qt_project\screenCapture\overlapmatcher.h                                                                               | C++      |         31 |          9 |          7 |         47 |
+| e:\qt_project\screenCapture\pinnedimagewindow.cpp                                                                          | C++      |        433 |          0 |         66 |        499 |
+| e:\qt_project\screenCapture\pinnedimagewindow.h                                                                            | C++      |         59 |          9 |         10 |         78 |
+| e:\qt_project\screenCapture\scrollanchorprovider.cpp                                                                       | C++      |        755 |          0 |        101 |        856 |
+| e:\qt_project\screenCapture\scrollanchorprovider.h                                                                         | C++      |         29 |          9 |         10 |         48 |
+| e:\qt_project\screenCapture\scrolldispatcher.cpp                                                                           | C++      |        233 |          0 |         47 |        280 |
+| e:\qt_project\screenCapture\scrolldispatcher.h                                                                             | C++      |         28 |          9 |          8 |         45 |
+| e:\qt_project\screenCapture\selectionoverlay.cpp                                                                           | C++      |      2,542 |          0 |        393 |      2,935 |
+| e:\qt_project\screenCapture\selectionoverlay.h                                                                             | C++      |        257 |          9 |         26 |        292 |
+| e:\qt_project\screenCapture\settingsservice.cpp                                                                            | C++      |         52 |          1 |         13 |         66 |
+| e:\qt_project\screenCapture\settingsservice.h                                                                              | C++      |         15 |         14 |         10 |         39 |
+| e:\qt_project\screenCapture\showtip.cpp                                                                                    | C++      |        101 |          2 |         23 |        126 |
+| e:\qt_project\screenCapture\showtip.h                                                                                      | C++      |         33 |         14 |         14 |         61 |
+| e:\qt_project\screenCapture\stableframecollector.cpp                                                                       | C++      |        104 |          0 |         22 |        126 |
+| e:\qt_project\screenCapture\stableframecollector.h                                                                         | C++      |         22 |          9 |          9 |         40 |
+| e:\qt_project\screenCapture\stitchcomposer.cpp                                                                             | C++      |        211 |          0 |         39 |        250 |
+| e:\qt_project\screenCapture\stitchcomposer.h                                                                               | C++      |         26 |          9 |          9 |         44 |
+| e:\qt_project\screenCapture\tippresenter.cpp                                                                               | C++      |         67 |          1 |         20 |         88 |
+| e:\qt_project\screenCapture\tippresenter.h                                                                                 | C++      |         29 |         14 |         13 |         56 |
+| e:\qt_project\screenCapture\wgccapturebackend.cpp                                                                          | C++      |         20 |          0 |          6 |         26 |
+| e:\qt_project\screenCapture\wgccapturebackend.h                                                                            | C++      |         13 |          9 |          6 |         28 |
+| Total                                                                                                                      |          |     17,137 |        656 |      2,984 |     20,777 |
++----------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

@@ -2,15 +2,18 @@
 
 #include <QApplication>
 #include <QCursor>
+#include <cmath>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLayout>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScreen>
 #include <QShowEvent>
+#include <QSizePolicy>
 #include <QToolButton>
 #include <QWheelEvent>
 
@@ -22,10 +25,10 @@ constexpr qreal kInitialScreenUsage = 0.42;
 constexpr int kWindowMargin = 0;
 constexpr int kSurfacePadding = 0;
 constexpr int kControlButtonSize = 20;
-constexpr int kControlButtonInset = 4;
+constexpr int kControlButtonInset = 8;
 constexpr int kControlButtonSpacing = 4;
 constexpr int kSpawnOffset = 24;
-constexpr int kMaximizedPadding = 18;
+constexpr int kMaximizedImagePadding = 12;
 
 enum class WindowControlIconType
 {
@@ -89,6 +92,16 @@ QIcon createWindowControlIcon(WindowControlIconType type, const QColor &color, c
 
     return QIcon(pixmap);
 }
+
+QSize scaledPixmapSizeForBounds(const QSize &sourceSize, const QSize &bounds)
+{
+    if (!sourceSize.isValid() || !bounds.isValid())
+    {
+        return QSize();
+    }
+
+    return sourceSize.scaled(bounds, Qt::KeepAspectRatio);
+}
 }
 
 PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
@@ -125,11 +138,13 @@ PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
 
     auto *surfaceLayout = new QHBoxLayout(m_surface);
     surfaceLayout->setContentsMargins(kSurfacePadding, kSurfacePadding, kSurfacePadding, kSurfacePadding);
-    surfaceLayout->addWidget(m_imageLabel);
+    surfaceLayout->setSpacing(0);
+    surfaceLayout->addWidget(m_imageLabel, 0, Qt::AlignCenter);
 
     m_imageLabel->setObjectName(QStringLiteral("pinnedImageLabel"));
     m_imageLabel->setAlignment(Qt::AlignCenter);
     m_imageLabel->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    m_imageLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_imageLabel->setStyleSheet(
         "QLabel#pinnedImageLabel {"
         "background: transparent;"
@@ -186,6 +201,7 @@ PinnedImageWindow::PinnedImageWindow(const QPixmap &pixmap,
     connect(m_minimizeButton, &QToolButton::clicked, this, &QWidget::showMinimized);
 
     m_toggleMaximizeButton->setObjectName(QStringLiteral("pinnedImageMaximizeButton"));
+    m_toggleMaximizeButton->setToolTip(QStringLiteral("最大化"));
     m_toggleMaximizeButton->setStyleSheet(neutralControlStyle);
     connect(m_toggleMaximizeButton, &QToolButton::clicked, this, [this]()
     {
@@ -231,10 +247,13 @@ void PinnedImageWindow::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    if (event->button() == Qt::LeftButton && !m_isCustomMaximized)
+    if (event->button() == Qt::LeftButton)
     {
         m_dragging = true;
-        m_dragOffset = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        m_dragStartGlobalPos = event->globalPosition().toPoint();
+        m_dragOffset = m_isCustomMaximized
+                           ? event->position().toPoint()
+                           : (m_dragStartGlobalPos - frameGeometry().topLeft());
         event->accept();
         return;
     }
@@ -244,13 +263,42 @@ void PinnedImageWindow::mousePressEvent(QMouseEvent *event)
 
 void PinnedImageWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    if (event == nullptr || !m_dragging || m_isCustomMaximized)
+    if (event == nullptr || !m_dragging)
     {
         QWidget::mouseMoveEvent(event);
         return;
     }
 
-    move(event->globalPosition().toPoint() - m_dragOffset);
+    const QPoint globalPos = event->globalPosition().toPoint();
+    if (m_isCustomMaximized)
+    {
+        if ((globalPos - m_dragStartGlobalPos).manhattanLength() < QApplication::startDragDistance())
+        {
+            event->accept();
+            return;
+        }
+
+        const qreal anchorRatio = (width() <= 0)
+                                      ? 0.5
+                                      : qBound(0.0,
+                                               static_cast<qreal>(m_dragOffset.x()) / qMax(1, width()),
+                                               1.0);
+        const int dragOffsetY = qBound(0, m_dragOffset.y(), qMax(0, height() - 1));
+
+        m_isCustomMaximized = false;
+        m_scaleFactor = m_restoreScaleFactor;
+        updateDisplayedPixmap();
+        updateMaximizeButtonState();
+        updateWindowControlsPosition();
+
+        const int restoredAnchorX = qRound(width() * anchorRatio);
+        const int restoredAnchorY = qBound(0, dragOffsetY, qMax(0, height() - 1));
+        repositionWithinCurrentScreen(QPoint(globalPos.x() - restoredAnchorX,
+                                             globalPos.y() - restoredAnchorY));
+        m_dragOffset = globalPos - frameGeometry().topLeft();
+    }
+
+    move(globalPos - m_dragOffset);
     event->accept();
 }
 
@@ -281,6 +329,7 @@ void PinnedImageWindow::mouseDoubleClickEvent(QMouseEvent *event)
 void PinnedImageWindow::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    updateDisplayedPixmap();
     updateWindowControlsPosition();
 }
 
@@ -315,7 +364,28 @@ void PinnedImageWindow::wheelEvent(QWheelEvent *event)
         return;
     }
 
-    const QPoint center = frameGeometry().center();
+    const QRectF beforeImageRect = displayedImageRect();
+    if (!beforeImageRect.isValid() || beforeImageRect.width() <= 0.0 || beforeImageRect.height() <= 0.0)
+    {
+        QWidget::wheelEvent(event);
+        return;
+    }
+
+    const QPointF localAnchor = event->position();
+    const QPointF clampedAnchor(qBound(beforeImageRect.left(), localAnchor.x(), beforeImageRect.right()),
+                                qBound(beforeImageRect.top(), localAnchor.y(), beforeImageRect.bottom()));
+    const QPoint anchorFloor(static_cast<int>(std::floor(clampedAnchor.x())),
+                             static_cast<int>(std::floor(clampedAnchor.y())));
+    const QPointF globalAnchor = QPointF(mapToGlobal(anchorFloor))
+                                 + QPointF(clampedAnchor.x() - anchorFloor.x(),
+                                           clampedAnchor.y() - anchorFloor.y());
+
+    const qreal beforeScaleX = beforeImageRect.width() / qMax(1, m_originalPixmap.width());
+    const qreal beforeScaleY = beforeImageRect.height() / qMax(1, m_originalPixmap.height());
+    const QPointF imageAnchor((clampedAnchor.x() - beforeImageRect.left()) / beforeScaleX,
+                              (clampedAnchor.y() - beforeImageRect.top()) / beforeScaleY);
+
+    const qreal previousScale = m_scaleFactor;
     if (delta > 0)
     {
         m_scaleFactor = qMin(kMaxScaleFactor, m_scaleFactor * 1.12);
@@ -325,26 +395,104 @@ void PinnedImageWindow::wheelEvent(QWheelEvent *event)
         m_scaleFactor = qMax(kMinScaleFactor, m_scaleFactor / 1.12);
     }
 
+    if (qFuzzyCompare(previousScale, m_scaleFactor))
+    {
+        event->accept();
+        return;
+    }
+
     updateDisplayedPixmap();
-    repositionWithinCurrentScreen(center - rect().center());
+    if (layout() != nullptr)
+    {
+        layout()->activate();
+    }
+    if (m_surface != nullptr && m_surface->layout() != nullptr)
+    {
+        m_surface->layout()->activate();
+    }
+
+    const QRectF afterImageRect = displayedImageRect();
+    if (!afterImageRect.isValid() || afterImageRect.width() <= 0.0 || afterImageRect.height() <= 0.0)
+    {
+        event->accept();
+        return;
+    }
+
+    const qreal afterScaleX = afterImageRect.width() / qMax(1, m_originalPixmap.width());
+    const qreal afterScaleY = afterImageRect.height() / qMax(1, m_originalPixmap.height());
+    const QPointF anchorInWindow(afterImageRect.left() + imageAnchor.x() * afterScaleX,
+                                 afterImageRect.top() + imageAnchor.y() * afterScaleY);
+    const QPointF newTopLeft = globalAnchor - anchorInWindow;
+    move(qRound(newTopLeft.x()), qRound(newTopLeft.y()));
     event->accept();
+}
+
+QRectF PinnedImageWindow::displayedImageRect() const
+{
+    if (m_surface == nullptr || m_imageLabel == nullptr || !m_displayedPixmapSize.isValid())
+    {
+        return QRectF();
+    }
+
+    QRectF contentsRect(m_imageLabel->contentsRect());
+    contentsRect.translate(m_imageLabel->pos());
+    contentsRect.translate(m_surface->pos());
+    if (!contentsRect.isValid() || contentsRect.width() <= 0.0 || contentsRect.height() <= 0.0)
+    {
+        return QRectF();
+    }
+
+    const QSize visibleSize = m_displayedPixmapSize.scaled(contentsRect.size().toSize(),
+                                                           Qt::KeepAspectRatio);
+    if (!visibleSize.isValid())
+    {
+        return QRectF();
+    }
+
+    const QPointF topLeft(contentsRect.left() + (contentsRect.width() - visibleSize.width()) * 0.5,
+                          contentsRect.top() + (contentsRect.height() - visibleSize.height()) * 0.5);
+    return QRectF(topLeft, QSizeF(visibleSize));
 }
 
 void PinnedImageWindow::updateDisplayedPixmap()
 {
     if (m_originalPixmap.isNull())
     {
+        m_displayedPixmapSize = QSize();
         m_imageLabel->setPixmap(QPixmap());
         return;
     }
 
-    const QSize scaledSize = m_originalPixmap.size() * m_scaleFactor;
-    const QPixmap scaled = m_originalPixmap.scaled(scaledSize,
+    QSize targetSize;
+    if (m_isCustomMaximized)
+    {
+        const QRect available = availableGeometry();
+        const QSize bounds = available.size() - QSize(kMaximizedImagePadding * 2,
+                                                      kMaximizedImagePadding * 2);
+        targetSize = scaledPixmapSizeForBounds(m_originalPixmap.size(), bounds);
+        if (m_originalPixmap.width() > 0 && m_originalPixmap.height() > 0 && targetSize.isValid())
+        {
+            const qreal widthScale = static_cast<qreal>(targetSize.width()) / m_originalPixmap.width();
+            const qreal heightScale = static_cast<qreal>(targetSize.height()) / m_originalPixmap.height();
+            m_scaleFactor = qMax(kMinScaleFactor, qMin(kMaxScaleFactor, qMin(widthScale, heightScale)));
+        }
+    }
+    else
+    {
+        targetSize = m_originalPixmap.size() * m_scaleFactor;
+    }
+
+    const QPixmap scaled = m_originalPixmap.scaled(targetSize,
                                                    Qt::KeepAspectRatio,
                                                    Qt::SmoothTransformation);
+    m_displayedPixmapSize = scaled.size();
     m_imageLabel->setPixmap(scaled);
     m_imageLabel->setFixedSize(scaled.size());
-    adjustSize();
+
+    if (!m_isCustomMaximized)
+    {
+        adjustSize();
+    }
 }
 
 void PinnedImageWindow::updateWindowControlsPosition()
@@ -354,9 +502,8 @@ void PinnedImageWindow::updateWindowControlsPosition()
         return;
     }
 
-    const QRect imageRect = m_imageLabel->geometry().translated(m_surface->pos());
-    const int closeX = imageRect.right() - kControlButtonInset - m_closeButton->width() + 1;
-    const int controlY = imageRect.top() + kControlButtonInset;
+    const int controlY = kControlButtonInset;
+    const int closeX = width() - kControlButtonInset - m_closeButton->width();
     const int toggleX = closeX - kControlButtonSpacing - m_toggleMaximizeButton->width();
     const int minimizeX = toggleX - kControlButtonSpacing - m_minimizeButton->width();
 
@@ -411,17 +558,11 @@ void PinnedImageWindow::maximizeToCurrentScreen()
 
     m_restoreGeometry = frameGeometry();
     m_restoreScaleFactor = m_scaleFactor;
-
-    const QRect available = availableGeometry().adjusted(kMaximizedPadding,
-                                                         kMaximizedPadding,
-                                                         -kMaximizedPadding,
-                                                         -kMaximizedPadding);
-    m_scaleFactor = maximumScaleFactorForAvailableGeometry(available);
-    updateDisplayedPixmap();
-
-    const QPoint centeredTopLeft = available.center() - rect().center();
-    repositionWithinCurrentScreen(centeredTopLeft);
     m_isCustomMaximized = true;
+
+    const QRect available = availableGeometry();
+    setGeometry(available);
+    updateDisplayedPixmap();
     updateMaximizeButtonState();
     updateWindowControlsPosition();
 }
@@ -433,10 +574,10 @@ void PinnedImageWindow::restoreFromMaximized()
         return;
     }
 
+    m_isCustomMaximized = false;
     m_scaleFactor = m_restoreScaleFactor;
     updateDisplayedPixmap();
-    setGeometry(m_restoreGeometry);
-    m_isCustomMaximized = false;
+    move(m_restoreGeometry.topLeft());
     updateMaximizeButtonState();
     updateWindowControlsPosition();
 }

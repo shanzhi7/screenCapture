@@ -440,6 +440,7 @@ void MainWindow::startCapture()
     connect(m_overlay, &SelectionOverlay::longCaptureWheel, this, &MainWindow::onOverlayLongCaptureWheel);
     connect(m_overlay, &SelectionOverlay::longCaptureSaveRequested, this, &MainWindow::onOverlayLongCaptureSaveRequested);
     connect(m_overlay, &SelectionOverlay::longCaptureConfirmRequested, this, &MainWindow::onOverlayLongCaptureConfirmRequested);
+    connect(m_overlay, &SelectionOverlay::longCapturePinRequested, this, &MainWindow::onOverlayLongCapturePinRequested);
 #endif
 
     connect(m_overlay, &QObject::destroyed, this, [this]()
@@ -731,6 +732,7 @@ void MainWindow::onOverlayLongCaptureSaveRequested(const QRect &rect)
         return;
     }
 
+    m_pendingLongCapturePin = false;
     m_longCaptureController->saveAs();
 }
 
@@ -743,6 +745,20 @@ void MainWindow::onOverlayLongCaptureConfirmRequested(const QRect &rect)
         return;
     }
 
+    m_pendingLongCapturePin = false;
+    m_longCaptureController->confirmCopy();
+}
+
+void MainWindow::onOverlayLongCapturePinRequested(const QRect &rect)
+{
+    Q_UNUSED(rect)
+
+    if (m_longCaptureController == nullptr)
+    {
+        return;
+    }
+
+    m_pendingLongCapturePin = true;
     m_longCaptureController->confirmCopy();
 }
 
@@ -848,10 +864,20 @@ void MainWindow::onLongCaptureCopyReady(const QPixmap &pixmap)
         restoreWindowIfNeeded();
     }
 
-    updatePreview(finalPixmap);
+        updatePreview(finalPixmap);
     appendCaptureToHistory(finalPixmap, QStringLiteral("长截图"));
     copyPixmapToClipboard(finalPixmap);
-    showTip(QStringLiteral("长截图已复制"));
+
+    if (m_pendingLongCapturePin)
+    {
+        showPinnedImage(finalPixmap, QStringLiteral("长截图贴图"));
+        showTip(QStringLiteral("长截图已贴到桌面顶层"));
+        m_pendingLongCapturePin = false;
+    }
+    else
+    {
+        showTip(QStringLiteral("长截图已复制"));
+    }
 
     endCaptureSession();
 }
@@ -891,6 +917,7 @@ void MainWindow::onLongCaptureSaveReady(const QPixmap &pixmap)
         restoreWindowIfNeeded();
     }
 
+        m_pendingLongCapturePin = false;
     updatePreview(finalPixmap);
     appendCaptureToHistory(finalPixmap, QStringLiteral("长截图"));
     saveCurrentImageWithDialog(decision.shouldRestoreWindow);
@@ -900,6 +927,7 @@ void MainWindow::onLongCaptureSaveReady(const QPixmap &pixmap)
 
 void MainWindow::onLongCaptureFailed(const QString &message)
 {
+    m_pendingLongCapturePin = false;
     if (m_overlay != nullptr)
     {
         m_overlay->setStatusText(message);
@@ -1501,6 +1529,7 @@ void MainWindow::resetLongCaptureState()
 {
     m_overlayClosing = false;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+    m_pendingLongCapturePin = false;
     if (m_longCaptureController != nullptr)
     {
         m_longCaptureController->cancel();

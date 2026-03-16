@@ -1,4 +1,4 @@
-﻿/***********************************************************************************
+/***********************************************************************************
 *
 * @file         mainwindow.h
 * @brief        主窗口：负责截图流程编排、历史展示与系统托盘交互。
@@ -84,6 +84,7 @@ private slots:
     void onOverlayLongCaptureWheel(const QRect &rect, int delta);
     void onOverlayLongCaptureSaveRequested(const QRect &rect);
     void onOverlayLongCaptureConfirmRequested(const QRect &rect);
+    void onOverlayLongCapturePinRequested(const QRect &rect);
     void onLongCapturePreviewUpdated(const QPixmap &pixmap);
     void onLongCapturePredictedVisualHeightChanged(int height);
     void onLongCaptureCommittedVisualHeightChanged(int height);
@@ -210,6 +211,7 @@ private:
     QList<QPointer<PinnedImageWindow>> m_pinnedWindows;
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
     std::unique_ptr<LongCaptureSessionController> m_longCaptureController;
+    bool m_pendingLongCapturePin = false;
 #endif
 
     QSystemTrayIcon *m_trayIcon = nullptr;
