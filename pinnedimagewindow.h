@@ -1,7 +1,7 @@
-﻿/***********************************************************************************
+/***********************************************************************************
 *
 * @file         pinnedimagewindow.h
-* @brief        贴图悬浮窗：以置顶轻量窗口显示截图结果。
+* @brief        鐠愭潙娴橀幃顒佽癁缁愭绱版禒銉х枂妞ゆ儼浜ら柌蹇曠崶閸欙絾妯夌粈鐑樺焻閸ュ墽绮ㄩ弸婧库偓?
 *
 * @author       shanzhi
 * @date         2026/03/14
@@ -14,6 +14,7 @@
 #include <QPixmap>
 #include <QPoint>
 #include <QRect>
+#include <QSize>
 #include <QString>
 #include <QWidget>
 
@@ -47,6 +48,7 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
+    QRectF displayedImageRect() const;
     void updateDisplayedPixmap();
     void updateWindowControlsPosition();
     void updateMaximizeButtonState();
@@ -65,7 +67,9 @@ private:
     QToolButton *m_toggleMaximizeButton = nullptr;
     QToolButton *m_closeButton = nullptr;
     QPixmap m_originalPixmap;
+    QSize m_displayedPixmapSize;
     QPoint m_dragOffset;
+    QPoint m_dragStartGlobalPos;
     QPoint m_spawnGlobalPos;
     QRect m_restoreGeometry;
     qreal m_scaleFactor = 1.0;

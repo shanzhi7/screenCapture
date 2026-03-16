@@ -1,4 +1,4 @@
-﻿#include "selectionoverlay.h"
+#include "selectionoverlay.h"
 
 #if SCREENCAPTURE_ENABLE_LONG_CAPTURE
 #include "longcapturepreviewpanel.h"
@@ -2448,10 +2448,6 @@ void SelectionOverlay::ensureToolbar()
         }
 
         m_longCaptureEnabled = m_btnLongCapture->isChecked();
-        if (m_btnPin != nullptr)
-        {
-            m_btnPin->setEnabled(!m_longCaptureEnabled);
-        }
         const QRect current = currentRect();
 
         if (m_longCaptureEnabled)
@@ -2512,6 +2508,14 @@ void SelectionOverlay::ensureToolbar()
         {
             return;
         }
+
+#if SCREENCAPTURE_ENABLE_LONG_CAPTURE
+        if (m_longCaptureEnabled)
+        {
+            emit longCapturePinRequested(m_selectedRect);
+            return;
+        }
+#endif
 
         prepareForOutputCapture();
         emit pinRequested(m_selectedRect);

@@ -1,9 +1,10 @@
-﻿#include "capturesettingsdialog.h"
+#include "capturesettingsdialog.h"
 
 #include "ui_capturesettingsdialog.h"
 
 #include <QDir>
 #include <QFileDialog>
+#include <QTimer>
 
 CaptureSettingsDialog::CaptureSettingsDialog(QWidget *parent)
     : QDialog(parent)
@@ -13,6 +14,8 @@ CaptureSettingsDialog::CaptureSettingsDialog(QWidget *parent)
 
     setModal(true);
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    setFocusPolicy(Qt::StrongFocus);
+    ui->hotkeyEdit->clearFocus();
 
     // 复用主窗口样式，保持风格一致。
     if (parent != nullptr)
@@ -30,6 +33,22 @@ CaptureSettingsDialog::CaptureSettingsDialog(QWidget *parent)
 CaptureSettingsDialog::~CaptureSettingsDialog()
 {
     delete ui;
+}
+
+void CaptureSettingsDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+
+    QTimer::singleShot(0, this, [this]()
+    {
+        if (!isVisible() || ui == nullptr)
+        {
+            return;
+        }
+
+        ui->hotkeyEdit->clearFocus();
+        setFocus(Qt::OtherFocusReason);
+    });
 }
 
 void CaptureSettingsDialog::setCurrentHotkey(const QKeySequence &sequence)

@@ -7,8 +7,8 @@
 
 欢迎下载最新版本：
 - 🌐 **[访问 GitHub Releases 页面](https://github.com/shanzhi7/screenCapture/releases)** (查看所有版本记录)
-- 📦 **[下载 EXE installer](https://github.com/shanzhi7/screenCapture/releases/download/v0.2/qingyin-setup.exe)** (推荐：一键安装)
-- 🗂️ **[下载 ZIP package](https://github.com/shanzhi7/screenCapture/releases/download/v0.2/screenCapture-f.zip)** (便携版：解压即用)
+- 📦 **[下载 EXE installer](https://github.com/shanzhi7/screenCapture/releases/download/v0.3/qingyin-setup-v0.3.exe)** (推荐：一键安装)
+- 🗂️ **[下载 ZIP package](https://github.com/shanzhi7/screenCapture/releases/download/v0.3/screenCapture-f.zip)** (便携版：解压即用)
 
 ## Overview / 项目简介
 

@@ -1,7 +1,7 @@
-﻿/***********************************************************************************
+/***********************************************************************************
 *
 * @file         capturesettingsdialog.h
-* @brief        截图设置对话框：用于编辑截图热键与自动保存目录。
+* @brief        鎴浘璁剧疆瀵硅瘽妗嗭細鐢ㄤ簬缂栬緫鎴浘鐑敭涓庤嚜鍔ㄤ繚瀛樼洰褰曘€?
 *
 * @author       shanzhi
 * @date         2026/03/07
@@ -22,6 +22,7 @@ class CaptureSettingsDialog;
 }
 QT_END_NAMESPACE
 
+class QShowEvent;
 class CaptureSettingsDialog : public QDialog
 {
     Q_OBJECT
@@ -30,35 +31,38 @@ public:
     explicit CaptureSettingsDialog(QWidget *parent = nullptr);
     ~CaptureSettingsDialog() override;
 
-    // 设置当前截图快捷键。
+    // 璁剧疆褰撳墠鎴浘蹇嵎閿€?
     void setCurrentHotkey(const QKeySequence &sequence);
 
-    // 设置自动保存目录（空字符串表示使用默认目录）。
+    // 璁剧疆鑷姩淇濆瓨鐩綍锛堢┖瀛楃涓茶〃绀轰娇鐢ㄩ粯璁ょ洰褰曪級銆?
     void setAutoSaveDirectory(const QString &directory);
 
-    // 获取用户在对话框中选择的快捷键。
+    // 鑾峰彇鐢ㄦ埛鍦ㄥ璇濇涓€夋嫨鐨勫揩鎹烽敭銆?
     QKeySequence selectedHotkey() const;
 
-    // 获取用户在对话框中选择的自动保存目录。
+    // 鑾峰彇鐢ㄦ埛鍦ㄥ璇濇涓€夋嫨鐨勮嚜鍔ㄤ繚瀛樼洰褰曘€?
     QString selectedAutoSaveDirectory() const;
 
-    // 设置是否启用开机自启动。
+    // 璁剧疆鏄惁鍚敤寮€鏈鸿嚜鍚姩銆?
     void setLaunchAtStartupEnabled(bool enabled);
 
-    // 设置当前平台是否支持开机自启动。
+    // 璁剧疆褰撳墠骞冲彴鏄惁鏀寔寮€鏈鸿嚜鍚姩銆?
     void setLaunchAtStartupSupported(bool supported);
 
-    // 获取用户是否勾选开机自启动。
+    // 鑾峰彇鐢ㄦ埛鏄惁鍕鹃€夊紑鏈鸿嚜鍚姩銆?
     bool selectedLaunchAtStartupEnabled() const;
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
-    // 选择自动保存目录。
+    // 閫夋嫨鑷姩淇濆瓨鐩綍銆?
     void onBrowseDirectoryClicked();
 
-    // 清空目录配置，回退默认目录策略。
+    // 娓呯┖鐩綍閰嶇疆锛屽洖閫€榛樿鐩綍绛栫暐銆?
     void onClearDirectoryClicked();
 
-    // 恢复默认快捷键。
+    // 鎭㈠榛樿蹇嵎閿€?
     void onResetHotkeyClicked();
 
 private:
