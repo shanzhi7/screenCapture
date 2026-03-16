@@ -1,4 +1,4 @@
-﻿#include "aboutdialog.h"
+#include "aboutdialog.h"
 
 #include "ui_aboutdialog.h"
 
@@ -26,7 +26,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 
     const QString buildTime = QStringLiteral(__DATE__) + QStringLiteral(" ") + QStringLiteral(__TIME__);
     ui->contentLabel->setText(QStringLiteral("应用：轻影截图（LightShadowCapture）\n"
-                                             "版本：v0.2\n"
+                                             "版本：v0.3\n"
                                              "构建时间：%1\n"
                                              "功能：全屏截图、区域截图、历史记录、长截图")
                                  .arg(buildTime));
